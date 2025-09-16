@@ -1,0 +1,249 @@
+.stats--nav {
+  grid-column: 1 / 2;
+  grid-row: 2 / 4;
+  background: var(--tags-nav-background);
+  color: var(--tags-nav-color);
+}
+
+.stats--nav {
+  /*   display: grid;
+  grid-template-rows: repeat(6, 16.67%); 
+  gap: 10px; */
+  /* margin-left: 10px; */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+.stats--nav .stat {
+  width: 90%;
+  border-top-right-radius: 2em 5em;
+  border-bottom-right-radius: 2em 5em;
+}
+
+.stats--nav .stat:hover {
+  width: 90%;
+  border-top-right-radius: 2em 5em;
+  border-bottom-right-radius: 2em 5em;
+  background: var(--tags-nav-menu-background-hover);
+  color: var(--tags-nav-menu-color-hover);
+  cursor: pointer;
+}
+
+.directory-name {
+  padding: 0.2rem 0.4rem;
+  border-radius: 2px;
+}
+
+.directory-name:hover {
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.stats--list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.stats--list::-webkit-scrollbar-thumb {
+  background: var(--covers-scrollbar-thumb);
+  width: 10px;
+}
+
+.stats--list::-webkit-scrollbar-track {
+  background: var(--covers-scrollbar);
+}
+
+.stats--list::-webkit-scrollbar-button:increment,
+.stats--list::-webkit-scrollbar-button:decrement {
+  background-color: var(--covers-scrollbar-buttons);
+}
+
+.stats--results::-webkit-scrollbar {
+  display: none;
+}
+
+.stats--genres {
+  height: 100%;
+
+  display: inline-block;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.stats--genres-genre {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+  border-top: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  padding: 10px;
+  background-color: #f9f9f9;
+}
+
+.stats--genres span {
+  margin-right: 30px;
+}
+
+.stat-selected {
+  background-color: var(--tags-nav-selected);
+  color: var(--tags-nav-selected-color);
+}
+
+.genre-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: gray;
+  background: var(--color1);
+  font-weight: bold;
+  padding: 0.2rem;
+  color: white;
+  border-radius: 5px;
+}
+.genre-name {
+  font-weight: bold;
+  color: blue;
+}
+
+.stats-nav .stat {
+  padding: 20px;
+}
+
+/* .stats--nav .stat:not(.directories-list):hover {
+  cursor: pointer;
+  background: var(--tags-nav-menu-background-hover);
+  color: var(--tags-nav-menu-color-hover);
+}
+
+.directories-option:hover {
+  cursor: pointer;
+  background: var(--tags-nav-menu-background-hover);
+  color: var(--tags-nav-menu-color-hover);
+} */
+
+.stats--nav .stat p {
+  padding: 0.5rem;
+}
+
+/* .stats--nav .stat p:hover, */
+/* .directories-option:hover {
+  cursor: pointer;
+  background: var(--tags-nav-menu-background-hover);
+  color: var(--tags-nav-menu-color-hover);
+} */
+
+.stats--results {
+  grid-column: 2 / 3;
+  grid-row: 2 / 4;
+  height: 100%;
+  background: black;
+  color: white;
+  scroll-behavior: smooth;
+  resize: both;
+  background: var(--tags-results-background);
+  color: var(--tags-results-color);
+}
+
+.stats ul {
+  list-style: none;
+  margin-block-start: 0;
+  margin-block-end: 0;
+  padding-inline-start: 0;
+}
+
+/* .stats-label {
+  background: var(--color2);
+} */
+
+.stats--totalmedia {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  line-height: 2.4rem;
+}
+
+.stats--genres {
+  list-style: none;
+  padding: 0;
+}
+
+.stats--sort {
+  height: 2rem;
+  background-color: red;
+  color: white;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+}
+/* .stats--genres li:nth-child(even) {
+  background-color: white;
+  color: black;
+}
+
+.stats--genres li:nth-child(odd) {
+  background-color: black;
+  color: white;
+}
+ */
+.directories {
+  display: flex;
+  align-items: center;
+  margin-top: 0.5rem;
+  padding: 0.2rem;
+  border-radius: 10px;
+}
+
+.directories > input {
+  margin-left: 0.2rem;
+  margin-right: 1rem;
+}
+
+.directories > span {
+  margin-left: 1rem;
+}
+
+.directories > span > svg {
+  fill: gray;
+  background-color: #525252;
+  border-radius: 50%;
+  padding: 0.2rem;
+}
+
+.directories > span > svg:hover {
+  fill: lightblue;
+  border: 1px solid lightblue;
+}
+
+/* .stat:not(.directories-list) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50%;
+} */
+
+/* .stat:not(.directories-list) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50%;
+}
+ */
+/* .directories-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+} */
+
+/* .directories ul {
+  display: flex;
+  flex-direction: column;
+}
+ */
+
+.root-highlight {
+  background: var(--root-highlight);
+  color: var(--root-highlight-color);
+}

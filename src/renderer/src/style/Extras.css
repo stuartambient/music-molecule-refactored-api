@@ -1,0 +1,54 @@
+.audio-player .extras {
+  grid-area: extras;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  -webkit-app-region: no-drag;
+}
+
+.audio-player .extras {
+  width: 90%;
+  margin: auto 0;
+  padding: 0;
+  margin-block-start: 0em;
+  margin-block-end: 0em;
+  padding-inline-start: 0px;
+}
+
+.audio-player .extras .btn {
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem;
+  /* position: relative; */
+  background: var(--color4);
+  /* z-index: 0; */
+  /* border-bottom: 1px inset var(--color1);
+  border-right: 1px inset var(--color1); */
+}
+
+.extras .btn svg {
+  fill: var(--controls-icon);
+}
+
+.audio-player .extras .btn:hover {
+  cursor: pointer;
+}
+
+.audio-player .extras .off {
+  visibility: hidden;
+}
+
+.audio-player .extras .on {
+  /* border: 1px solid darkgreen; */
+  /* background-color: var(--color3) */
+  background: var(--active-controls);
+  border-radius: 3px;
+  color: var(--active-controls-font);
+  padding: 0.1rem 0.3rem;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+}

@@ -1,0 +1,17 @@
+{
+  "hiddenColumns": [
+    "status",
+    "failedSort"
+  ],
+  "theme": "dark",
+  "mainTheme": "theme-3",
+  "schedule": {
+    "Monday": "07:23",
+    "Tuesday": "07:18",
+    "Wednesday": "17:37",
+    "Thursday": "17:28",
+    "Friday": "03:15",
+    "Saturday": "",
+    "Sunday": ""
+  }
+}

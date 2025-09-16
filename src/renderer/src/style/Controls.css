@@ -1,0 +1,163 @@
+.controls {
+  grid-area: controls;
+  display: flex;
+  justify-content: space-between;
+  width: 90%;
+  list-style: none;
+  margin: auto 0;
+  padding: 0;
+  margin-block-start: 0;
+  margin-block-end: 0;
+  margin-inline-start: 0;
+  margin-inline-end: 0;
+  padding-inline-start: 0;
+  -webkit-app-region: no-drag;
+}
+
+.controls .btn {
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  background: var(--controls-background);
+  box-shadow: transparent;
+  user-select: none;
+}
+
+.controls .btn svg {
+  fill: var(--controls-icon);
+}
+
+.controls .btn.isliked svg {
+  fill: var(--likedBtn);
+}
+
+.controls .btn.isliked svg:hover {
+  fill: var(--likedBtn);
+}
+
+.controls .btn svg:hover {
+  fill: var(--controls-button-icon-hover);
+}
+
+.controls .btn:hover {
+  cursor: pointer;
+}
+.controls .btn:active {
+  transform: translateX(2px) translateY(2px);
+}
+
+.controls--minimalmode {
+  /* margin: 0.8rem 0; */
+  grid-row: 3 / 4;
+  grid-column: 1 / 2;
+  padding: 2px;
+  margin: 0;
+  height: 25px;
+  align-self: center;
+  justify-self: center;
+  justify-content: space-evenly;
+  margin-block-start: 0em;
+  margin-block-end: 0em;
+  padding-inline-start: 0px;
+  background: var(--player-background);
+}
+
+.controls--minimalmode .btn {
+  border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  background: none;
+  z-index: 1;
+  border-bottom: none;
+  border-right: none;
+}
+
+/* .controls--minimalmode .btn:hover {
+  background: none;
+} */
+
+.controls--minimalmode .btn svg {
+  position: relative;
+  z-index: 2;
+  height: 1.2em;
+  width: 1.2em;
+}
+
+/* .controls--minimalmode .likeBtn svg:hover {
+  fill: var(--minimode-control-icons);
+} */
+
+/* .controls--minimalmode .isliked svg:hover {
+  fill: var(--likedBtn);
+} */
+
+.controls--minimalmode .btn:hover {
+  background: none;
+}
+
+/* .controls-home .on svg {
+  fill: red;
+} */
+
+.controls-home .btn {
+  background: var(--controls-background);
+}
+
+/*  */
+
+.controls-home {
+  grid-area: controls;
+  width: 100%;
+  display: flex;
+  justify-content: space-evenly;
+  padding-inline-start: 0;
+  margin-block-start: 0;
+  margin-block-end: 0;
+  border-radius: 10px;
+}
+
+.controls-home .btn {
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 2px;
+  padding: 0.2em;
+  border-bottom: none;
+  border-right: none;
+}
+
+/* .controls-home .btn svg {
+  fill: var(--controls-icon);
+} */
+/* .controls-home .on svg {
+  fill: var(--likedBtn);
+} */
+
+/* .controls-home .btn.isliked svg {
+  fill: var(--likedBtn);
+} */
+
+/* .controls-home .likeBtn:hover {
+  fill: var(--controls-icon);
+} */
+
+/* .controls-home .btnLike svg:hover {
+  fill: var(--controls-icon);
+} */
+
+.controls .on svg {
+  fill: var(--control-on);
+}
+
+.controls .on svg:hover {
+  fill: var(--control-on);
+}
+
+.controls .likeBtn svg:hover {
+  fill: var(--likedBtn);
+}

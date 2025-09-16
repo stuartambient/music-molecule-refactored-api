@@ -1,0 +1,69 @@
+.status-tag-loader {
+  width: 15%;
+  height: 10px;
+  display: inline-block;
+  position: relative;
+  background: rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+  margin-left: 10px;
+  border-radius: 3px;
+}
+.status-tag-loader::after {
+  content: '';
+  width: 100px;
+  height: 10px;
+  /* background: red; */
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  animation: animloader 2s linear alternate infinite;
+}
+
+.status-tag-loader.nav {
+  width: 100px;
+}
+
+@keyframes animloader {
+  0% {
+    left: 0;
+    transform: translateX(-100%);
+  }
+  100% {
+    left: 100%;
+    transform: translateX(0%);
+  }
+}
+
+.tag-update-status-notice {
+  border: 1px solid blue;
+  display: flex;
+  flex-basis: 20%;
+}
+
+.tag-update-status-notice > * {
+  /* margin-left: 25%; */
+  flex-grow: 2;
+  font-size: 1.2em;
+}
+
+.status-view,
+.status-dismiss {
+  display: flex;
+  justify-content: center;
+  cursor: pointer;
+  background-color: transparent;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.9em;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
+}
+.status-view:hover,
+.status-dismiss:hover {
+  background-color: #f0f0f0;
+  border-color: #999;
+  color: black;
+}

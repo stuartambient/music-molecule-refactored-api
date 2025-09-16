@@ -1,0 +1,79 @@
+#cover-search-alt {
+  /* display: grid; */
+  /* grid-template-columns: 1fr 10px 1fr; */
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.iframeContainer {
+  /*grid-row: 1 / 2; */
+  /* overflow-y: scroll; */
+  overflow: hidden;
+}
+
+.resizer {
+  /* grid-column: 2 / 3; */
+  background-color: orange;
+  cursor: col-resize;
+  width: 10px;
+}
+
+.image-preview {
+  /* grid-row: 3 / 4; */
+  /* grid-column: 3 / 4; */
+  background-color: black;
+  display: grid;
+  grid-template-rows: 1fr;
+  grid-template-columns: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.iframeContainer,
+.image-preview {
+  /*   flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 0; */
+  flex-basis: 50%;
+  min-width: 50px;
+}
+
+@media (max-width: 768px) {
+  /* You can adjust the breakpoint as needed */
+  #cover-search-alt {
+    flex-direction: column;
+  }
+  .resizer {
+    background-color: orange;
+    cursor: row-resize;
+    height: 10px;
+    width: 100%;
+  }
+}
+
+.download-image {
+  background-color: #f58f05;
+  border: 2px solid #4caf50;
+  border-radius: 5px;
+  color: white;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 10px 2px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.download-image:hover {
+  background-color: #45a049;
+  border: 2px solid #45a049;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+}
+
+.integration {
+  color: white;
+}

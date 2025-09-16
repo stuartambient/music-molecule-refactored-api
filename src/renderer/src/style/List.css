@@ -1,0 +1,113 @@
+.highlighted {
+  height: 3rem;
+  background: var(--tags-list-header-background);
+  color: var(--tags-list-header-color);
+  z-index: 2;
+}
+
+/* .highlighted .header-content span:not(:first-child) {
+  margin-left: 10px;
+} */
+
+.highlighted .header-content span:not(.list-header-deselect):not(.search):not(.list-header-button) {
+  background: var(--tags-list-header-controls-background);
+  padding: 0.2rem;
+  color: var(--tags-list-header-text-color);
+  border-radius: 2px;
+  width: 175px;
+  display: flex;
+  justify-content: center;
+  height: 2rem;
+  align-items: center;
+}
+
+.highlighted .header-content .list-header-button,
+.highlighted .header-content span input {
+  background: var(--tags-list-header-controls-background);
+  /*  flex: 0.5; */
+}
+
+/* .highlighted .header-content span .search {
+  background: none;
+}
+ */
+.highlighted .header-content span input {
+  color: var(--tags-list-header-input);
+}
+
+.highlighted .header-content input::placeholder {
+  color: var(--tags-list-header-text-color);
+}
+
+.highlighted .header-content svg {
+  color: var(--tags-list-header-icon);
+}
+
+.list-header-button {
+  color: white;
+  padding: 0.2rem;
+  border-radius: 5px;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 0.25rem;
+  color: var(--tags-list-header-text-color);
+}
+
+.list-header-button:hover {
+  cursor: pointer;
+  transform: translateY(-1px);
+}
+
+.list-header-deselect:hover {
+  cursor: pointer;
+}
+
+/* .list-header-button:active {
+  background-color: #f0f0f1;
+  border-color: rgba(0, 0, 0, 0.15);
+  box-shadow: rgba(0, 0, 0, 0.06) 0 2px 4px;
+  color: rgba(0, 0, 0, 0.65);
+  transform: translateY(0);
+} */
+
+@keyframes breathe {
+  0% {
+    transform: scale(1);
+    color: red;
+  }
+  50% {
+    transform: scale(1.5);
+    color: white;
+  }
+  100% {
+    transform: scale(1);
+    color: blue;
+  }
+}
+
+.alert {
+  animation: breathe 1.5s ease-in-out infinite;
+  display: inline-block; /* ensure transform applies correctly */
+  color: red;
+}
+
+@keyframes iconbreathe {
+  0% {
+    transform: rotate(0);
+  }
+  50% {
+    transform: rotate(180deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.alert svg {
+  animation: iconbreathe 1.5s ease-in-out infinite;
+}

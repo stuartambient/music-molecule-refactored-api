@@ -1,0 +1,33 @@
+export const editableColumns = [
+  'title',
+  'performers',
+  'performersRole',
+  'albumArtists',
+  'album',
+  'year',
+  'genres',
+  'composers',
+  'conductor',
+  'comment',
+  'description',
+  'disc',
+  'discCount',
+  'track',
+  'trackCount',
+  'isCompilation',
+  'publisher',
+  'isrc',
+  'copyright',
+  /* 'pictures', */
+  'picture-location',
+  'duration',
+  'beatsPerMinute',
+  'lyrics',
+  'remixedBy',
+  /* 'like', */
+  'replayGainAlbumGain',
+  'replayGainAlbumPeak',
+  'replayGainTrackGain',
+  'replayGainTrackPeak',
+  'modified'
+];

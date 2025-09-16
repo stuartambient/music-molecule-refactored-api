@@ -1,0 +1,9 @@
+node_modules
+assets
+dist
+out
+*.log*
+db
+.env
+*.local
+ProfilingData

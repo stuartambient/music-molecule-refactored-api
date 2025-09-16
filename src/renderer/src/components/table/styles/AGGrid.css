@@ -1,0 +1,21 @@
+.gridWrapper {
+  grid-row: 3/4 !important;
+  grid-column: 1 / 3 !important;
+}
+
+.no-panel {
+  grid-row: 2/4 !important;
+}
+
+.two-column {
+  grid-column: 2 / 3 !important;
+}
+
+.row-failed {
+  background-color: red !important; /* soft green */
+  color: white !important;
+}
+
+.row-warnings {
+  background-color: yellow !important;
+}

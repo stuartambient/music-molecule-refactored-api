@@ -1,0 +1,68 @@
+:root {
+  --accent: #3b82f6;
+  --accent-contrast: #ffffff;
+
+  --surface: #ffffff;
+  --text: #111111;
+  --muted: #f3f4f6;
+  --border: rgba(0, 0, 0, 0.12);
+  --overlay: rgba(0, 0, 0, 0.5);
+
+  --btn-bg: #f3f3f3;
+  --btn-text: #111111;
+  --btn-border: rgba(0, 0, 0, 0.15);
+  --hover: rgba(0, 0, 0, 0.04);
+}
+
+.light {
+  --background-color: #ffffff;
+  --text-color: #000000;
+  --slider-color: black;
+
+  --surface: #ffffff;
+  --text: #111111;
+  --muted: #f5f7fa;
+  --border: rgba(0, 0, 0, 0.12);
+  --overlay: rgba(0, 0, 0, 0.5);
+
+  --btn-bg: #f3f3f3;
+  --btn-text: #111111;
+  --btn-border: rgba(0, 0, 0, 0.15);
+
+  --accent: #3b82f6;
+  --accent-contrast: #ffffff;
+  --hover: rgba(0, 0, 0, 0.06);
+}
+
+.dark {
+  --background-color: #1f2836;
+  --text-color: #ffffff;
+  --slider-color: white;
+
+  --surface: #1f1f1f;
+  --text: #eaeaea;
+  --muted: #242933;
+  --border: rgba(255, 255, 255, 0.12);
+  --overlay: rgba(0, 0, 0, 0.6);
+
+  --btn-bg: #2a2a2a;
+  --btn-text: #eaeaea;
+  --btn-border: rgba(255, 255, 255, 0.14);
+
+  --accent: #2563eb;
+  --accent-contrast: #ffffff;
+  --hover: rgba(255, 255, 255, 0.06);
+}
+
+.column-panel,
+.hamburger-container,
+.modal-content,
+.edit-form,
+.centralControlContainer {
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+.status-tag-loader::after {
+  background: var(--slider-color);
+}
