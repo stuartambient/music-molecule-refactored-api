@@ -104,7 +104,7 @@ const MainNav = ({ onClick }) => {
     const runUpdates = () => {
       switch (updateOption) {
         case 'update-folders': {
-          window.api.updateFolders();
+          window.ipcApi.invoke('update-folders');
           break;
         }
         case 'update-files': {
@@ -112,11 +112,11 @@ const MainNav = ({ onClick }) => {
           break;
         }
         case 'update-covers': {
-          window.api.updateCovers();
+          window.ipcApi.invoke('update-covers');
           break;
         }
         case 'update-meta': {
-          window.api.updateMeta();
+          window.ipcApi.invoke('update-meta');
           break;
         }
         case 'setup / modify': {

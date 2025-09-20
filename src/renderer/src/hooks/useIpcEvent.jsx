@@ -17,9 +17,9 @@ export default function useIpcEvent(channel, handler) {
       handlerRef.current?.(...args);
     };
 
-    window.api.on(channel, listener);
+    window.ipcApi.on(channel, listener);
     return () => {
-      window.api.off(channel, listener);
+      window.ipcApi.off(channel, listener);
     };
   }, [channel]);
 }

@@ -40,7 +40,10 @@ const ContextMenu = ({ fromlisttype, id, fullpath = undefined }) => {
         }
         case 'add-album-to-playlist': {
           const getAlbumTracks = async () => {
-            const albumTracks = await window.api.getAlbumTracks(contextMenuItem.path);
+            const albumTracks = await window.ipcApi.invoke(
+              'get-album-tracks',
+              contextMenuItem.path
+            );
             dispatch({
               type: 'play-album',
               playlistTracks: albumTracks

@@ -171,19 +171,6 @@ const List = ({
         await initTable(tableName);
       }
 
-      // Fetch tracks by selected type
-      /*  const trackFetchers = {
-        'album-tracks': () => window.api.getTracksByAlbum(tableName, multiSelects),
-        'artist-tracks': () => window.api.getTracksByArtist(tableName, multiSelects),
-        'genre-tracks': () => window.api.getTracksByGenre(tableName, multiSelects)
-      }; */
-
-      // Only call the specific fetcher for the current `tableName`
-      /*       if (tableName && trackFetchers[tableName]) {
-        await trackFetchers[tableName]();
-      }
-    }; */
-
       if (tableName && multiSelects.length > 1) {
         await window.api.getTracksByCategory(tableName, multiSelects);
       }

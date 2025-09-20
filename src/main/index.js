@@ -785,7 +785,7 @@ ipcMain.handle('get-cover', async (event, arg) => {
   return 0;
 });
 
-ipcMain.handle('screen-mode', async (event, ...args) => {
+ipcMain.on('screen-mode', async (event, ...args) => {
   if (args[0] === 'mini') {
     await mainWindow.setMinimumSize(290, 350);
     await mainWindow.setSize(290, 350, false);

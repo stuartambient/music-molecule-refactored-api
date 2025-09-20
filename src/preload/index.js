@@ -18,16 +18,16 @@ contextBridge.exposeInMainWorld('ipcApi', {
 });
 
 contextBridge.exposeInMainWorld('api', {
-  updateFiles: () => ipcRenderer.invoke('update-files'),
+  /*  updateFiles: () => ipcRenderer.invoke('update-files'),
   updateFolders: () => ipcRenderer.invoke('update-folders'),
-  updateCovers: () => ipcRenderer.invoke('update-covers'),
-  getTracks: (page, term, sort) => ipcRenderer.invoke('get-tracks', page, term, sort),
-  getAlbums: (page, term, sort) => ipcRenderer.invoke('get-albums', page, term, sort),
+  updateCovers: () => ipcRenderer.invoke('update-covers'), */
+  /* getTracks: (page, term, sort) => ipcRenderer.invoke('get-tracks', page, term, sort), */
+  /* getAlbums: (page, term, sort) => ipcRenderer.invoke('get-albums', page, term, sort), */
   //getAlbum: (id) => ipcRenderer.invoke('get-album', id),
-  getAlbumTracks: (pattern) => ipcRenderer.invoke('get-album-tracks', pattern),
-  getCover: (trackid) => ipcRenderer.invoke('get-cover', trackid),
-  windowAction: (action) => ipcRenderer.send('window-action', action),
-  screenMode: (size) => ipcRenderer.invoke('screen-mode', size),
+  /* getAlbumTracks: (pattern) => ipcRenderer.invoke('get-album-tracks', pattern), */
+  /* getCover: (trackid) => ipcRenderer.invoke('get-cover', trackid), */
+  /* windowAction: (action) => ipcRenderer.send('window-action', action), */
+  /*  screenMode: (size) => ipcRenderer.invoke('screen-mode', size), */
   updateLike: (id) => ipcRenderer.invoke('update-like', id),
   isLiked: (id) => ipcRenderer.invoke('is-liked', id),
   totalTracksStat: () => ipcRenderer.invoke('total-tracks-stat'),
@@ -55,7 +55,7 @@ contextBridge.exposeInMainWorld('api', {
   showChild: (args) => ipcRenderer.invoke('show-child', args),
   onRefreshHomeCover: (cb) => ipcRenderer.on('refresh-home-cover', (event, ...args) => cb(args)),
   openAlbumFolder: (path) => ipcRenderer.invoke('open-album-folder', path),
-  updateMeta: () => ipcRenderer.invoke('update-meta'),
+  /* updateMeta: () => ipcRenderer.invoke('update-meta'), */
   genresStat: () => ipcRenderer.invoke('genres-stat'),
   distinctDirectories: () => ipcRenderer.invoke('distinct-directories'),
   /*   getTracksByArtist: (listType, artist) =>
@@ -79,7 +79,7 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on('album-menu', (event, ...args) => cb(args));
   },
   getAlbumsByRoot: (roots) => ipcRenderer.invoke('get-albums-by-root', roots),
-  toggleResizable: (isResizable) => ipcRenderer.send('toggle-resizable', isResizable),
+  /* toggleResizable: (isResizable) => ipcRenderer.send('toggle-resizable', isResizable), */
   checkForOpenTable: (name) => ipcRenderer.invoke('check-for-open-table', name),
   clearTable: () => ipcRenderer.invoke('clear-table'),
   onUpdatedTags: (cb) => ipcRenderer.on('updated-tags', (event, msg) => cb(msg)),

@@ -22,7 +22,7 @@ const loadFile = async (file, id, state, dispatch) => {
   } catch (e) {
     console.log(e);
   }
-  const picture = await window.api.getCover(file);
+  const picture = await window.ipcApi.invoke('get-cover', file);
 
   if (picture === 0 || !picture) {
     dispatch({

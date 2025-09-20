@@ -45,7 +45,12 @@ const useTracks = (
       setTracksLoading(true);
       setTracksError(false);
 
-      let trackRequest = await window.api.getTracks(tracksPageNumber, tracksSearchTerm, sortType);
+      let trackRequest = await window.ipcApi.invoke(
+        'get-tracks',
+        tracksPageNumber,
+        tracksSearchTerm,
+        sortType
+      );
       if (trackRequest && isSubscribed) {
         if (tracksPageNumber === 0) {
           setTimeout(() => {
@@ -140,7 +145,8 @@ const useAlbums = (albumsPageNumber, albumsSearchTerm, sortType, resetKey, dispa
       try {
         setAlbumsLoading(true);
         setAlbumsError(false);
-        const albumRequest = await window.api.getAlbums(
+        const albumRequest = await window.ipcApi.invoke(
+          'get-albums',
           albumsPageNumber,
           albumsSearchTerm,
           sortType
@@ -178,7 +184,7 @@ const useAlbumTracks = (pattern) => {
     let subscribed = true;
     const loadAlbumTracks = async () => {
       try {
-        const albumTracksRequest = await window.api.getAlbumTracks(pattern);
+        const albumTracksRequest = await window.ipcApi.invoke('get-album-tracks', pattern);
         if (albumTracksRequest && subscribed) {
           setAlbumTracks(albumTracksRequest);
         }
@@ -450,24 +456,6 @@ const useTotalTracksStat = (setTotalTracks) => {
 
   return { error };
 };
-
-/* const useTracksByRoot = (root, setTracks) => {
-  useEffect(() => {
-    let isSubscribed = true;
-    const getTracksByRoot = async () => {
-      const results = await window.api.getTracksByRoot(root);
-      if (results && isSubscribed) {
-        // Instead of setting the state here, call the callback with the results
-        setTracks(results);
-      }
-    };
-
-    getTracksByRoot();
-    return () => {
-      isSubscribed = false;
-    };
-  }, [root, setTracks]); // Include onTracksFetched in the dependencies array
-}; */
 
 export {
   useTracks,

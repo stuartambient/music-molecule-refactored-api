@@ -112,7 +112,7 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
   const handlePlayReq = useCallback(
     async (event, id) => {
       setCurrentAlbum(id);
-      const albumTracks = await window.api.getAlbumTracks(id);
+      const albumTracks = await window.ipcApi.invoke('get-album-tracks', id);
 
       if (albumTracks) {
         dispatch({
@@ -189,7 +189,7 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
 
   const handleAlbumToPlaylist = useCallback(
     async (path) => {
-      const albumTracks = await window.api.getAlbumTracks(path);
+      const albumTracks = await window.ipcApi.invoke('get-album-tracks', path);
       if (albumTracks) {
         dispatch({
           type: 'play-album',

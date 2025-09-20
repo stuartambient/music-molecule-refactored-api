@@ -274,19 +274,19 @@ audio/wav canPlay:  maybe */
 
   useEffect(() => {
     let subscribed = true;
-    const changeScreenMode = async () => {
+    const changeScreenMode = () => {
       if (state.minimalmode && state.player) {
-        await window.api.screenMode(state.miniModePlaylist ? 'mini-expanded' : 'mini');
-        await window.api.toggleResizable(false);
+        window.ipcApi.send('screen-mode', state.miniModePlaylist ? 'mini-expanded' : 'mini');
+        window.ipcApi.send('toggle-resizable', false);
       } else if (!state.minimalmode && state.player && state.library) {
-        await window.api.screenMode('player-library');
-        await window.api.toggleResizable(true);
+        window.ipcApi.send('screen-mode', 'player-library');
+        window.ipcApi.send('toggle-resizable', true);
       } else if (state.player && !state.library) {
-        await window.api.screenMode('player');
-        await window.api.toggleResizable(false);
+        window.ipcApi.send('screen-mode', 'player');
+        window.ipcApi.send('toggle-resizable', false);
       } else if (!state.player) {
-        await window.api.screenMode('default');
-        await window.api.toggleResizable(true);
+        window.ipcApi.send('screen-mode', 'default');
+        window.ipcApi.send('toggle-resizable', true);
       }
     };
     if (subscribed) {
@@ -406,7 +406,7 @@ audio/wav canPlay:  maybe */
   };
 
   const handleWindowAction = (action) => {
-    window.api.windowAction(action);
+    window.ipcApi.send('window-action', action);
   };
 
   const handleMenu = () => {
