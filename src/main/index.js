@@ -835,9 +835,9 @@ ipcMain.handle('total-tracks-stat', async () => {
   return totalCounts;
 });
 
-ipcMain.handle('top-hundred-artists-stat', async () => {
-  const topHundred = await topHundredArtists();
-  return topHundred.slice(1);
+ipcMain.handle('artists-by-num-tracks', async () => {
+  const artistList = await topHundredArtists();
+  return artistList.slice(1);
 });
 
 async function openWindowAndSendData(queryResults, listType) {
@@ -953,33 +953,6 @@ ipcMain.handle('open-playlist', async () => {
   return getPlaylist(parsedPlFiles);
 });
 
-/* ipcMain.handle('save-playlist', async (_, args) => {
-  const save = await dialog.showSaveDialog(mainWindow, {
-    defaultPath: playlistsFolder,
-    filters: [{ name: 'Playlist', extensions: ['m3u'] }]
-  });
-
-  if (save.canceled) return 'action cancelled';
-
-  args.forEach((a, index) => {
-    const tmp = a.audiotrack.replaceAll('/', '\\');
-    if (index === args.length - 1) {
-      fs.writeFileSync(save.filePath, `${tmp}`, {
-        flag: 'a'
-      });
-    } else {
-      fs.writeFileSync(save.filePath, `${tmp}\n`, {
-        flag: 'a'
-      });
-    }
-  });
-
-  const show = await dialog.showMessageBox(mainWindow, {
-    message: `Saved playlist ${path.basename(save.filePath)}`,
-    buttons: []
-  });
-}); */
-
 ipcMain.handle('save-playlist', async (_, args) => {
   try {
     const save = await dialog.showSaveDialog(mainWindow, {
@@ -1067,8 +1040,9 @@ ipcMain.handle('set-shuffled-tracks-array', async () => {
   shuffled = shuffle(primaryKeysArray);
 });
 
-ipcMain.handle('get-shuffled-tracks', async (_, ...args) => {
-  const offset = args[0];
+ipcMain.handle('get-shuffled-tracks', async (_, args) => {
+  console.log('get shuffled tracks', args);
+  const offset = args;
   const limit = 200;
   try {
     const start = offset * limit;

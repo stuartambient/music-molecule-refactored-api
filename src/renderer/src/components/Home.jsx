@@ -96,7 +96,7 @@ const Home = () => {
                   name="covers-search-term"
                   ref={coverSearchRef}
                   placeholder="search covers"
-                  onContextMenu={async () => await window.api.showTextInputMenu()}
+                  onContextMenu={async () => await window.ipcApi.invoke('show-text-input-menu')}
                   /*  value={state.coversSearchTerm}
               onChange={handleCoversSearchTerm} */
                 />

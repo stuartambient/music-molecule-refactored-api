@@ -81,10 +81,10 @@ const useTracks = (
       setTracksLoading(true);
       setTracksError(false);
       if (tracksPageNumber === 0) {
-        await window.api.setShuffledTracksArray();
+        await window.ipcApi.invoke('set-shuffled-tracks-array');
       }
 
-      const shuffledTracks = await window.api.getShuffledTracks(tracksPageNumber);
+      const shuffledTracks = await window.ipcApi.invoke('get-shuffled-tracks', tracksPageNumber);
       //await new Promise((resolve) => setTimeout(resolve, 0)); // allow state to flush
       //console.log('isSubscribed: ', isSubBoolean(), 'state.tracks.length: ', state.tracks.length);
       isSubscribed = isSubBoolean();
@@ -244,7 +244,7 @@ const useTopHundredArtistsStat = () => {
   useEffect(() => {
     let subscribed = true;
     const getTopHundredArtists = async () => {
-      const topHundredArtistsRequest = await window.api.topHundredArtistsStat();
+      const topHundredArtistsRequest = await window.ipcApi.invoke('artists-by-num-tracks');
       if (topHundredArtistsRequest && subscribed) {
         setTopHundredArtists(topHundredArtistsRequest);
       } else {
@@ -297,7 +297,8 @@ const useAllAlbumsCovers = (
         setCoversLoading(true);
         setCoversError(false);
 
-        const coversRequest = await window.api.getCovers(
+        const coversRequest = await window.ipcApi.invoke(
+          'get-covers',
           coversPageNumber,
           coversSearchTerm,
           coversDateSort,
@@ -350,7 +351,7 @@ const usePlaylistDialog = (req, playlistTracks, dispatch, setPlaylistReq) => {
 
     const openplaylist = async () => {
       try {
-        const openpl = await window.api.openPlaylist();
+        const openpl = await window.ipcApi.invoke('open-playlist');
         if (isSubscribed) {
           if (openpl === 'action cancelled') {
             setPlaylistReq('');
@@ -369,7 +370,7 @@ const usePlaylistDialog = (req, playlistTracks, dispatch, setPlaylistReq) => {
 
     const saveplaylist = async () => {
       try {
-        const savepl = await window.api.savePlaylist(playlistTracks);
+        const savepl = await window.ipcApi.invoke('save-playlist', playlistTracks);
         if (isSubscribed) {
           if (savepl === 'action cancelled') {
             setPlaylistReq('');
@@ -435,7 +436,7 @@ const useTotalTracksStat = (setTotalTracks) => {
 
     const getTotalTracks = async () => {
       try {
-        const totalTracksRequest = await window.api.totalTracksStat();
+        const totalTracksRequest = await window.ipcApi.invoke('total-tracks-stat');
         if (totalTracksRequest && isSubscribed) {
           setTotalTracks(totalTracksRequest);
         }

@@ -37,11 +37,6 @@ const MediaMenu = ({
     });
   };
 
-  /*   const handleInputMenu = async (e) => {
-    console.log(e.target);
-    await window.api.showTextInputMenu();
-  }; */
-
   return (
     <ul
       className={
@@ -110,7 +105,7 @@ const MediaMenu = ({
                 name="textsearch"
                 id="textsearch"
                 placeholder="   search tracks"
-                onContextMenu={async () => await window.api.showTextInputMenu()}
+                onContextMenu={async () => await window.ipcApi.invoke('show-text-input-menu')}
               />
 
               <button type="submit" className="submitbtn">
@@ -132,7 +127,7 @@ const MediaMenu = ({
                 name="textsearch"
                 id="textsearch"
                 placeholder="   search albums"
-                onContextMenu={async () => await window.api.showTextInputMenu()}
+                onContextMenu={async () => await window.ipcApi.invoke('show-text-input-menu')}
               />
 
               <button type="submit" className="submitbtn">

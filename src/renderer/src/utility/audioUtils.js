@@ -130,7 +130,7 @@ const handleTrackSelect = async (event, state, dispatch, ...params) => {
   });
 
   try {
-    const liked = await window.api.isLiked(trackId);
+    const liked = await window.ipcApi.invoke('is-liked', trackId);
     dispatch({
       type: 'update-like',
       isLiked: liked.like === 1

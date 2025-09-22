@@ -28,28 +28,28 @@ contextBridge.exposeInMainWorld('api', {
   /* getCover: (trackid) => ipcRenderer.invoke('get-cover', trackid), */
   /* windowAction: (action) => ipcRenderer.send('window-action', action), */
   /*  screenMode: (size) => ipcRenderer.invoke('screen-mode', size), */
-  updateLike: (id) => ipcRenderer.invoke('update-like', id),
-  isLiked: (id) => ipcRenderer.invoke('is-liked', id),
-  totalTracksStat: () => ipcRenderer.invoke('total-tracks-stat'),
-  topHundredArtistsStat: () => ipcRenderer.invoke('top-hundred-artists-stat'),
+  /* updateLike: (id) => ipcRenderer.invoke('update-like', id), */
+  /* isLiked: (id) => ipcRenderer.invoke('is-liked', id), */
+  /* totalTracksStat: () => ipcRenderer.invoke('total-tracks-stat'), */
+  /* topHundredArtistsStat: () => ipcRenderer.invoke('top-hundred-artists-stat'),
   last10AlbumsStat: () => ipcRenderer.invoke('last-10Albums-stat'),
-  last100TracksStat: () => ipcRenderer.invoke('last-100Tracks-stat'),
-  openPlaylist: () => ipcRenderer.invoke('open-playlist'),
-  savePlaylist: (playlistTracks) => ipcRenderer.invoke('save-playlist', playlistTracks),
+  last100TracksStat: () => ipcRenderer.invoke('last-100Tracks-stat'), */
+  /* openPlaylist: () => ipcRenderer.invoke('open-playlist'), */
+  /* savePlaylist: (playlistTracks) => ipcRenderer.invoke('save-playlist', playlistTracks), */
   //getPlaylists: () => ipcRenderer.invoke('get-playlists'),
-  getCovers: (coversPageNum, coversSearchTerm, coversDateSort, coversMissingReq) =>
+  /*   getCovers: (coversPageNum, coversSearchTerm, coversDateSort, coversMissingReq) =>
     ipcRenderer.invoke(
       'get-covers',
       coversPageNum,
       coversSearchTerm,
       coversDateSort,
       coversMissingReq
-    ),
-  setShuffledTracksArray: () => ipcRenderer.invoke('set-shuffled-tracks-array'),
-  getShuffledTracks: (start, end) => ipcRenderer.invoke('get-shuffled-tracks', start, end),
-  showAlbumCoverMenu: (path, folder) => ipcRenderer.invoke('show-album-cover-menu', path, folder),
-  showTextInputMenu: () => ipcRenderer.invoke('show-text-input-menu'),
-  onEditTrackMetadata: (cb) => ipcRenderer.once('edit-metadata', (event, args) => cb(args)),
+    ), */
+  /* setShuffledTracksArray: () => ipcRenderer.invoke('set-shuffled-tracks-array'), */
+  /* getShuffledTracks: (start, end) => ipcRenderer.invoke('get-shuffled-tracks', start, end), */
+  /* showAlbumCoverMenu: (path, folder) => ipcRenderer.invoke('show-album-cover-menu', path, folder), */
+  /* showTextInputMenu: () => ipcRenderer.invoke('show-text-input-menu'), */
+  /* onEditTrackMetadata: (cb) => ipcRenderer.once('edit-metadata', (event, args) => cb(args)), */
   onRemoveFromPlaylist: (cb) =>
     ipcRenderer.once('remove-from-playlist', (event, ...args) => cb(args)),
   showChild: (args) => ipcRenderer.invoke('show-child', args),
@@ -71,10 +71,10 @@ contextBridge.exposeInMainWorld('api', {
   onTracksByGenreLoaded: (cb) => ipcRenderer.on('genre-tracks-loaded', (event, arg) => cb(arg)),
   onTracksByArtistLoaded: (cb) => ipcRenderer.on('artist-tracks-loaded', (event, arg) => cb(arg)),
   showContextMenu: (id, itemType) => ipcRenderer.send('show-context-menu', id, itemType),
-  onContextMenuCommand: (callback) => {
+  /*   onContextMenuCommand: (callback) => {
     ipcRenderer.once('context-menu-command', (event, command) => callback(command));
     return () => ipcRenderer.removeAllListeners('context-menu-command'); // Cleanup
-  },
+  }, */
   onAlbumCoverMenu: (cb) => {
     ipcRenderer.on('album-menu', (event, ...args) => cb(args));
   },

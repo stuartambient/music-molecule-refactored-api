@@ -59,7 +59,7 @@ export const TotalMedia = () => {
  * @param {(value: null) => void} reset - Setter to clear the selection
  */
 const useTrackLoader = (type, value, reset) => {
-  console.log('type: ', type, 'value: ', value, 'reset: ', reset);
+  /* console.log('type: ', type, 'value: ', value, 'reset: ', reset); */
   useEffect(() => {
     if (!value) return;
 
@@ -117,6 +117,7 @@ export const TopHundredArtists = ({ dimensions }) => {
   const { topHundredArtists } = useTopHundredArtistsStat();
   const [selectedArtist, setSelectedArtist] = useState(null);
 
+  /* console.log('artistsList: ', artistsList); */
   useTrackLoader('artist', selectedArtist, setSelectedArtist);
 
   const handleArtistClick = (e) => {

@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useAudioPlayer } from '../mainAudioContext';
+import useIpcEvent from '../hooks/useIpcEvent';
 import { BsThreeDots } from 'react-icons/bs';
 import '../style/FlashEffect.css';
 
@@ -10,10 +11,84 @@ const ContextMenu = ({ fromlisttype, id, fullpath = undefined }) => {
   const [contextMenuItem, setContextMenuItem] = useState(null);
   const divRef = useRef(null);
 
-  useEffect(() => {
+  /*  useIpcEvent('context-menu-command', handleContextMenuCommand); */
+
+  function handleAddTrackToPlaylist() {
+    const track = state.tracks.find((item) => item.track_id === contextMenuItem.id);
+    if (track) {
+      const alreadyInPlaylist = state.playlistTracks.find((e) => e.track_id === contextMenuItem.id);
+      if (!alreadyInPlaylist) {
+        dispatch({
+          type: 'track-to-playlist',
+          playlistTracks: [...state.playlistTracks, track]
+        });
+        dispatch({
+          type: 'flash-div',
+          flashDiv: contextMenuItem
+        });
+      }
+    }
+  }
+
+  function handleEditTrackMetadata() {
+    console.log('---> Editing track metadata', contextMenuItem);
+  }
+
+  function handleAddAlbumToPlaylist() {
+    const getAlbumTracks = async () => {
+      const albumTracks = await window.ipcApi.invoke('get-album-tracks', contextMenuItem.path);
+      dispatch({
+        type: 'play-album',
+        playlistTracks: albumTracks
+      });
+
+      const diff = albumTracks.filter(
+        (p) => !state.playlistTracks.find((d) => d.track_id === p.track_id)
+      );
+      if (diff.length > 0) {
+        dispatch({
+          type: 'flash-div',
+          flashDiv: contextMenuItem
+        });
+      }
+    };
+    getAlbumTracks();
+  }
+
+  function handleRemoveFromPlaylist() {
+    dispatch({
+      type: 'remove-track',
+      id: contextMenuItem.id
+    });
+  }
+
+  function handleOpenAlbumFolder() {
+    window.api.openAlbumFolder(contextMenuItem.path);
+  }
+
+  useIpcEvent('context-menu-command', (command) => {
+    if (!contextMenuItem) return;
+    switch (command) {
+      case 'add-track-to-playlist':
+        return handleAddTrackToPlaylist();
+      case 'edit-track-metadata':
+        return handleEditTrackMetadata();
+      case 'add-album-to-playlist':
+        return handleAddAlbumToPlaylist();
+      case 'remove-from-playlist':
+        return handleRemoveFromPlaylist();
+      case 'open-album-folder':
+        return handleOpenAlbumFolder();
+      default:
+        console.warn('Unknown command:', command);
+    }
+  });
+
+  /*   useEffect(() => {
     if (!contextMenuItem) return;
 
     const handleContextMenuCommand = (command) => {
+      console.log('command: ', command, 'contextMenuItem: ', contextMenuItem);
       switch (command) {
         case 'add-track-to-playlist': {
           const track = state.tracks.find((item) => item.track_id === contextMenuItem.id);
@@ -80,14 +155,12 @@ const ContextMenu = ({ fromlisttype, id, fullpath = undefined }) => {
       }
     };
 
-    // Attach the context menu command listener
     const cleanup = window.api.onContextMenuCommand(handleContextMenuCommand);
 
-    // Cleanup listener on unmount or when dependencies change
     return () => {
       if (cleanup) cleanup();
     };
-  }, [contextMenuItem, state.tracks, state.playlistTracks, dispatch]);
+  }, [contextMenuItem, state.tracks, state.playlistTracks, dispatch]); */
 
   const handleContextMenu = async (e) => {
     e.preventDefault();

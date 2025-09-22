@@ -7,6 +7,7 @@ import { GiMagnifyingGlass } from 'react-icons/gi';
 import { ArchiveAdd, Playlist, Shuffle, Plus, Minus } from './assets/icons';
 import { Buffer } from 'buffer'; */
 import { useAudioPlayer } from './mainAudioContext';
+import useIpcEvent from './hooks/useIpcEvent';
 
 import {
   convertDuration
@@ -224,7 +225,42 @@ audio/wav canPlay:  maybe */
     };
   }, [state.pause, state.audioRef]);
 
-  useEffect(() => {
+  useIpcEvent('track-like-removed', handleLikeRemoved);
+  useIpcEvent('track-liked', handleTrackLiked);
+
+  function handleLikeRemoved(id) {
+    console.log('track like removed', id);
+    dispatch({
+      type: 'update-like',
+      isLiked: 0
+    });
+    dispatch({
+      type: 'tracks-update-like',
+      payload: {
+        track_id: id,
+        field: 'like',
+        value: 0
+      }
+    });
+  }
+
+  function handleTrackLiked(id) {
+    console.log('track liked', id);
+    dispatch({
+      type: 'update-like',
+      isLiked: 1
+    });
+    dispatch({
+      type: 'tracks-update-like',
+      payload: {
+        track_id: id,
+        field: 'like',
+        value: 1
+      }
+    });
+  }
+
+  /*   useEffect(() => {
     const handleLikeRemoved = (e) => {
       console.log('track like removed', e);
       dispatch({
@@ -246,9 +282,9 @@ audio/wav canPlay:  maybe */
     return () => {
       window.api.off('track-like-removed', handleLikeRemoved);
     };
-  }, [dispatch]);
+  }, [dispatch]); */
 
-  useEffect(() => {
+  /*   useEffect(() => {
     const handleTrackLiked = (e) => {
       console.log('track liked', e);
       dispatch({
@@ -270,7 +306,7 @@ audio/wav canPlay:  maybe */
     return () => {
       window.api.off('track-liked', handleTrackLiked);
     };
-  }, [dispatch]);
+  }, [dispatch]); */
 
   useEffect(() => {
     let subscribed = true;
@@ -307,7 +343,8 @@ audio/wav canPlay:  maybe */
 
   const handleUpdateLike = async (id) => {
     if (!id) return;
-    await window.api.updateLike(id);
+    /* await window.api.updateLike(id); */
+    await window.ipcApi.invoke('update-like', id);
   };
 
   const handlePlayerControls = (e) => {
