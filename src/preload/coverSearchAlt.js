@@ -12,7 +12,6 @@ contextBridge.exposeInMainWorld('coverSearchAltApi', {
   showContextMenu: (id, itemType) => ipcRenderer.send('show-context-menu', id, itemType),
   onContextMenuCommand: (callback) => {
     ipcRenderer.on('context-menu-command', (event, command) => callback(command));
-    /* return () => ipcRenderer.removeAllListeners('context-menu-command'); */ // Cleanup
   },
   off: (channel, callback) => ipcRenderer.removeListener(channel, callback)
 });

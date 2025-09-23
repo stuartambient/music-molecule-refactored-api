@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useRef } from 'react';
 import { useAudioPlayer } from '../mainAudioContext';
 import useIpcEvent from '../hooks/useIpcEvent';
 import { BsThreeDots } from 'react-icons/bs';
@@ -8,15 +8,15 @@ const ContextMenu = ({ fromlisttype, id, fullpath = undefined }) => {
   /* console.log('fullpath: ', fullpath); */
   /*  console.log(fromlisttype, '---', id, '----', fullpath); */
   const { state, dispatch } = useAudioPlayer();
-  const [contextMenuItem, setContextMenuItem] = useState(null);
+  /*   const [contextMenuItem, setContextMenuItem] = useState(null); */
   const divRef = useRef(null);
 
   /*  useIpcEvent('context-menu-command', handleContextMenuCommand); */
 
-  function handleAddTrackToPlaylist() {
-    const track = state.tracks.find((item) => item.track_id === contextMenuItem.id);
+  function handleAddTrackToPlaylist(context) {
+    const track = state.tracks.find((item) => item.track_id === context.id);
     if (track) {
-      const alreadyInPlaylist = state.playlistTracks.find((e) => e.track_id === contextMenuItem.id);
+      const alreadyInPlaylist = state.playlistTracks.find((e) => e.track_id === context.id);
       if (!alreadyInPlaylist) {
         dispatch({
           type: 'track-to-playlist',
@@ -24,19 +24,19 @@ const ContextMenu = ({ fromlisttype, id, fullpath = undefined }) => {
         });
         dispatch({
           type: 'flash-div',
-          flashDiv: contextMenuItem
+          flashDiv: context
         });
       }
     }
   }
 
-  function handleEditTrackMetadata() {
-    console.log('---> Editing track metadata', contextMenuItem);
+  function handleEditTrackMetadata(context) {
+    console.log('---> Editing track metadata', context);
   }
 
-  function handleAddAlbumToPlaylist() {
+  function handleAddAlbumToPlaylist(context) {
     const getAlbumTracks = async () => {
-      const albumTracks = await window.ipcApi.invoke('get-album-tracks', contextMenuItem.path);
+      const albumTracks = await window.ipcApi.invoke('get-album-tracks', context.path);
       dispatch({
         type: 'play-album',
         playlistTracks: albumTracks
@@ -48,37 +48,36 @@ const ContextMenu = ({ fromlisttype, id, fullpath = undefined }) => {
       if (diff.length > 0) {
         dispatch({
           type: 'flash-div',
-          flashDiv: contextMenuItem
+          flashDiv: context
         });
       }
     };
     getAlbumTracks();
   }
 
-  function handleRemoveFromPlaylist() {
+  function handleRemoveFromPlaylist(context) {
     dispatch({
       type: 'remove-track',
-      id: contextMenuItem.id
+      id: context.id
     });
   }
 
-  function handleOpenAlbumFolder() {
-    window.api.openAlbumFolder(contextMenuItem.path);
+  function handleOpenAlbumFolder(context) {
+    window.api.openAlbumFolder(context.path);
   }
 
-  useIpcEvent('context-menu-command', (command) => {
-    if (!contextMenuItem) return;
+  useIpcEvent('context-menu-command', ({ command, context }) => {
     switch (command) {
       case 'add-track-to-playlist':
-        return handleAddTrackToPlaylist();
+        return handleAddTrackToPlaylist(context);
       case 'edit-track-metadata':
-        return handleEditTrackMetadata();
+        return handleEditTrackMetadata(context);
       case 'add-album-to-playlist':
-        return handleAddAlbumToPlaylist();
+        return handleAddAlbumToPlaylist(context);
       case 'remove-from-playlist':
-        return handleRemoveFromPlaylist();
+        return handleRemoveFromPlaylist(context);
       case 'open-album-folder':
-        return handleOpenAlbumFolder();
+        return handleOpenAlbumFolder(context);
       default:
         console.warn('Unknown command:', command);
     }
@@ -169,13 +168,13 @@ const ContextMenu = ({ fromlisttype, id, fullpath = undefined }) => {
     const path = divRef.current.dataset.path;
 
     /* console.log(id, type, path); */
-    setContextMenuItem(null);
+    /*     setContextMenuItem(null);
     if (path) {
       setContextMenuItem({ id, type, path });
     } else {
       setContextMenuItem({ id, type });
-    }
-    window.api.showContextMenu(id, type);
+    } */
+    window.ipcApi.send('show-context-menu', id, type, path);
   };
 
   return (

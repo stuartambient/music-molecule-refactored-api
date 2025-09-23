@@ -170,7 +170,7 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
         if (!contextMenu) return;
         const path = contextMenu.getAttribute('fullpath');
         const folder = contextMenu.getAttribute('album');
-        window.api.showAlbumCoverMenu(path, folder);
+        window.ipcApi.invoke('show-album-cover-menu', path, folder);
       }
     };
 

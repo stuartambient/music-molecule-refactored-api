@@ -1089,9 +1089,8 @@ ipcMain.handle('update-tags', async (event, arr) => {
   }
 });
 
-ipcMain.on('show-context-menu', (event, id, type) => {
-  /* console.log('type: ', type, 'id: ', id); */
-  /* console.log('show-context-menu: ', id, '----', type); */
+ipcMain.on('show-context-menu', (event, id, type, path = undefined) => {
+  const context = { id, type, path };
   const template = [];
 
   // Add items based on the 'type'
@@ -1099,12 +1098,14 @@ ipcMain.on('show-context-menu', (event, id, type) => {
     template.push(
       {
         label: 'Add Track to Playlist',
-        click: () => event.sender.send('context-menu-command', 'add-track-to-playlist')
+        click: () =>
+          event.sender.send('context-menu-command', { command: 'add-track-to-playlist', context })
       },
       { type: 'separator' },
       {
         label: 'Edit Track Metadata',
-        click: () => event.sender.send('context-menu-command', 'edit-track-metadata')
+        click: () =>
+          event.sender.send('context-menu-command', { command: 'edit-track-metadata', context })
       }
     );
   }
@@ -1113,12 +1114,14 @@ ipcMain.on('show-context-menu', (event, id, type) => {
     template.push(
       {
         label: 'Add Album to Playlist',
-        click: () => event.sender.send('context-menu-command', 'add-album-to-playlist')
+        click: () =>
+          event.sender.send('context-menu-command', { command: 'add-album-to-playlist', context })
       },
       { type: 'separator' },
       {
         label: 'Open Album Folder',
-        click: () => event.sender.send('context-menu-command', 'open-album-folder')
+        click: () =>
+          event.sender.send('context-menu-command', { command: 'open-album-folder', context })
       }
     );
   }
@@ -1127,12 +1130,14 @@ ipcMain.on('show-context-menu', (event, id, type) => {
     template.push(
       {
         label: 'Remove from Playlist',
-        click: () => event.sender.send('context-menu-command', 'remove-from-playlist')
+        click: () =>
+          event.sender.send('context-menu-command', { command: 'remove-from-playlist', context })
       },
       { type: 'separator' },
       {
         label: 'Edit Track Metadata',
-        click: () => event.sender.send('context-menu-command', 'edit-track-metadata')
+        click: () =>
+          event.sender.send('context-menu-command', { command: 'edit-track-metadata', context })
       }
     );
   }

@@ -7,21 +7,7 @@ import '../style/FlashEffect.css';
 
 const Item = forwardRef((props, ref) => {
   const { state, dispatch } = useAudioPlayer();
-  /* console.log('divId: ', props.divId); */
-  /* console.log('props like: ', props.like); */
 
-  /*   useEffect(() => {
-    console.log(`MOUNTED: ${props.divId}`);
-
-    return () => {
-      console.log(`UNMOUNTED: ${props.divId}`);
-    };
-  }, [props.divId]);
-
-  useEffect(() => {
-    console.log(`UPDATED: ${props.divId}`);
-  });
- */
   if (props.type === 'files') {
     const newId = props.divId.split('--')[0];
     return (

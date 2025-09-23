@@ -9,7 +9,13 @@ contextBridge.exposeInMainWorld('ipcApi', {
   invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
   send: (channel, ...args) => ipcRenderer.send(channel, ...args),
   on: (channel, listener) => {
-    ipcRenderer.on(channel, (event, ...args) => listener(...args));
+    /*     ipcRenderer.on(channel, (event, ...args) => listener(...args));
+    console.log('listener added for', channel, ipcRenderer.listenerCount(channel)); */
+
+    const wrapped = (event, ...args) => listener(...args);
+    ipcRenderer.on(channel, wrapped);
+    console.log('listener added for', channel, ipcRenderer.listenerCount(channel));
+    return () => ipcRenderer.removeListener(channel, wrapped);
   },
   once: (channel, listener) => {
     ipcRenderer.once(channel, (event, ...args) => listener(...args));
@@ -71,10 +77,7 @@ contextBridge.exposeInMainWorld('api', {
   onTracksByGenreLoaded: (cb) => ipcRenderer.on('genre-tracks-loaded', (event, arg) => cb(arg)),
   onTracksByArtistLoaded: (cb) => ipcRenderer.on('artist-tracks-loaded', (event, arg) => cb(arg)),
   showContextMenu: (id, itemType) => ipcRenderer.send('show-context-menu', id, itemType),
-  /*   onContextMenuCommand: (callback) => {
-    ipcRenderer.once('context-menu-command', (event, command) => callback(command));
-    return () => ipcRenderer.removeAllListeners('context-menu-command'); // Cleanup
-  }, */
+
   onAlbumCoverMenu: (cb) => {
     ipcRenderer.on('album-menu', (event, ...args) => cb(args));
   },
