@@ -86,7 +86,7 @@
   --update-container-background: #2d2d2d;
 }
 
-.theme-1 {
+/* .theme-1 {
   --active: #dbd7d2;
   --active-album: lightgray;
   --active-album-color: #000000;
@@ -174,6 +174,66 @@
   --tags-row-odd-color: #000000;
   --user-indicate: red;
   --update-container-background: #ffffff;
+} */
+
+.theme-1 {
+  --container-bg: #ffffff;
+  --active-bg: #dbd7d2;
+  --active-border: #2f4f4f;
+  --active-text: #ffffff;
+  --active-icon: #2f4f4f;
+  --active-accent: #ff0080; /* pink highlight in your light theme */
+  --text-primary: #000000;
+  --text-secondary: #808080;
+  --text-inverse: #ffffff;
+  --text-accent: #ff0000; /* example: red */
+  --hover-bg: #265bff;
+  --hover-text: #ffffff;
+  --hover-accent: #ff0090; /* ex: pink highlight */
+
+  --player-background: var(--container-bg);
+  --list-background: var(--container-bg);
+  --main-nav-background: var(--container-bg);
+  --update-container-background: var(--container-bg);
+  --tags-nav-background: var(--container-bg);
+  --tags-results-background: var(--container-bg);
+  --tags-list-header-background: var(--container-bg);
+
+  --active: var(--active-bg);
+  --bar: var(--active-bg);
+  --tab-background-active: var(--active-bg);
+  --active-border: var(--active-border);
+  --borders: var(--active-border);
+  --active-color: var(--active-text);
+  --active-controls-font: var(--active-text);
+  --controls-icon: var(--active-icon);
+  --minimode-control-icons: var(--active-icon);
+  --root-highlight: var(--active-accent);
+  --sort-icon-active: var(--active-accent);
+  --likedBtn: var(--active-accent);
+
+  --list-font-color: var(--text-primary);
+  --main-nav-font-color: var(--text-primary);
+  --tags-nav-color: var(--text-primary);
+  --tags-results-color: var(--text-primary);
+  --tags-list-header-color: var(--text-primary);
+  --tab-font-active: var(--text-primary);
+  --tab-font-inactive: var(--text-primary);
+
+  --form-label: var(var(--text-secondary));
+  --sort-icon-inactive: var(var(--text-secondary));
+  --overlay-color: var(var(--text-inverse));
+  --tags-list-header-text-color: var(var(--text-inverse));
+  --tags-nav-selected-color: var(var(--text-inverse));
+  --user-indicate: var(--text-accent);
+  --button-hover: var(--hover-bg);
+  --main-nav-hover-color: var(--hover-bg);
+  --item-hover: var(--hover-bg);
+  --album-cover-tools-extra-icons-bkgd-hover: var(--hover-bg);
+  --album-cover-tools-extra-icons-icon-hover: var(--hover-text);
+  --main-nav-hover-menu-color: var(--hover-text);
+  --tags-nav-menu-background-hover: var(--hover-accent);
+  --tags-nav-menu-color-hover: var(--hover-accent);
 }
 
 .theme-2 {

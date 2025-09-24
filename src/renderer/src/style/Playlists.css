@@ -31,14 +31,6 @@
   font-size: 1.2rem;
 }
 
-/* .playlists .playlists-list li span {
-  background: var(--color1);
-  padding: 0.2rem;
-  border-radius: 5px;
-  display: flex;
-  justify-content: center;
-}
- */
 .playlists .playlists-list li span:hover {
   cursor: pointer;
 }

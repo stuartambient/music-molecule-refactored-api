@@ -24,9 +24,6 @@
   padding: 0.2rem;
   /* position: relative; */
   background: var(--color4);
-  /* z-index: 0; */
-  /* border-bottom: 1px inset var(--color1);
-  border-right: 1px inset var(--color1); */
 }
 
 .extras .btn svg {

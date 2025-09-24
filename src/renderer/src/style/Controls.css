@@ -131,25 +131,6 @@
   border-right: none;
 }
 
-/* .controls-home .btn svg {
-  fill: var(--controls-icon);
-} */
-/* .controls-home .on svg {
-  fill: var(--likedBtn);
-} */
-
-/* .controls-home .btn.isliked svg {
-  fill: var(--likedBtn);
-} */
-
-/* .controls-home .likeBtn:hover {
-  fill: var(--controls-icon);
-} */
-
-/* .controls-home .btnLike svg:hover {
-  fill: var(--controls-icon);
-} */
-
 .controls .on svg {
   fill: var(--control-on);
 }

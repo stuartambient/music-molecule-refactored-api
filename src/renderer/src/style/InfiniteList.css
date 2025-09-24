@@ -127,10 +127,6 @@
   color: var(--list-font-color);
   font-size: 0.8rem;
 }
-/* 
-.item .label {
-  color: var(--color1);
-} */
 
 .metadata-container {
   display: flex;
