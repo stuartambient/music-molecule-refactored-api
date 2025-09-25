@@ -184,10 +184,10 @@
   fill: none;
 } */
 
-#plus path,
+/* #plus path,
 #minus path {
   fill: black !important;
-}
+} */
 
 .itemloading,
 .hasmoretracks,
@@ -230,12 +230,9 @@
   font-size: 2.2rem;
 }
 
-div #plus path {
-  fill: white;
-}
-
+div #plus path,
 div #minus path {
-  fill: white;
+  fill: var(--list-font-color);
 }
 
 .albumtracks {
