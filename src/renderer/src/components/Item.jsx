@@ -2,7 +2,11 @@ import { forwardRef } from 'react';
 import ContextMenu from './ContextMenu';
 import { useAudioPlayer } from '../mainAudioContext';
 import handleTrackSelect from '../utility/audioUtils';
-import { Plus, Minus } from '../assets/icons';
+/* import { FaCirclePlus as Plus } from 'react-icons/fa6'; */
+/* import { FaCircleMinus as Minus } from 'react-icons/fa6'; */
+import { HiPlusSm as Plus } from 'react-icons/hi';
+import { HiMinusSm as Minus } from 'react-icons/hi';
+/* import { Plus, Minus } from '../assets/icons'; */
 import '../style/FlashEffect.css';
 
 const Item = forwardRef((props, ref) => {

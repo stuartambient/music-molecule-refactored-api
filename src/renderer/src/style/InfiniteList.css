@@ -171,9 +171,22 @@
   display: flex;
   justify-content: center;
 }
+
 .item-albumtrack svg {
-  width: 1.2rem;
-  height: 1.2rem;
+  height: 1.5em;
+  color: green;
+}
+
+/* .item-albumtrack svg {
+  color: black;
+}
+.item-albumtrack svg path {
+  fill: none;
+} */
+
+#plus path,
+#minus path {
+  fill: black !important;
 }
 
 .itemloading,

@@ -177,63 +177,104 @@
 } */
 
 .theme-1 {
-  --container-bg: #ffffff;
-  --active-bg: #dbd7d2;
-  --active-border: #2f4f4f;
-  --active-text: #ffffff;
-  --active-icon: #2f4f4f;
-  --active-accent: #ff0080; /* pink highlight in your light theme */
-  --text-primary: #000000;
-  --text-secondary: #808080;
-  --text-inverse: #ffffff;
-  --text-accent: #ff0000; /* example: red */
-  --hover-bg: #265bff;
-  --hover-text: #ffffff;
-  --hover-accent: #ff0090; /* ex: pink highlight */
+  --active-1: #000000;
+  --active-2: #dbd7d2;
+  --active-3: #ff0080;
 
-  --player-background: var(--container-bg);
-  --list-background: var(--container-bg);
-  --main-nav-background: var(--container-bg);
-  --update-container-background: var(--container-bg);
-  --tags-nav-background: var(--container-bg);
-  --tags-results-background: var(--container-bg);
-  --tags-list-header-background: var(--container-bg);
+  --background-1: #ffffff;
+  --background-2: #adadad;
+  --background-3: #000000;
 
-  --active: var(--active-bg);
-  --bar: var(--active-bg);
-  --tab-background-active: var(--active-bg);
-  --active-border: var(--active-border);
-  --borders: var(--active-border);
-  --active-color: var(--active-text);
-  --active-controls-font: var(--active-text);
-  --controls-icon: var(--active-icon);
-  --minimode-control-icons: var(--active-icon);
-  --root-highlight: var(--active-accent);
-  --sort-icon-active: var(--active-accent);
-  --likedBtn: var(--active-accent);
+  --text-light: #ffffff;
+  --text-dark: #000000;
 
-  --list-font-color: var(--text-primary);
-  --main-nav-font-color: var(--text-primary);
-  --tags-nav-color: var(--text-primary);
-  --tags-results-color: var(--text-primary);
-  --tags-list-header-color: var(--text-primary);
-  --tab-font-active: var(--text-primary);
-  --tab-font-inactive: var(--text-primary);
+  --hover-1: #adadad;
+  --hover-2: #265bff;
+  --hover-3: #000000;
+  --hover-4: #e8e8e8;
 
-  --form-label: var(var(--text-secondary));
-  --sort-icon-inactive: var(var(--text-secondary));
-  --overlay-color: var(var(--text-inverse));
-  --tags-list-header-text-color: var(var(--text-inverse));
-  --tags-nav-selected-color: var(var(--text-inverse));
-  --user-indicate: var(--text-accent);
-  --button-hover: var(--hover-bg);
-  --main-nav-hover-color: var(--hover-bg);
-  --item-hover: var(--hover-bg);
-  --album-cover-tools-extra-icons-bkgd-hover: var(--hover-bg);
-  --album-cover-tools-extra-icons-icon-hover: var(--hover-text);
-  --main-nav-hover-menu-color: var(--hover-text);
-  --tags-nav-menu-background-hover: var(--hover-accent);
-  --tags-nav-menu-color-hover: var(--hover-accent);
+  --icons-1: #000000;
+  --icons-2: #adadad;
+
+  --active: var(--active-2);
+  --active-album: var(--active-1);
+  --active-album-color: var(--text-light);
+  --active-border: var(--active-2);
+  --active-color: var(--text-dark);
+  --active-controls: var(--active-3);
+  --active-controls-font: var(--text-light);
+  --album-cover-tools: var(--background-1);
+  --album-cover-tools-extra-icons-bkgd: var(--background-2);
+  --album-cover-tools-extra-icons-bkgd-hover: var(--hover-3);
+  --album-cover-tools-extra-icons-icon: var(--icons-1);
+  --album-cover-tools-extra-icons-icon-hover: var(--hover-1);
+  --bar: var(--background-2);
+  --bar-outline-background: var(--background-3);
+  /*--borders	container (player border)
+--button-hover	hover
+--button-on	active button*/
+  --color4: var(--background-1);
+  --container-home-background: var(--background-1);
+  /* --control-on	active button */
+  --controls-background: none;
+  --controls-button-icon-hover: var(--hover-2);
+  --controls-icon: var(--icons-1);
+  --cover-tools-range-thumb: var(--background-2);
+  --cover-tools-range-track: var(--background-3);
+  /* --covers-loading	element that loads while more images are loading
+--covers-scrollbar	scrollbar
+--covers-scrollbar-buttons	scrollbar
+--covers-scrollbar-thumb	scrollbar */
+  --form-background: var(--background-1);
+  /* --form-button-background	submit button background
+--form-button-color	text
+--form-color	text
+--form-label	includes entire div label
+--form-radio-checked	button (in form)
+--highlight	border (for active element) */
+  --item-hover: var(--hover-4);
+  /* --likedBtn	active (should be unique)  */
+  --list-background: var(--background-1);
+  --list-font-color: var(--text-dark);
+  --list-scroll-active: var(--active-1);
+  --list-scroll-inactive: var(--icons-2);
+  --main-nav-background: var(--background-1);
+  --main-nav-font-color: var(--text-dark);
+  /*--main-nav-hover-color	hover */
+  --main-nav-hover-menu: var(--hover-3);
+  /*--main-nav-hover-menu-color	hover (main nav)
+--minimode-control-icons	icons
+--overlay-color	overlay (div) */
+  --player-background: var(--background-1);
+  --player-font-color: var(--text-dark);
+  /*--root-highlight	active state
+--root-highlight-color	color */
+  --sort-icon-active: var(--background-3);
+  --sort-icon-inactive: var(--background-2);
+  /*--status-loader-background	status load background (animation)
+--status-loader-bar	loading animation background */
+  --tab-background-active: var(--active-2);
+  --tab-font-active: var(--text-dark);
+  --tab-font-inactive: var(--text-dark);
+  --tags-list-header-background: var(--background-1);
+  /* --tags-list-header-color	text */
+  --tags-list-header-controls-background: var(--background-1);
+  /* --tags-list-header-icon	icon
+--tags-list-header-input	text
+--tags-list-header-text-color	text */
+  --tags-nav-background: var(--background-1);
+  /* --tags-nav-color	not in use
+--tags-nav-menu-background-hover 	hover
+--tags-nav-menu-color-hover	hover
+--tags-nav-selected	active state
+--tags-nav-selected-color	text (active element) */
+  --tags-results-background: var(--background-1);
+  /* --tags-results-color	text
+--tags-row-even	list rows
+--tags-row-even-color 	list row
+--tags-row-odd 	list row
+--tags-row-odd-color	list row
+--update-container-background	container  */
 }
 
 .theme-2 {
