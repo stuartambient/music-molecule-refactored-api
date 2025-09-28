@@ -19,7 +19,6 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import { createOrUpdateChildWindow, getWindowNames, getWindow } from './windowManager.js';
 import mime from 'mime-types';
-import url from 'url';
 import { File } from 'node-taglib-sharp';
 import createUpdateTagsWorker from './updateTagsWorker?nodeWorker';
 import createUpdateFilesWorker from './updateFilesWorker?nodeWorker';
@@ -270,7 +269,8 @@ function createWindow() {
       additionalArguments: [`--mainTheme=${mainTheme}`],
       sandbox: true,
       webSecurity: true,
-      contextIsolation: true
+      contextIsolation: true,
+      nodeIntegration: true
       /* additionalArguments: [`--mainTheme=${mainTheme}`] */
       /* nodeIntegration: true */
     }
@@ -551,6 +551,13 @@ ipcMain.handle('update-roots', async (event, roots) => {
   } catch (error) {
     console.error(error.message);
   }
+});
+
+ipcMain.handle('pick-folder', async () => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openDirectory', 'multiSelections']
+  });
+  return result.filePaths; // array of absolute folder paths
 });
 
 ipcMain.handle('get-folder-path', (event, folderName) => {
@@ -1143,6 +1150,7 @@ ipcMain.on('show-context-menu', (event, id, type, path = undefined) => {
   }
 
   if (type === 'cover') {
+    console.log('cover called');
     const customLabel = id === 'cover-search-alt' ? 'Save Image' : 'Select Image';
     template.push({
       label: customLabel,
@@ -1166,27 +1174,11 @@ ipcMain.on('show-context-menu', (event, id, type, path = undefined) => {
         label: `Get image for single track`,
         click: () => event.sender.send('context-menu-command', { type: 'single-track', params: id })
       },
-      /*   {
-        label: `Get image for selected tracks`,
-        click: () =>
-          event.sender.send('context-menu-command', {
-            type: 'all-tracks',
-            params: 'all-tracks'
-          })
-      }, */
       {
         label: 'Select image from folder for single track',
         click: () =>
           event.sender.send('context-menu-command', { type: 'search-folder-single', params: id })
       }
-      /* {
-        label: 'Select image from folder for selected tracks',
-        click: () =>
-          event.sender.send('context-menu-command', {
-            type: 'search-folder-all-tracks',
-            params: 'search-folder-all-tracks'
-          })
-      } */
     );
   }
 
@@ -1254,7 +1246,7 @@ ipcMain.on('show-context-menu', (event, id, type, path = undefined) => {
 });
 
 ipcMain.handle('show-album-cover-menu', (event, path, folder) => {
-  /* console.log('show album cover menu: ', path, folder); */
+  console.log('show-album-cover-menu');
   const template = [
     {
       label: 'add album to playlist',
@@ -1306,9 +1298,10 @@ ipcMain.handle('show-text-input-menu', (event) => {
   }
 });
 
-ipcMain.handle('show-child', (event, args) => {
+ipcMain.handle('show-child', async (event, args) => {
+  console.log('show-child: ', 'hit');
   const { name, type, winConfig, data } = args;
-  createOrUpdateChildWindow(name, type, winConfig, data /* , theme */);
+  await createOrUpdateChildWindow(name, type, winConfig, data /* , theme */);
 });
 
 // Helper function for downloading and saving
@@ -1466,15 +1459,16 @@ ipcMain.handle('select-image-from-folder', async (event, arr, delayDownload = fa
   }
 });
 
-ipcMain.handle('refresh-cover', async (event, ...args) => {
+/* ipcMain.handle('refresh-cover', async (event, ...args) => {
   const [file, filepath] = args;
   const imgurl = url.pathToFileURL(file).href;
-  /* const imageobj = { img: imgurl.href }; */
+   const imageobj = { img: imgurl.href }; 
 
   BrowserWindow.fromId(mainWindow.id).webContents.send('refresh-home-cover', filepath, imgurl);
-});
+}); */
 
-ipcMain.handle('open-album-folder', async (_, path) => {
+ipcMain.on('open-album-folder', async (_, path) => {
+  console.log('path: ', path);
   /* console.log('open-album-folder'); */
   try {
     const properPath = path.replaceAll('/', '\\');

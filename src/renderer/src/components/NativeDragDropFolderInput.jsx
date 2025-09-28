@@ -6,9 +6,6 @@ function NativeDragDropFolderInput({ rootDirs, setRootDirs }) {
   const [rootChanges, setRootChanges] = useState([]);
 
   const handleRootsUpdate = (e) => {
-    /*   console.log(rootDirs);
-    console.log(folders); */
-
     console.log(e.target.id);
 
     const sendRoots = async (roots) => {
@@ -21,36 +18,12 @@ function NativeDragDropFolderInput({ rootDirs, setRootDirs }) {
     if (e.target.id === 'roots-update' || e.currentTarget.id === 'roots-update') {
       sendRoots([...rootDirs, ...folders]);
     }
-    /*  const allRoots = [...rootDirs, ...folders];
-    console.log('allRoots: ', allRoots); */
   };
 
   const handleOpenFolder = (e) => {
     /* window.api.openAlbumFolder(e.target.id); */
     const folder = e.currentTarget.id;
-    window.api.openAlbumFolder(folder);
-  };
-
-  const handleDrop = (event) => {
-    event.preventDefault();
-    const files = event.dataTransfer.files;
-
-    if (files.length > 0) {
-      const filePaths = Array.from(files).map((file) => {
-        console.log('file.path: ', file.path);
-        const newPath = file.path.replaceAll('\\', '/');
-
-        return newPath;
-      });
-      const updatedPaths = filePaths.filter(
-        (path) => !rootDirs.includes(path) && !folders.includes(path)
-      );
-      setFolders((prevFolders) => [...prevFolders, ...updatedPaths]);
-    }
-  };
-
-  const handleDragOver = (event) => {
-    event.preventDefault();
+    window.ipcApi.send('open-album-folder', folder);
   };
 
   const removeFolder = (index) => {
@@ -64,20 +37,28 @@ function NativeDragDropFolderInput({ rootDirs, setRootDirs }) {
 
   return (
     <div className="roots-form">
-      <h3>Drag and Drop Folders</h3>
-      <div
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
+      <h3>Select Folders</h3>
+      <button
+        type="button"
+        onClick={async () => {
+          const paths = await window.ipcApi.invoke('pick-folder');
+          if (paths?.length) {
+            const updated = paths.filter((p) => !rootDirs.includes(p) && !folders.includes(p));
+            setFolders((prev) => [...prev, ...updated]);
+          }
+        }}
         style={{
           border: '2px dashed #ccc',
           padding: '20px',
           textAlign: 'center',
           cursor: 'pointer',
-          marginBottom: '20px'
+          marginBottom: '20px',
+          width: '100%'
         }}
       >
-        Drop folders here
-      </div>
+        Browse for Folders…
+      </button>
+
       <ul className="folder-list">
         {folders.map((folder, index) => (
           <li key={index} className="folder-list--item">
@@ -90,14 +71,15 @@ function NativeDragDropFolderInput({ rootDirs, setRootDirs }) {
           </li>
         ))}
       </ul>
+
       <ul className="folder-list">
         {rootDirs.length > 0 ? (
           <li className="folder-list--item title">Current folders:</li>
         ) : (
           <li className="folder-list--item title">No roots folders saved</li>
         )}
-        {rootDirs.map((dir, index) => (
-          <li key={index} className="folder-list--item">
+        {rootDirs.map((dir) => (
+          <li key={dir} className="folder-list--item">
             <span onClick={handleOpenFolder} className="item-name" id={dir}>
               <u>{dir}</u>
             </span>
@@ -107,21 +89,22 @@ function NativeDragDropFolderInput({ rootDirs, setRootDirs }) {
           </li>
         ))}
       </ul>
-      <button className="roots-update" id="roots-update" type="text" onClick={handleRootsUpdate}>
+
+      <button className="roots-update" id="roots-update" type="button" onClick={handleRootsUpdate}>
         <span className="text">Update</span>
       </button>
+
       {rootChanges.length > 0 && (
         <ul className="folder-list results-panel">
-          {rootChanges &&
-            rootChanges.map((item, i) => (
-              <li key={i}>
-                {Object.entries(item).map(([key, val]) => (
-                  <div key={key}>
-                    {key}: {typeof val === 'object' ? JSON.stringify(val) : String(val)}
-                  </div>
-                ))}
-              </li>
-            ))}
+          {rootChanges.map((item, i) => (
+            <li key={i}>
+              {Object.entries(item).map(([key, val]) => (
+                <div key={key}>
+                  {key}: {typeof val === 'object' ? JSON.stringify(val) : String(val)}
+                </div>
+              ))}
+            </li>
+          ))}
         </ul>
       )}
     </div>

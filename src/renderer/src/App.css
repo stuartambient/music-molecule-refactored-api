@@ -184,6 +184,9 @@
   --background-1: #ffffff;
   --background-2: #adadad;
   --background-3: #000000;
+  --background-4: #dedede;
+
+  --button-1: #7395ff;
 
   --text-light: #ffffff;
   --text-dark: #000000;
@@ -221,17 +224,17 @@
   --controls-icon: var(--icons-1);
   --cover-tools-range-thumb: var(--background-2);
   --cover-tools-range-track: var(--background-3);
-  /* --covers-loading	element that loads while more images are loading
---covers-scrollbar	scrollbar
---covers-scrollbar-buttons	scrollbar
---covers-scrollbar-thumb	scrollbar */
-  --form-background: var(--background-1);
-  /* --form-button-background	submit button background
---form-button-color	text
---form-color	text
---form-label	includes entire div label
---form-radio-checked	button (in form)
---highlight	border (for active element) */
+  /* --covers-loading	element that loads while more images are loading*/
+  --covers-scrollbar: var(--background-2);
+  --covers-scrollbar-buttons: var(--background-3);
+  --covers-scrollbar-thumb: var(--background-3);
+  --form-background: var(--background-2);
+  --form-button-background: var(--button-1);
+  --form-button-color: var(--text-dark);
+  --form-color: var(--text-dark);
+  --form-label: var(--background-4);
+  --form-radio-checked: var(--active-3);
+  --highlight: var(--active-1);
   --item-hover: var(--hover-4);
   /* --likedBtn	active (should be unique)  */
   --list-background: var(--background-1);
@@ -258,23 +261,23 @@
   --tab-font-inactive: var(--text-dark);
   --tags-list-header-background: var(--background-1);
   /* --tags-list-header-color	text */
-  --tags-list-header-controls-background: var(--background-1);
+  --tags-list-header-controls-background: var(--background-2);
   /* --tags-list-header-icon	icon
 --tags-list-header-input	text
 --tags-list-header-text-color	text */
   --tags-nav-background: var(--background-1);
-  /* --tags-nav-color	not in use
---tags-nav-menu-background-hover 	hover
---tags-nav-menu-color-hover	hover
---tags-nav-selected	active state
---tags-nav-selected-color	text (active element) */
+  --tags-nav-color: var(--text-dark);
+  --tags-nav-menu-background-hover: var(--hover-1);
+  --tags-nav-menu-color-hover: var(--text-dark);
+  --tags-nav-selected: var(--active-1);
+  --tags-nav-selected-color: var(--text-light);
   --tags-results-background: var(--background-1);
-  /* --tags-results-color	text
---tags-row-even	list rows
---tags-row-even-color 	list row
---tags-row-odd 	list row
---tags-row-odd-color	list row
---update-container-background	container  */
+  --tags-results-color: var(--text-dark);
+  --tags-row-even: var(--background-1);
+  --tags-row-even-color: var(--text-dark);
+  --tags-row-odd: var(--background-2);
+  --tags-row-odd-color: var(--text-dark);
+  --update-container-background: var(--background-1);
 }
 
 .theme-2 {

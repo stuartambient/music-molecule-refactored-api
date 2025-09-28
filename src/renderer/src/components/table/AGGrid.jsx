@@ -223,50 +223,6 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     return { artist, title, path: paths };
   }, []);
 
-  /*   const handleNumNodes = () => {
-    const n = gridRef.current.api.getSelectedNodes();
-    return n.length;
-  }; */
-
-  /*   const handleEmbedPicture = useCallback((values) => {
-    console.log('handleEmbedPicture: ', values);
-    let artist,
-      title,
-      path,
-      type = values.type;
-
-    if (type === 'single-track') {
-      artist = values.params.artist;
-      title = values.params.album;
-      path = values.params.path;
-    } else if (type === 'search-folder-single') {
-      return setTempFolder(values.params.path);
-    }
-    return openChildWindow(
-      'cover-search-alt-tags',
-      'cover-search-alt-tags',
-      {
-        width: 700,
-        height: 600,
-        show: false,
-        resizable: true,
-        preload: 'coverSearchAlt',
-        sandbox: true,
-        webSecurity: true,
-        contextIsolation: true
-      },
-      { artist, title, path, type }
-    );
-  }, []);
-
-  useEffect(() => {
-    window.metadataEditingApi.onContextMenuCommand(handleEmbedPicture);
-    return () => {
-      window.metadataEditingApi.off('context-menu-command', handleEmbedPicture);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); */
-
   const embedPictureHandlerRef = useRef();
 
   useEffect(() => {

@@ -65,6 +65,8 @@
 
 }
 
+
+
 .roots-form .radio-group label {
   background-color: var(--form-label);
   height: 3rem;
@@ -74,7 +76,7 @@
   appearance: none;
   width: 20px;
   height: 20px;
-  border: 2px solid #ccc;
+  border: 2px solid var(--background-3);
   border-radius: 50%;
   background-color: transparent;
 }
@@ -96,6 +98,7 @@
 
 .roots-form h2 {
   align-self: center;
+  color: var(--text-dark);
 }
 
 

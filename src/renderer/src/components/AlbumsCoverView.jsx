@@ -185,7 +185,7 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
         container.removeEventListener('click', handleOverlayClick);
       }
     };
-  }, [currentAlbum, handlePlayReq, stopAlbumPlay]);
+  }, [currentAlbum, handlePlayReq, stopAlbumPlay]); // <-- only if album change matters to your click handler
 
   const handleAlbumToPlaylist = useCallback(
     async (path) => {
@@ -200,9 +200,39 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
     [dispatch]
   );
 
+  const handleCoverSearch = useCallback(async (search) => {
+    const { album, path } = search;
+    console.log('handleCoverSearch: ', album, path);
+
+    let artist, title;
+    if (album.includes('-')) {
+      [artist, title] = album
+        .split('-')
+        .map((part) => part.replaceAll(/\W/g, ' ').replaceAll('and', ' '));
+    } else {
+      title = album;
+    }
+
+    return openChildWindow(
+      'cover-search-alt',
+      'cover-search-alt',
+      {
+        width: 1400,
+        height: 600,
+        show: false,
+        resizable: true,
+        preload: 'coverSearchAlt',
+        sandbox: true,
+        webSecurity: true,
+        contextIsolation: true
+      },
+      { artist, title, path }
+    );
+  }, []);
+
   useEffect(() => {
     const sendOpenFolder = async () => {
-      return await window.api.openAlbumFolder(openFolder);
+      return await window.ipcApi.send('open-album-folder', openFolder);
     };
     if (openFolder) {
       sendOpenFolder();
@@ -219,19 +249,14 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
           return handleAlbumToPlaylist(path);
         }
         case 'open album folder': {
-          //window.api.openAlbumFolder(path);
-          //if (process.env.NODE_ENV === 'development') {
           if (openFolder === path) return;
           setOpenFolder(path);
-          // } else {
-          //  window.api.openAlbumFolder(path);
-          //  }
           break;
         }
         case 'cover search': {
           const regex = /(\([^)]*\)|\[[^\]]*\]|\{[^}]*\})/g;
           const refAlbum = album.replace(regex, '');
-          return handleCoverSearch({ path: path, album: refAlbum, service: 'covit' });
+          return handleCoverSearch({ path: path, album: refAlbum });
         }
         default:
           return;
@@ -243,7 +268,8 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
     return () => {
       window.api.off('album-menu', handleContextMenu);
     };
-  }, [handleAlbumToPlaylist, openFolder]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /*   // Function to start continuous scrolling
   const startScrolling = useCallback(() => {
@@ -268,40 +294,6 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
 
     return () => clearInterval(scrollInterval); // Clean up interval when component unmounts or scrolling stops
   }, [isScrolling]); // Re-run the effect when the `isScrolling` state changes */
-
-  const handleCoverSearch = async (search) => {
-    console.log('search: ', search);
-    const { album, path, service } = search;
-
-    let artist, title;
-    if (album.includes('-')) {
-      [artist, title] = album
-        .split('-')
-        .map((part) => part.replaceAll(/\W/g, ' ').replaceAll('and', ' '));
-    } else {
-      title = album;
-    }
-
-    /*   if (!artist) return; */
-
-    if (service === 'covit') {
-      return openChildWindow(
-        'cover-search-alt',
-        'cover-search-alt',
-        {
-          width: 1400,
-          height: 600,
-          show: false,
-          resizable: true,
-          preload: 'coverSearchAlt',
-          sandbox: true,
-          webSecurity: true,
-          contextIsolation: true
-        },
-        { artist, title, path }
-      );
-    }
-  };
 
   const lastCoverElement = useCallback(
     (node) => {

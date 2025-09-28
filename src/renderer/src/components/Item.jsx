@@ -11,6 +11,7 @@ import '../style/FlashEffect.css';
 
 const Item = forwardRef((props, ref) => {
   const { state, dispatch } = useAudioPlayer();
+  /* const { setContextMenuItem } = useContextMenu(); */
 
   if (props.type === 'files') {
     const newId = props.divId.split('--')[0];
@@ -46,7 +47,9 @@ const Item = forwardRef((props, ref) => {
           <br></br>
         </a>
         <div className="item-menu">
-          <ContextMenu fromlisttype={props.type} id={props.id} /* divid={props.divId} */ />
+          <ContextMenu fromlisttype={props.type} id={props.id} />
+          {/* onContextMenu=
+          {() => setContextMenuItem({ id: props.id, type: props.type, state, dispatch })} */}
         </div>
       </div>
     );

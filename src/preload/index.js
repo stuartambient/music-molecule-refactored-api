@@ -56,10 +56,10 @@ contextBridge.exposeInMainWorld('api', {
   /* showAlbumCoverMenu: (path, folder) => ipcRenderer.invoke('show-album-cover-menu', path, folder), */
   /* showTextInputMenu: () => ipcRenderer.invoke('show-text-input-menu'), */
   /* onEditTrackMetadata: (cb) => ipcRenderer.once('edit-metadata', (event, args) => cb(args)), */
-  onRemoveFromPlaylist: (cb) =>
-    ipcRenderer.once('remove-from-playlist', (event, ...args) => cb(args)),
-  showChild: (args) => ipcRenderer.invoke('show-child', args),
-  onRefreshHomeCover: (cb) => ipcRenderer.on('refresh-home-cover', (event, ...args) => cb(args)),
+  /* onRemoveFromPlaylist: (cb) =>
+    ipcRenderer.once('remove-from-playlist', (event, ...args) => cb(args)), */
+  /* showChild: (args) => ipcRenderer.invoke('show-child', args), */
+  /* onRefreshHomeCover: (cb) => ipcRenderer.on('refresh-home-cover', (event, ...args) => cb(args)), */
   openAlbumFolder: (path) => ipcRenderer.invoke('open-album-folder', path),
   /* updateMeta: () => ipcRenderer.invoke('update-meta'), */
   genresStat: () => ipcRenderer.invoke('genres-stat'),

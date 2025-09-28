@@ -1,7 +1,11 @@
 {
   "hiddenColumns": [
     "status",
-    "failedSort"
+    "failedSort",
+    "replayGainAlbumGain",
+    "replayGainAlbumPeak",
+    "replayGainTrackGain",
+    "replayGainTrackPeak"
   ],
   "theme": "dark",
   "mainTheme": "theme-1",

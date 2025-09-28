@@ -46,6 +46,21 @@ const ScheduleForm = () => {
     setSchedulingResults(false);
   };
 
+  const handleClearAll = () => {
+    setRunEveryDay(false); // uncheck Run Every Day
+    setEveryDayTime(''); // clear the everyday time
+    setSchedule({
+      // reset all days
+      Monday: '',
+      Tuesday: '',
+      Wednesday: '',
+      Thursday: '',
+      Friday: '',
+      Saturday: '',
+      Sunday: ''
+    });
+  };
+
   const handleToggleEveryDay = () => {
     setRunEveryDay(!runEveryDay);
     if (!runEveryDay) {
@@ -163,14 +178,32 @@ const ScheduleForm = () => {
           )}
 
           <button
+            type="button"
+            onClick={handleClearAll}
+            style={{
+              display: 'block',
+              width: '100%',
+              padding: '10px',
+              marginTop: '10px',
+              backgroundColor: 'var(--background-1)',
+              color: 'var(--text-dark)',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Clear All
+          </button>
+
+          <button
             type="submit"
             style={{
               display: 'block',
               width: '100%',
               padding: '10px',
               marginTop: '15px',
-              backgroundColor: '#007BFF',
-              color: '#fff',
+              backgroundColor: 'var(--button-1)',
+              color: 'var(--text-dark)',
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer'
