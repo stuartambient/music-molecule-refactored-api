@@ -122,7 +122,7 @@
 } */
 
 .media-menu .playlist-dialogs span {
-  border: 1px solid var(--borders);
+  border: 2px solid var(--borders);
   padding: 0 0.5rem 0 0.5rem;
   border-radius: 5px;
 }

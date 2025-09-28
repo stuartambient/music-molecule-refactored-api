@@ -27,7 +27,7 @@
 
 /* PLAYER WITHOUT MEDIA LIBRARY MOUNTED */
 .centered {
-  border: solid 1px var(--borders);
+  /* border: solid 25px var(--borders); */
   /* grid-row: 2 / 10; */
   grid-row: 1 / 4;
   grid-column: 1 / 3;

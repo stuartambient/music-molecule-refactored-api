@@ -113,7 +113,7 @@
 .update-meta,
 .update-covers,
 .update-roots {
-  border: 1px solid var(--borders);
+  /* border: 1px solid var(--borders); */
   width: 90%;
   height: 1.8rem;
   display: flex;

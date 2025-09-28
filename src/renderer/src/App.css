@@ -213,9 +213,8 @@
   --album-cover-tools-extra-icons-icon-hover: var(--hover-1);
   --bar: var(--background-2);
   --bar-outline-background: var(--background-3);
-  /*--borders	container (player border)
---button-hover	hover
---button-on	active button*/
+  --borders: var(--background-3);
+  /*--button-on	active button*/
   --color4: var(--background-1);
   --container-home-background: var(--background-1);
   /* --control-on	active button */

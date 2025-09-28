@@ -1,23 +1,12 @@
 import { useEffect, useCallback } from 'react';
 import classNames from 'classnames';
 import { handleManualChange } from './utility/audioUtils';
-/* import { GiPauseButton, GiPlayButton } from 'react-icons/gi';
-import { FaForward, FaBackward, FaListUl, FaHeart } from 'react-icons/fa';
-import { GiMagnifyingGlass } from 'react-icons/gi';
-import { ArchiveAdd, Playlist, Shuffle, Plus, Minus } from './assets/icons';
-import { Buffer } from 'buffer'; */
 import { useAudioPlayer } from './mainAudioContext';
 import useIpcEvent from './hooks/useIpcEvent';
 
-import {
-  convertDuration
-  /*   convertDurationSeconds,
-  convertCurrentTime,
-  convertToSeconds */
-} from './hooks/useTime';
+import { convertDuration } from './hooks/useTime';
 import Player from './components/Player';
 import InfiniteList from './Components/InfiniteList';
-/* import Switch from './Components/Switch'; */
 import Home from './Components/Home';
 import Update from './Components/Update';
 import MainNav from './Components/MainNav';
@@ -26,11 +15,9 @@ import Extras from './Components/Extras';
 import Stats from './Components/Stats';
 
 import './App.css';
-/* import './style/normalize.css'; */
 
 function App() {
   const { state, dispatch } = useAudioPlayer();
-  /*  const [mainTheme, setMainTheme] = useState(''); */
 
   const handleThemeUpdate = useCallback(async () => {
     const preferences = await window.api.getPreferences();
@@ -58,95 +45,10 @@ function App() {
     };
   }, [handleThemeUpdate]);
 
-  /*   useEffect(() => {
-    const handleThemeUpdate = async () => {
-      const preferences = await window.api.getPreferences();
-
-      if (preferences.mainTheme && preferences.mainTheme !== state.mainTheme) {
-        console.log('not equal');
-        dispatch({
-          type: 'set-main-theme',
-          mainTheme: preferences.mainTheme
-        });
-      }
-    };
-
-    handleThemeUpdate();
-
-    window.api.onMainThemeUpdate(handleThemeUpdate);
-
-    return () => {
-      window.api.off('main-theme-updated', handleThemeUpdate);
-    };
-  }, [dispatch, state.mainTheme]); */
-
-  /*   useEffect(() => {
-    const sendNotice = async () => { */
-  /*       console.log('sending notice', state.artist, state.title);
-      await window.api.sendTrackNotification({
-        body: state.artist,
-        title: state.title,
-        icon: state.cover
-      }); */
-  /*    const NOTIFICATION_TITLE = 'Now playing...';
-      const NOTIFICATION_BODY = `${state.artist} - ${state.title}`;
-      const NOTIFICATION_ICON = state.cover; */
-  /*       const CLICK_MESSAGE = 'Notification clicked!'; 
-      new window.Notification(NOTIFICATION_TITLE, { body: NOTIFICATION_BODY }).onclick = () => {
-        document.getElementById('output').innerText = CLICK_MESSAGE;
-      }; */
-  /*       new window.Notification(NOTIFICATION_TITLE, {
-        body: NOTIFICATION_BODY,
-        icon: NOTIFICATION_ICON
-      });
-    };
-    if (state.title && state.artist) {
-      sendNotice();
-    }
-  }, [state.artist, state.title]); */
-
   useEffect(() => {
     const audio = state.audioRef.current;
 
     const handleLoadedMetadata = (/* e */) => {
-      /*       const mediaTypes = [
-        'audio/mpeg',
-        'audio/flac',
-        'audio/opus',
-        'audio/ogg',
-        'audio/m4a',
-        'audio/ape',
-        'audio/alac',
-        'audio/wav'
-      ];
-
-      mediaTypes.forEach((type) => {
-        const playType = audio.canPlayType(type);
-        console.log('type: ', type, 'canPlay: ', playType);
-      }); */
-
-      /*       audio/mpeg canPlay:  probably
-audio/flac canPlay:  probably
-audio/opus canPlay:  
-audio/ogg canPlay:  maybe
-audio/m4a canPlay:  
-audio/ape canPlay:  
-audio/alac canPlay:  
-audio/wav canPlay:  maybe */
-
-      /*       if (audio.canPlayType('audio/mpeg')) {
-        console.log('mpeg is supported');
-      }
-      if (audio.canPlayType('audio/flac')) {
-        console.log('flac is supported');
-      }
-      if (audio.canPlayType('audio/opus')) {
-        console.log('opus is supported');
-      }
-      if (audio.canPlayType('audio/ogg')) {
-        console.log('ogg is supported');
-      } */
-      /* console.log('audio duration: ', audio.duration); */
       dispatch({ type: 'duration', duration: convertDuration(audio) });
       dispatch({ type: 'set-delay', delay: true });
     };
@@ -191,11 +93,6 @@ audio/wav canPlay:  maybe */
       audio.onended = null;
     };
   }, [state.audioRef, dispatch, state]);
-
-  /*   useEffect(() => {
-    if (state.pause) state.audioRef.current.pause();
-    if (!state.pause) state.audioRef.current.play();
-  }, [state.pause, state.audioRef]); */
 
   useEffect(() => {
     const audio = state.audioRef.current;
@@ -260,54 +157,6 @@ audio/wav canPlay:  maybe */
     });
   }
 
-  /*   useEffect(() => {
-    const handleLikeRemoved = (e) => {
-      console.log('track like removed', e);
-      dispatch({
-        type: 'update-like',
-        isLiked: 0
-      });
-      dispatch({
-        type: 'tracks-update-like',
-        payload: {
-          track_id: e,
-          field: 'like',
-          value: 0
-        }
-      });
-    };
-
-    window.api.onTrackLikeRemoved(handleLikeRemoved);
-
-    return () => {
-      window.api.off('track-like-removed', handleLikeRemoved);
-    };
-  }, [dispatch]); */
-
-  /*   useEffect(() => {
-    const handleTrackLiked = (e) => {
-      console.log('track liked', e);
-      dispatch({
-        type: 'update-like',
-        isLiked: 1
-      });
-      dispatch({
-        type: 'tracks-update-like',
-        payload: {
-          track_id: e,
-          field: 'like',
-          value: 1
-        }
-      });
-    };
-
-    window.api.onTrackLiked(handleTrackLiked);
-
-    return () => {
-      window.api.off('track-liked', handleTrackLiked);
-    };
-  }, [dispatch]); */
-
   useEffect(() => {
     let subscribed = true;
     const changeScreenMode = () => {
@@ -336,8 +185,7 @@ audio/wav canPlay:  maybe */
       state.listType === 'albums' ||
       (state.listType === 'playlist' && state.playlistTracks.length === 0) ||
       (state.listType === 'files' && state.activeList === 'playlistActive') ||
-      (state.listType === 'playlist' && state.activeList === 'tracklistActive') /* ||
-      (direction === 'forward' && state.newtrack >= state.playlistTracks.length - 1) */
+      (state.listType === 'playlist' && state.activeList === 'tracklistActive')
     );
   };
 
