@@ -262,7 +262,7 @@ const useGenres = (setGenres) => {
   useEffect(() => {
     let subscribed = true;
     const getGenres = async () => {
-      const genresRequest = await window.api.genresStat();
+      const genresRequest = await window.ipcApi.invoke('genres-stat');
       if (genresRequest && subscribed) {
         setGenres(genresRequest);
       } else {
@@ -416,7 +416,7 @@ const useDistinctDirectories = (setDirectories) => {
   useEffect(() => {
     let subscribed = true;
     const getDistinctDirectories = async () => {
-      const myDirectories = await window.api.distinctDirectories();
+      const myDirectories = await window.ipcApi.invoke('distinct-directories');
       if (myDirectories) {
         setDirectories(myDirectories);
       }

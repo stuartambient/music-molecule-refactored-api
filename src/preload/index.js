@@ -60,22 +60,22 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.once('remove-from-playlist', (event, ...args) => cb(args)), */
   /* showChild: (args) => ipcRenderer.invoke('show-child', args), */
   /* onRefreshHomeCover: (cb) => ipcRenderer.on('refresh-home-cover', (event, ...args) => cb(args)), */
-  openAlbumFolder: (path) => ipcRenderer.invoke('open-album-folder', path),
+  /* openAlbumFolder: (path) => ipcRenderer.invoke('open-album-folder', path), */
   /* updateMeta: () => ipcRenderer.invoke('update-meta'), */
-  genresStat: () => ipcRenderer.invoke('genres-stat'),
-  distinctDirectories: () => ipcRenderer.invoke('distinct-directories'),
+  /* genresStat: () => ipcRenderer.invoke('genres-stat'), */
+  /* distinctDirectories: () => ipcRenderer.invoke('distinct-directories'), */
   /*   getTracksByArtist: (listType, artist) =>
     ipcRenderer.invoke('get-tracks-by-artist', listType, artist), */
-  getTracksByCategory: (listType, value) =>
+  /*   getTracksByCategory: (listType, value) =>
     ipcRenderer.invoke('get-tracks-by-category', { listType, value }),
-  onTracksLoaded: (cb) => ipcRenderer.on('tracks-loaded', (event, msg) => cb(msg)),
+  onTracksLoaded: (cb) => ipcRenderer.on('tracks-loaded', (event, msg) => cb(msg)), */
 
   /* getTracksByGenre: (listType, genre) => ipcRenderer.invoke('get-tracks-by-genre', listType, genre), */
-  getTracksByRoot: (root, listType) => ipcRenderer.invoke('get-tracks-by-root', root, listType),
+  /* getTracksByRoot: (root, listType) => ipcRenderer.invoke('get-tracks-by-root', root, listType), */
   /* getTracksByAlbum: (listType, album) => ipcRenderer.invoke('get-tracks-by-album', listType, album), */
-  onTracksByAlbumLoaded: (cb) => ipcRenderer.on('album-tracks-loaded', (event, arg) => cb(arg)),
-  onTracksByGenreLoaded: (cb) => ipcRenderer.on('genre-tracks-loaded', (event, arg) => cb(arg)),
-  onTracksByArtistLoaded: (cb) => ipcRenderer.on('artist-tracks-loaded', (event, arg) => cb(arg)),
+  /*    onTracksByAlbumLoaded: (cb) => ipcRenderer.on('album-tracks-loaded', (event, arg) => cb(arg)),
+    onTracksByGenreLoaded: (cb) => ipcRenderer.on('genre-tracks-loaded', (event, arg) => cb(arg)),
+    onTracksByArtistLoaded: (cb) => ipcRenderer.on('artist-tracks-loaded', (event, arg) => cb(arg)), */
   showContextMenu: (id, itemType) => ipcRenderer.send('show-context-menu', id, itemType),
 
   onAlbumCoverMenu: (cb) => {
@@ -83,7 +83,7 @@ contextBridge.exposeInMainWorld('api', {
   },
   getAlbumsByRoot: (roots) => ipcRenderer.invoke('get-albums-by-root', roots),
   /* toggleResizable: (isResizable) => ipcRenderer.send('toggle-resizable', isResizable), */
-  checkForOpenTable: (name) => ipcRenderer.invoke('check-for-open-table', name),
+  /* checkForOpenTable: (name) => ipcRenderer.invoke('check-for-open-table', name), */
   clearTable: () => ipcRenderer.invoke('clear-table'),
   onUpdatedTags: (cb) => ipcRenderer.on('updated-tags', (event, msg) => cb(msg)),
   onChildWindowClosed: (cb) => ipcRenderer.on('window-closed', (event, name) => cb(name)),
@@ -96,26 +96,7 @@ contextBridge.exposeInMainWorld('api', {
     console.log('track notice: ', track);
     ipcRenderer.invoke('send-track-notification', track);
   },
-  /* onUpdateFiles: (cb) => {
-    ipcRenderer.on('file-update-complete', (event, result) => {
-      cb(result);
-    });
-  },
-  onUpdateFolders: (cb) => {
-    ipcRenderer.on('update-complete', (event, type, result) => {
-      cb(result);
-    });
-  },
-  onUpdateMetadata: (cb) => {
-    ipcRenderer.on('meta-update-complete', (event, result) => {
-      cb(result);
-    });
-  },
-  onUpdateCovers: (cb) => {
-    ipcRenderer.on('cover-update-complete', (event, result) => {
-      cb(result);
-    });
-  }, */
+
   removeChildWindowClosedListener: (callback) => {
     ipcRenderer.removeListener('window-closed', callback);
   },

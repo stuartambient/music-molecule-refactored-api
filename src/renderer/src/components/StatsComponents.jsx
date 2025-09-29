@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import List from './List';
 import { openChildWindow } from './ChildWindows/openChildWindow';
 import { useTotalTracksStat, useTopHundredArtistsStat, useGenres } from '../hooks/useDb';
+import useIpcEvent from '../hooks/useIpcEvent';
 
 const initTable = /* async */ (type, data = null) => {
   const name = 'table-data';
@@ -20,7 +21,7 @@ const initTable = /* async */ (type, data = null) => {
 
 const tableStatus = async () => {
   try {
-    const openTable = await window.api.checkForOpenTable('table-data');
+    const openTable = await window.ipcApi.invoke('check-for-open-table', 'table-data');
     if (openTable) {
       await window.api.clearTable();
 
@@ -58,59 +59,46 @@ export const TotalMedia = () => {
  * @param {string|null} value - The selected genre/artist/album value
  * @param {(value: null) => void} reset - Setter to clear the selection
  */
+
+const tableMap = {
+  genre: 'genre-tracks',
+  artist: 'artist-tracks',
+  album: 'album-tracks',
+  root: 'root-tracks'
+};
+
+const loadedMsgMap = {
+  genre: 'genre-tracks-loaded',
+  artist: 'artist-tracks-loaded',
+  album: 'album-tracks-loaded',
+  root: 'root-tracks-loaded'
+};
 const useTrackLoader = (type, value, reset) => {
-  /* console.log('type: ', type, 'value: ', value, 'reset: ', reset); */
   useEffect(() => {
     if (!value) return;
 
-    const tableMap = {
-      genre: 'genre-tracks',
-      artist: 'artist-tracks',
-      album: 'album-tracks',
-      root: 'root-tracks'
-    };
-
-    const loadedMsgMap = {
-      genre: 'genre-tracks-loaded',
-      artist: 'artist-tracks-loaded',
-      album: 'album-tracks-loaded',
-      root: 'root-tracks-loaded'
-    };
-
     const tableName = tableMap[type];
-    const loadedMsg = loadedMsgMap[type];
-
-    let isSubscribed = true;
-
     const loadTracks = async () => {
       try {
         const tableStat = await tableStatus();
-        if (isSubscribed && !tableStat) {
+        if (!tableStat) {
           await initTable(tableName);
         }
 
-        if (isSubscribed) {
-          window.api.getTracksByCategory(tableName, value); // generic IPC sender
-        }
+        console.log('stats-components');
+        window.ipcApi.invoke('get-tracks-by-category', { listType: tableName, value }); // generic IPC sender
       } catch (error) {
         console.error(`Error loading ${type} tracks:`, error);
       }
     };
 
-    const handleLoaded = (msg) => {
-      if (isSubscribed && msg === loadedMsg) {
-        reset(null);
-      }
-    };
-
     loadTracks();
-    window.api.onTracksLoaded(handleLoaded);
-
-    return () => {
-      isSubscribed = false;
-      window.api.off('tracks-loaded', handleLoaded);
-    };
-  }, [type, value, reset]);
+  }, [type, value]);
+  useIpcEvent('tracks-loaded', (msg) => {
+    if (msg === loadedMsgMap[type]) {
+      reset(null);
+    }
+  });
 };
 
 export const TopHundredArtists = ({ dimensions }) => {

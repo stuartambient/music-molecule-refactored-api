@@ -172,7 +172,11 @@ const List = ({
       }
 
       if (tableName && multiSelects.length > 1) {
-        await window.api.getTracksByCategory(tableName, multiSelects);
+        console.log('list');
+        await window.ipcApi.invoke('get-tracks-by-category', {
+          listType: tableName,
+          value: multiSelects
+        });
       }
     };
 

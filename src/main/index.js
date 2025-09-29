@@ -865,6 +865,7 @@ async function openWindowAndSendData(queryResults, listType) {
 }
 
 ipcMain.handle('get-tracks-by-category', async (event, obj) => {
+  console.log('object: ', obj);
   const { listType, value } = obj;
   /*  console.log('-----> ', listType, value); */
   try {
@@ -911,14 +912,14 @@ ipcMain.handle('distinct-directories', async () => {
   }
 });
 
-ipcMain.handle('get-tracks-by-root', async (event, root, listType) => {
+/* ipcMain.handle('get-tracks-by-root', async (event, root, listType) => {
   try {
     const rootTracks = await allTracksByRoot(root);
     await openWindowAndSendData(rootTracks, listType);
   } catch (e) {
     console.error(e.message);
   }
-});
+}); */
 
 ipcMain.handle('check-for-open-table', async (event, name) => {
   const names = await getWindowNames();
