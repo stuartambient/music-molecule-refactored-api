@@ -15,6 +15,12 @@ import Extras from './Components/Extras';
 import Stats from './Components/Stats';
 
 import './App.css';
+import './appstyles/root.css';
+import './appstyles/theme-1.css';
+import './appstyles/theme-2.css';
+import './appstyles/theme-3.css';
+import './appstyles/theme-4.css';
+import './appstyles/theme-5.css';
 
 function App() {
   const { state, dispatch } = useAudioPlayer();

@@ -81,13 +81,13 @@ const loadFile = async (file, id, state, dispatch) => {
 }; */
 
 const handleTrackSelect = async (event, state, dispatch, ...params) => {
-  console.log('event target: ', event.target, 'params: ', params);
+  /* console.log('event target: ', event.target, 'params: ', params); */
   // 1. prevent the default
   event.preventDefault();
   // 2. pull anything you need off `event` now:
   const trackId = event.target.id;
-  const val = event.target.getAttribute('val');
-  console.log('val: ', val);
+  const val = event.target.getAttribute('data-val');
+  /* console.log('val: ', val); */
 
   // 3. short-circuit if they clicked the already-active track
   /*   if (listType === 'playlist' && activeList === 'tracklistActive') */

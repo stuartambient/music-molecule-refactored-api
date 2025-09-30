@@ -12,7 +12,7 @@ function DragDropFolderInput() {
       console.log('item: ', item);
       if (item && item.isDirectory) {
         const folderName = item.name; // or any other method to get the full path
-        const fullPath = await window.api.getFolderPath(folderName);
+        const fullPath = await window.ipcApi.invoke('get-folder=path', folderName);
         setFolderPath(fullPath);
       } else {
         console.error('Not a directory');

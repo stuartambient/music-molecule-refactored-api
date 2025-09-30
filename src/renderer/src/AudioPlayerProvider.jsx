@@ -3,8 +3,8 @@ import { MainAudioContext } from './mainAudioContext';
 
 // Reducer function to manage state updates
 const audioPlayerReducer = (state, action) => {
-  if (action === 'direction') {
-    console.log('direction: ', state);
+  if (action === 'set-next-track') {
+    console.log('action: ', action);
   }
   switch (action.type) {
     case 'library': {
@@ -542,7 +542,7 @@ export const AudioPlayerProvider = ({ children }) => {
 
   useEffect(() => {
     const checkTable = async () => {
-      const isPopulated = await window.api.getRoots();
+      const isPopulated = await window.ipcApi.invoke('get-roots');
       /* console.log('isPopulated: ', isPopulated.length, 'type: ', Array.isArray(isPopulated)); */
       if (isPopulated.length === 0) {
         setInitialPage('update');

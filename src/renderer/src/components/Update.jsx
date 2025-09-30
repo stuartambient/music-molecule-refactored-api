@@ -15,7 +15,7 @@ const Update = () => {
 
   useEffect(() => {
     const reqRoots = async () => {
-      const rootFolders = await window.api.getRoots();
+      const rootFolders = await window.ipcApi.invoke('get-roots');
       //console.log('rootFolders: ', rootFolders);
       setRootDirs(rootFolders);
     };

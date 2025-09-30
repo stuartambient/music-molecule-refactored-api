@@ -69,7 +69,6 @@ contextBridge.exposeInMainWorld('api', {
   /*   getTracksByCategory: (listType, value) =>
     ipcRenderer.invoke('get-tracks-by-category', { listType, value }),
   onTracksLoaded: (cb) => ipcRenderer.on('tracks-loaded', (event, msg) => cb(msg)), */
-
   /* getTracksByGenre: (listType, genre) => ipcRenderer.invoke('get-tracks-by-genre', listType, genre), */
   /* getTracksByRoot: (root, listType) => ipcRenderer.invoke('get-tracks-by-root', root, listType), */
   /* getTracksByAlbum: (listType, album) => ipcRenderer.invoke('get-tracks-by-album', listType, album), */
@@ -77,7 +76,6 @@ contextBridge.exposeInMainWorld('api', {
     onTracksByGenreLoaded: (cb) => ipcRenderer.on('genre-tracks-loaded', (event, arg) => cb(arg)),
     onTracksByArtistLoaded: (cb) => ipcRenderer.on('artist-tracks-loaded', (event, arg) => cb(arg)), */
   /* showContextMenu: (id, itemType) => ipcRenderer.send('show-context-menu', id, itemType), */
-
   /*   onAlbumCoverMenu: (cb) => {
     ipcRenderer.on('album-menu', (event, ...args) => cb(args));
   }, */
@@ -88,39 +86,38 @@ contextBridge.exposeInMainWorld('api', {
   /* onUpdatedTags: (cb) => ipcRenderer.on('updated-tags', (event, msg) => cb(msg)), */
   /* onChildWindowClosed: (cb) => ipcRenderer.on('window-closed', (event, name) => cb(name)), */
   /* getPreferences: () => ipcRenderer.invoke('get-preferences'), */
-  savePreferences: (preferences) => ipcRenderer.invoke('save-preferences', preferences),
-  onTrackLiked: (cb) => ipcRenderer.on('track-liked', (event, msg) => cb(msg)),
-  onTrackLikeRemoved: (cb) => ipcRenderer.on('track-like-removed', (event, msg) => cb(msg)),
-  onMainThemeUpdate: (cb) => ipcRenderer.on('main-theme-updated', (event, msg) => cb(msg)),
-  sendTrackNotification: (track) => {
+  /* savePreferences: (preferences) => ipcRenderer.invoke('save-preferences', preferences), */
+  /* onTrackLiked: (cb) => ipcRenderer.on('track-liked', (event, msg) => cb(msg)), */
+  /* onTrackLikeRemoved: (cb) => ipcRenderer.on('track-like-removed', (event, msg) => cb(msg)), */
+  /* onMainThemeUpdate: (cb) => ipcRenderer.on('main-theme-updated', (event, msg) => cb(msg)), */
+  /*   sendTrackNotification: (track) => {
     console.log('track notice: ', track);
     ipcRenderer.invoke('send-track-notification', track);
-  },
-
-  removeChildWindowClosedListener: (callback) => {
+  }, */
+  /*   removeChildWindowClosedListener: (callback) => {
     ipcRenderer.removeListener('window-closed', callback);
-  },
-  getState: () => ipcRenderer.invole('get-prefernces'),
-  saveState: (preferences) => {
+  }, */
+  /*  getState: () => ipcRenderer.invole('get-prefernces'), */
+  /*   saveState: (preferences) => {
     console.log('prefs: ', preferences);
     ipcRenderer.invoke('save-preferences', preferences);
-  },
-  onHamburgerMenuCommand: (cb) =>
+  }, */
+  /*   onHamburgerMenuCommand: (cb) =>
     ipcRenderer.on('hamburger-menu-command', (event, command) => {
       cb(command);
-    }),
-  getRoots: () => ipcRenderer.invoke('get-roots'),
-  updateRoots: (roots) => ipcRenderer.invoke('update-roots', roots),
-  getFolderPath: (folderName) => ipcRenderer.invoke('get-folder-path', folderName),
-  onUpdateComplete: (cb) => {
+    }), */
+  /* getRoots: () => ipcRenderer.invoke('get-roots'), */
+  /* updateRoots: (roots) => ipcRenderer.invoke('update-roots', roots), */
+  /*  getFolderPath: (folderName) => ipcRenderer.invoke('get-folder-path', folderName), */
+  /*   onUpdateComplete: (cb) => {
     ipcRenderer.on('update-complete', (event, type, result) => {
       cb(type, result);
     });
-  },
-  onUpdateError: (cb) => {
+  }, */
+  /*   onUpdateError: (cb) => {
     ipcRenderer.on('update-error', (event, type, result) => {
       cb(type, result);
     });
-  },
-  off: (channel, callback) => ipcRenderer.removeListener(channel, callback)
+  }, */
+  /* off: (channel, callback) => ipcRenderer.removeListener(channel, callback) */
 });

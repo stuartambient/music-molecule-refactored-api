@@ -9,7 +9,7 @@ function NativeDragDropFolderInput({ rootDirs, setRootDirs }) {
     console.log(e.target.id);
 
     const sendRoots = async (roots) => {
-      const sentRoots = await window.api.updateRoots(roots);
+      const sentRoots = await window.ipcApi.invoke('update-roots', roots);
       if (sentRoots) {
         setRootChanges(sentRoots);
       }

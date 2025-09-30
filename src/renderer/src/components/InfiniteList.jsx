@@ -149,10 +149,8 @@ const InfiniteList = () => {
 
   useEffect(() => {
     const setTrackNavigation = (tracksArray) => {
-      /*    console.log('next track: ', state.newtrack >= 0, '----', tracksArray[state.newtrack + 1]); */
-      /*  console.log('prev track: ', state.newtrack >= 1, '----', tracksArray[state.newtrack - 1]); */
+      console.log('setTrackNavigation', state.newtrack, typeof state.newtrack);
       if (state.newtrack >= 0 && tracksArray[state.newtrack + 1]) {
-        /*  console.log('set-next-track'); */
         dispatch({
           type: 'set-next-track',
           nextTrack: tracksArray[state.newtrack + 1].track_id
@@ -482,6 +480,7 @@ const InfiniteList = () => {
               }}
               /* components={{ Scroller: CustomScroller }} */
               itemContent={(index, item) => {
+                /* console.log('index: ', index) */
                 if (!item) return null; // Handle empty items
 
                 return (

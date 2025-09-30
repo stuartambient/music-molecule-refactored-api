@@ -14,6 +14,7 @@ const Item = forwardRef((props, ref) => {
   /* const { setContextMenuItem } = useContextMenu(); */
 
   if (props.type === 'files') {
+    /* console.log('val: ', props['data-val']); */
     const newId = props.divId.split('--')[0];
     return (
       <div
@@ -25,7 +26,7 @@ const Item = forwardRef((props, ref) => {
         <a
           href={props.href}
           id={props.id}
-          data-val={props.val}
+          data-val={props['data-val']}
           /* fromlisttype={props.type} */
           onClick={(e) =>
             handleTrackSelect(e, state, dispatch, {
@@ -95,7 +96,7 @@ const Item = forwardRef((props, ref) => {
         <a
           href={props.href}
           id={props.id}
-          data-val={props.val}
+          data-val={props['data-val']}
           /* fromlisttype={props.type} */
           onClick={(e) =>
             handleTrackSelect(e, state, dispatch, {

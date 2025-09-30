@@ -183,16 +183,12 @@ const MainNav = ({ onClick }) => {
     if (updateOption) runUpdates();
   }, [dispatch, updateOption]);
 
-  useEffect(() => {
-    const handleUpdateOption = (option) => {
-      console.log('option: ', option);
-      setUpdateOption(option);
-    };
-    window.api.onHamburgerMenuCommand(handleUpdateOption);
-    return () => {
-      window.api.off('hamburger-menu-command', handleUpdateOption);
-    };
-  }, []);
+  const handleUpdateOption = (option) => {
+    console.log('option: ', option);
+    setUpdateOption(option);
+  };
+
+  useIpcEvent('hamburger-menu-command', handleUpdateOption);
 
   const mainNav = classNames(`main-nav ${state.mainTheme}`, {
     'main-nav--minimal': state.minimalmode,
