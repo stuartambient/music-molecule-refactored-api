@@ -5,7 +5,7 @@ const MainPreferences = () => {
   const [selectedTheme, setSelectedTheme] = useState('');
 
   const handlePreferences = async (theme) => {
-    return await window.api.savePreferences({ mainTheme: theme });
+    return await window.ipcApi.invoke('save-preferences', { mainTheme: theme });
   };
 
   const handleSubmit = (e) => {

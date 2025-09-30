@@ -3,6 +3,7 @@ import classNames from 'classnames';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import { useAudioPlayer } from '../mainAudioContext';
 import { useAllAlbumsCovers } from '../hooks/useDb';
+import useIpcEvent from '../hooks/useIpcEvent';
 import handleTrackSelect from '../utility/audioUtils';
 import NoImage from '../assets/noimage.jpg';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -187,22 +188,19 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
     };
   }, [currentAlbum, handlePlayReq, stopAlbumPlay]); // <-- only if album change matters to your click handler
 
-  const handleAlbumToPlaylist = useCallback(
-    async (path) => {
-      const albumTracks = await window.ipcApi.invoke('get-album-tracks', path);
-      if (albumTracks) {
-        dispatch({
-          type: 'play-album',
-          playlistTracks: albumTracks
-        });
-      }
-    },
-    [dispatch]
-  );
+  const handleAlbumToPlaylist = async (path) => {
+    console.log('path: ', path);
+    const albumTracks = await window.ipcApi.invoke('get-album-tracks', path);
+    if (albumTracks) {
+      dispatch({
+        type: 'play-album',
+        playlistTracks: albumTracks
+      });
+    }
+  };
 
-  const handleCoverSearch = useCallback(async (search) => {
+  const handleCoverSearch = async (search) => {
     const { album, path } = search;
-    console.log('handleCoverSearch: ', album, path);
 
     let artist, title;
     if (album.includes('-')) {
@@ -228,7 +226,7 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
       },
       { artist, title, path }
     );
-  }, []);
+  };
 
   useEffect(() => {
     const sendOpenFolder = async () => {
@@ -240,36 +238,31 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
     setTimeout(() => setOpenFolder(''), 1000);
   }, [openFolder]);
 
-  useEffect(() => {
-    const handleContextMenu = (option) => {
-      const [menuoption, path, album] = option;
+  const handleContextMenu = (option) => {
+    const { menuoption, path, folder } = option;
 
-      switch (menuoption) {
-        case 'add album to playlist': {
-          return handleAlbumToPlaylist(path);
-        }
-        case 'open album folder': {
-          if (openFolder === path) return;
-          setOpenFolder(path);
-          break;
-        }
-        case 'cover search': {
-          const regex = /(\([^)]*\)|\[[^\]]*\]|\{[^}]*\})/g;
-          const refAlbum = album.replace(regex, '');
-          return handleCoverSearch({ path: path, album: refAlbum });
-        }
-        default:
-          return;
+    switch (menuoption) {
+      case 'add album to playlist': {
+        console.log('hit ablum to playlist');
+        handleAlbumToPlaylist(path);
+        break;
       }
-    };
+      case 'open album folder': {
+        if (openFolder === path) return;
+        setOpenFolder(path);
+        break;
+      }
+      case 'cover search': {
+        const regex = /(\([^)]*\)|\[[^\]]*\]|\{[^}]*\})/g;
+        const refAlbum = folder.replace(regex, '');
+        return handleCoverSearch({ path: path, album: refAlbum });
+      }
+      default:
+        return;
+    }
+  };
 
-    window.api.onAlbumCoverMenu(handleContextMenu);
-
-    return () => {
-      window.api.off('album-menu', handleContextMenu);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useIpcEvent('album-menu', handleContextMenu);
 
   /*   // Function to start continuous scrolling
   const startScrolling = useCallback(() => {

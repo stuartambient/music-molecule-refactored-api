@@ -9,6 +9,7 @@ import {
   TracksByRoot
 } from './StatsComponents';
 import { useDistinctDirectories } from '../hooks/useDb';
+import useIpcEvent from '../hooks/useIpcEvent';
 import '../style/Stats.css';
 
 const Stats = () => {
@@ -27,32 +28,21 @@ const Stats = () => {
 
   const getKey = () => uuidv4();
 
-  useEffect(() => {
-    const handleWindowClosed = () => {
-      console.log('handleWindowClosed');
-      setSelectedRoot(null);
-      setNavRootHighlight(null);
-    };
+  const handleWindowClosed = () => {
+    console.log('handleWindowClosed');
+    setSelectedRoot(null);
+    setNavRootHighlight(null);
+  };
 
-    window.api.onChildWindowClosed(handleWindowClosed);
-    return () => {
-      window.api.off('window-closed', handleWindowClosed);
-    };
-  }, []);
+  useIpcEvent('window-closed', handleWindowClosed);
 
-  useEffect(() => {
-    const handleRefresh = (msg) => {
-      if (msg === 'updated-tags') {
-        setKey(getKey());
-      }
-    };
+  const handleRefresh = (msg) => {
+    if (msg === 'updated-tags') {
+      setKey(getKey());
+    }
+  };
 
-    window.api.onUpdatedTags(handleRefresh);
-
-    return () => {
-      window.api.off('updated-tags', handleRefresh);
-    };
-  }, []);
+  useIpcEvent('updated-tags', handleRefresh);
 
   useEffect(() => {
     if (isSubmenuOpen && reqDirectories.length > 0) {
@@ -107,7 +97,7 @@ const Stats = () => {
 
   const addRoot = (item) => {
     const rootItems = async (item) => {
-      const results = await window.api.getAlbumsByRoot(item);
+      const results = await window.ipcApi.invoke('get-albums-by-root', item);
       setAlbumsByRoot((prevItems) => [...prevItems, ...results]);
     };
     if (!reqDirectories.includes(item)) {

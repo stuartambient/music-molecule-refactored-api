@@ -76,18 +76,18 @@ contextBridge.exposeInMainWorld('api', {
   /*    onTracksByAlbumLoaded: (cb) => ipcRenderer.on('album-tracks-loaded', (event, arg) => cb(arg)),
     onTracksByGenreLoaded: (cb) => ipcRenderer.on('genre-tracks-loaded', (event, arg) => cb(arg)),
     onTracksByArtistLoaded: (cb) => ipcRenderer.on('artist-tracks-loaded', (event, arg) => cb(arg)), */
-  showContextMenu: (id, itemType) => ipcRenderer.send('show-context-menu', id, itemType),
+  /* showContextMenu: (id, itemType) => ipcRenderer.send('show-context-menu', id, itemType), */
 
-  onAlbumCoverMenu: (cb) => {
+  /*   onAlbumCoverMenu: (cb) => {
     ipcRenderer.on('album-menu', (event, ...args) => cb(args));
-  },
-  getAlbumsByRoot: (roots) => ipcRenderer.invoke('get-albums-by-root', roots),
+  }, */
+  /* getAlbumsByRoot: (roots) => ipcRenderer.invoke('get-albums-by-root', roots), */
   /* toggleResizable: (isResizable) => ipcRenderer.send('toggle-resizable', isResizable), */
   /* checkForOpenTable: (name) => ipcRenderer.invoke('check-for-open-table', name), */
-  clearTable: () => ipcRenderer.invoke('clear-table'),
-  onUpdatedTags: (cb) => ipcRenderer.on('updated-tags', (event, msg) => cb(msg)),
-  onChildWindowClosed: (cb) => ipcRenderer.on('window-closed', (event, name) => cb(name)),
-  getPreferences: () => ipcRenderer.invoke('get-preferences'),
+  /*  clearTable: () => ipcRenderer.invoke('clear-table'), */
+  /* onUpdatedTags: (cb) => ipcRenderer.on('updated-tags', (event, msg) => cb(msg)), */
+  /* onChildWindowClosed: (cb) => ipcRenderer.on('window-closed', (event, name) => cb(name)), */
+  /* getPreferences: () => ipcRenderer.invoke('get-preferences'), */
   savePreferences: (preferences) => ipcRenderer.invoke('save-preferences', preferences),
   onTrackLiked: (cb) => ipcRenderer.on('track-liked', (event, msg) => cb(msg)),
   onTrackLikeRemoved: (cb) => ipcRenderer.on('track-like-removed', (event, msg) => cb(msg)),

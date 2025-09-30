@@ -23,7 +23,7 @@ const tableStatus = async () => {
   try {
     const openTable = await window.ipcApi.invoke('check-for-open-table', 'table-data');
     if (openTable) {
-      await window.api.clearTable();
+      await window.ipcApi.send('clear-table');
 
       return true;
     }

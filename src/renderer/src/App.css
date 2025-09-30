@@ -253,8 +253,8 @@
 --root-highlight-color	color */
   --sort-icon-active: var(--background-3);
   --sort-icon-inactive: var(--background-2);
-  /*--status-loader-background	status load background (animation)
---status-loader-bar	loading animation background */
+  /*--status-loader-background	status load background (animation)*/
+  --status-loader-bar: var(--active-1);
   --tab-background-active: var(--active-2);
   --tab-font-active: var(--text-dark);
   --tab-font-inactive: var(--text-dark);

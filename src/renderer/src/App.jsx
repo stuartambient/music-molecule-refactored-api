@@ -20,7 +20,7 @@ function App() {
   const { state, dispatch } = useAudioPlayer();
 
   const handleThemeUpdate = useCallback(async () => {
-    const preferences = await window.api.getPreferences();
+    const preferences = await window.ipcApi.invoke('get-preferences');
 
     if (preferences.mainTheme && preferences.mainTheme !== state.mainTheme) {
       console.log('not equal');
@@ -32,18 +32,24 @@ function App() {
   }, [state.mainTheme, dispatch]);
 
   // Run check when mainTheme changes
-  useEffect(() => {
+  /*   useEffect(() => {
     handleThemeUpdate();
-  }, [handleThemeUpdate]);
+  }, [handleThemeUpdate]); */
+
+  const checkMainTheme = () => {
+    handleThemeUpdate();
+  };
 
   // Setup subscription once
-  useEffect(() => {
+  /*   useEffect(() => {
     window.api.onMainThemeUpdate(handleThemeUpdate);
 
     return () => {
       window.api.off('main-theme-updated', handleThemeUpdate);
     };
-  }, [handleThemeUpdate]);
+  }, [handleThemeUpdate]); */
+
+  useIpcEvent('main-theme-updated', checkMainTheme);
 
   useEffect(() => {
     const audio = state.audioRef.current;
@@ -295,7 +301,7 @@ function App() {
   };
 
   const handleMenu = () => {
-    window.api.showContextMenu(1, 'menu');
+    window.ipcApi.send('show-context-menu', 1, 'menu');
   };
 
   const handleMainNav = async (e) => {

@@ -929,8 +929,8 @@ ipcMain.handle('check-for-open-table', async (event, name) => {
   return false;
 });
 
-ipcMain.handle('clear-table', async () => {
-  const targetWindow = await getWindow('table-data');
+ipcMain.on('clear-table', () => {
+  const targetWindow = getWindow('table-data');
   targetWindow.webContents.send('clear-table', 'clear');
 });
 
@@ -1252,21 +1252,25 @@ ipcMain.handle('show-album-cover-menu', (event, path, folder) => {
     {
       label: 'add album to playlist',
       click: () => {
-        return event.sender.send('album-menu', 'add album to playlist', path, folder);
+        return event.sender.send('album-menu', {
+          menuoption: 'add album to playlist',
+          path,
+          folder
+        });
       }
     },
     { type: 'separator' },
     {
       label: 'open album folder',
       click: () => {
-        return event.sender.send('album-menu', 'open album folder', path, folder);
+        return event.sender.send('album-menu', { menuoption: 'open album folder', path, folder });
       }
     },
     { type: 'separator' },
     {
       label: 'cover search',
       click: () => {
-        return event.sender.send('album-menu', 'cover search', path, folder);
+        return event.sender.send('album-menu', { menuoption: 'cover search', path, folder });
       }
     }
   ];
