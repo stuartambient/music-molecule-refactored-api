@@ -21,6 +21,8 @@
   --icons-1: #000000;
   --icons-2: #adadad;
 
+  --overlay-background: #390502;
+
   --active: var(--active-2);
   --active-album: var(--active-1);
   --active-album-color: var(--text-light);
@@ -36,16 +38,16 @@
   --bar: var(--background-2);
   --bar-outline-background: var(--background-3);
   --borders: var(--background-3);
-  /*--button-on	active button*/
+  --button-on: var(--active-3);
   --color4: var(--background-1);
   --container-home-background: var(--background-1);
-  /* --control-on	active button */
+  --control-on: var(--active-3);
   --controls-background: none;
   --controls-button-icon-hover: var(--hover-2);
   --controls-icon: var(--icons-1);
   --cover-tools-range-thumb: var(--background-2);
   --cover-tools-range-track: var(--background-3);
-  /* --covers-loading	element that loads while more images are loading*/
+  --covers-loading: var(--background-2);
   --covers-scrollbar: var(--background-2);
   --covers-scrollbar-buttons: var(--background-3);
   --covers-scrollbar-thumb: var(--background-3);
@@ -57,18 +59,17 @@
   --form-radio-checked: var(--active-3);
   --highlight: var(--active-1);
   --item-hover: var(--hover-4);
-  /* --likedBtn	active (should be unique)  */
+  --likedBtn: var(--active-3);
   --list-background: var(--background-1);
   --list-font-color: var(--text-dark);
   --list-scroll-active: var(--active-1);
   --list-scroll-inactive: var(--icons-2);
   --main-nav-background: var(--background-1);
   --main-nav-font-color: var(--text-dark);
-  /*--main-nav-hover-color	hover */
   --main-nav-hover-menu: var(--hover-3);
-  /*--main-nav-hover-menu-color	hover (main nav)
---minimode-control-icons	icons
---overlay-color	overlay (div) */
+  --main-nav-hover-menu-color: var(--text-light);
+  --overlay: var(--overlay-background);
+  --overlay-color: var(--text-light);
   --player-background: var(--background-1);
   --player-font-color: var(--text-dark);
   /*--root-highlight	active state
