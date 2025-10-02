@@ -1,7 +1,15 @@
 // hooks/useIpcEvent.js
 import { useEffect, useRef } from 'react';
 
-export default function useIpcEvent(channel, handler) {
+/**
+ * React hook to subscribe to an IPC event in any renderer.
+ *
+ * @param {string} channel - IPC channel name
+ * @param {Function} handler - Callback when event fires
+ * @param {string} [apiKey='ipcApi'] - Which preload API to use (default = 'ipcApi')
+ */
+
+export default function useIpcEvent(channel, handler, apiKey = 'ipcApi') {
   /*   console.log('channel: ', channel, 'handler: ', handler); */
   const handlerRef = useRef(handler);
 
@@ -10,9 +18,22 @@ export default function useIpcEvent(channel, handler) {
     handlerRef.current = handler;
   }, [handler]);
 
-  useEffect(() => {
+  /*   useEffect(() => {
     if (!channel) return;
     const cleanup = window.ipcApi.on(channel, (...args) => handlerRef.current?.(...args));
-    return cleanup; // <-- crucial
+    return cleanup; 
   }, [channel]);
+ */
+  useEffect(() => {
+    if (!channel) return;
+
+    const api = window[apiKey];
+    if (!api?.on) {
+      console.warn(`useIpcEvent: '${apiKey}' does not exist or has no 'on' method`);
+      return;
+    }
+
+    const cleanup = api.on(channel, (...args) => handlerRef.current?.(...args));
+    return cleanup; // remove listener on unmount
+  }, [channel, apiKey]);
 }

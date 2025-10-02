@@ -27,7 +27,7 @@ function EditForm({
   useEffect(() => {
     if (imageFolder) {
       const delayDownload = true;
-      window.metadataEditingApi.selectImageFromFolder(imageFolder, delayDownload);
+      window.tagEditApi.invoke('select-image-from-folder', imageFolder, delayDownload);
     }
   }, [imageFolder]);
 

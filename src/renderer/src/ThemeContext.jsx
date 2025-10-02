@@ -11,7 +11,7 @@ export const ThemeProvider = ({ children }) => {
     const root = document.documentElement;
     root.classList.remove('light', 'dark');
     root.classList.add(theme);
-    window.metadataEditingApi.savePreferences({ theme });
+    window.tagEditApi.invoke('save-preferences', { theme });
   }, [theme]);
 
   const toggleTheme = () => setTheme((t) => (t === 'light' ? 'dark' : 'light'));

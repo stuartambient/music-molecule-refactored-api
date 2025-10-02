@@ -1000,9 +1000,9 @@ ipcMain.handle('save-playlist', async (_, args) => {
   return playlists;
 }); */
 
-ipcMain.handle('get-temp-path', async () => {
+/* ipcMain.handle('get-temp-path', async () => {
   return app.getPath('temp');
-});
+}); */
 
 /* ipcMain.handle('homepage-playlists', async (_m, ...args) => {
   const [type, value] = args;
@@ -1100,6 +1100,7 @@ ipcMain.handle('update-tags', async (event, arr) => {
 ipcMain.on('show-context-menu', (event, id, type, path = undefined) => {
   const context = { id, type, path };
   const template = [];
+  console.log('show-context-menu for cover: ', id, type);
 
   // Add items based on the 'type'
   if (type === 'files') {
@@ -1336,6 +1337,7 @@ const downloadFile = async (fileUrl, savePath) => {
 
 ipcMain.handle('download-file', async (event, ...args) => {
   const [fileUrl, filePath] = args;
+  console.log('download-file: ', fileUrl, filePath);
 
   const extension = path.extname(new URL(fileUrl).pathname);
   const defaultFilename = `cover${extension}`;

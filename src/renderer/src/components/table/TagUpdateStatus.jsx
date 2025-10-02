@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import useIpcEvent from '../../hooks/useIpcEvent';
 import StatusTagLoader from './StatusTagLoader';
 
 const TagUpdateState = ({ updateStatus, setUpdateStatus, tagReport, setTagReport }) => {
@@ -9,25 +9,19 @@ const TagUpdateState = ({ updateStatus, setUpdateStatus, tagReport, setTagReport
     }
   }, [updateStatus, setUpdateStatus]); */
 
-  useEffect(() => {
-    const handleUpdateTagsStatus = (msg) => {
-      console.log('msg: ', msg);
-      setUpdateStatus(msg.status);
-      const { status, passed = [], failed = [] } = msg;
-      setTagReport({ status, passed, failed });
-      return;
-    };
-
-    window.metadataEditingApi.onUpdateTagsStatus(handleUpdateTagsStatus);
-
-    return () => {
-      window.metadataEditingApi.off('updated-tags', handleUpdateTagsStatus);
-    };
-  }, [setUpdateStatus, setTagReport]);
-
-  const handleTagStatusRequest = () => {
-    console.log('status request');
+  const handleUpdateTagsStatus = (msg) => {
+    console.log('msg: ', msg);
+    setUpdateStatus(msg.status);
+    const { status, passed = [], failed = [] } = msg;
+    setTagReport({ status, passed, failed });
+    return;
   };
+
+  useIpcEvent('updated-tags', handleUpdateTagsStatus, 'tagEditApi');
+
+  /*  const handleTagStatusRequest = () => {
+    console.log('status request');
+  }; */
 
   const handleView = () => {
     console.log('view');

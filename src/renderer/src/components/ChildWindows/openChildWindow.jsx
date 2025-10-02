@@ -24,7 +24,7 @@ export const openChildWindow = async (name, type, config, data) => {
       data: { listType: type, results: data }
     });
   } else {
-    window.metadataEditingApi.showChild({
+    window.tagEditApi.invoke('show-child', {
       name: name,
       type: type,
       winConfig: {

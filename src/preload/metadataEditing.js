@@ -5,20 +5,38 @@ const initialTheme = themeArg ? themeArg.split('=')[1] : 'light';
 
 contextBridge.exposeInMainWorld('initialTheme', initialTheme);
 
+contextBridge.exposeInMainWorld('tagEditApi', {
+  invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
+  send: (channel, ...args) => ipcRenderer.send(channel, ...args),
+  on: (channel, listener) => {
+    /*     ipcRenderer.on(channel, (event, ...args) => listener(...args));
+    console.log('listener added for', channel, ipcRenderer.listenerCount(channel)); */
+
+    const wrapped = (event, ...args) => listener(...args);
+    ipcRenderer.on(channel, wrapped);
+    console.log('listener added for', channel, ipcRenderer.listenerCount(channel));
+    return () => ipcRenderer.removeListener(channel, wrapped);
+  },
+  once: (channel, listener) => {
+    ipcRenderer.once(channel, (event, ...args) => listener(...args));
+  },
+  off: (channel, listener) => ipcRenderer.removeListener(channel, listener)
+});
+
 contextBridge.exposeInMainWorld('metadataEditingApi', {
-  onSendToChild: (cb) => ipcRenderer.on('send-to-child', (event, arg) => cb(arg)),
-  updateTags: (arr) => ipcRenderer.invoke('update-tags', arr),
-  onUpdateTagsStatus: (cb) => ipcRenderer.on('updated-tags', (event, msg) => cb(msg)),
-  selectImageFromFolder: (arr, delayDownload) =>
-    ipcRenderer.invoke('select-image-from-folder', arr, delayDownload),
+  /* onSendToChild: (cb) => ipcRenderer.on('send-to-child', (event, arg) => cb(arg)), */
+  /* updateTags: (arr) => ipcRenderer.invoke('update-tags', arr), */
+  /* onUpdateTagsStatus: (cb) => ipcRenderer.on('updated-tags', (event, msg) => cb(msg)), */
+  /* selectImageFromFolder: (arr, delayDownload) =>
+    ipcRenderer.invoke('select-image-from-folder', arr, delayDownload), */
   /* onSelectedImage: (cb) => ipcRenderer.on('selected-image', (event, msg) => cb(msg)), */
   /*  onDownloadedImage: (cb) => ipcRenderer.on('downloaded-image', (event, img) => cb(img)), */
-  showChild: (args) => ipcRenderer.invoke('show-child', args),
-  onClearTable: (cb) => ipcRenderer.on('clear-table', (event, arg) => cb(arg)),
-  getRoots: () => ipcRenderer.invoke('get-roots'),
-  getPreferencesSync: () => ipcRenderer.invoke('get-preferences-sync'),
-  getPreferences: () => ipcRenderer.invoke('get-preferences'),
-  savePreferences: (preferences) => ipcRenderer.invoke('save-preferences', preferences),
+  /*  showChild: (args) => ipcRenderer.invoke('show-child', args), */
+  /* onClearTable: (cb) => ipcRenderer.on('clear-table', (event, arg) => cb(arg)), */
+  /* getRoots: () => ipcRenderer.invoke('get-roots'), */
+  /* getPreferencesSync: () => ipcRenderer.invoke('get-preferences-sync'), */
+  /* getPreferences: () => ipcRenderer.invoke('get-preferences'), */
+  /* savePreferences: (preferences) => ipcRenderer.invoke('save-preferences', preferences), */
   showContextMenu: (id, itemType) => ipcRenderer.send('show-context-menu', id, itemType),
   onContextMenuCommand: (callback) => {
     ipcRenderer.on('context-menu-command', (event, command) => callback(command));

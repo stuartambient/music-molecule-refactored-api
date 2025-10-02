@@ -7,7 +7,7 @@
     "replayGainTrackGain",
     "replayGainTrackPeak"
   ],
-  "theme": "light",
+  "theme": "dark",
   "mainTheme": "theme-1",
   "schedule": {
     "Monday": "07:23",

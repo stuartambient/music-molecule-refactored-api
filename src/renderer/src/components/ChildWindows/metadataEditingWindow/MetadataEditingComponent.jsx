@@ -1,5 +1,6 @@
-import { useState, useEffect /* , useRef, Suspense */ } from 'react';
+import { useState /* , useRef, Suspense */ } from 'react';
 import AGGrid from '../../table/AGGrid';
+import useIpcEvent from '../../../hooks/useIpcEvent';
 import './style.css';
 
 const MetadataEditingApp = () => {
@@ -8,32 +9,12 @@ const MetadataEditingApp = () => {
   const [reset, setReset] = useState(false);
   /* const [data, setData] = useState([]); */
 
-  useEffect(() => {
-    const handleClearTable = () => {
-      setReset(true);
-      /* setData([]); */
-    };
+  const handleClearTable = () => {
+    setReset(true);
+    /* setData([]); */
+  };
 
-    window.metadataEditingApi.onClearTable(handleClearTable);
-
-    return () => {
-      window.metadataEditingApi.off('clear-table', handleClearTable);
-    };
-  }, []);
-
-  /*   useEffect(() => {
-    const handleSendToChild = (e) => {
-      setListType(e.listType);
-      setData(e.results);
-      setReset(false);
-    };
-
-    window.metadataEditingApi.onSendToChild(handleSendToChild);
-
-    return () => {
-      window.metadataEditingApi.off('send-to-child', handleSendToChild);
-    };
-  }, []); */
+  useIpcEvent('clear-table', handleClearTable, 'tagEditApi');
 
   return <AGGrid reset={reset} setListType={setListType} setReset={setReset} /* data={data} */ />;
 };

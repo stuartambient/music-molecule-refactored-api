@@ -21,6 +21,7 @@ import EditForm from './EditForm';
 import { useColumnDefinitions } from './useTableDefinitions';
 import { useColumnTypes } from './useColumnTypes';
 import { themeQuartz } from 'ag-grid-community';
+import useIpcEvent from '../../hooks/useIpcEvent';
 import PlayButtonRenderer from './PlayButtonRenderer';
 import './styles/AGGrid.css';
 import { useTheme } from '../../ThemeContext';
@@ -71,23 +72,15 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
 
   /*--------------------------------------------------*/
 
-  useEffect(() => {
-    const handleSendToChild = (e) => {
-      console.log('results: ', e.results, e.results.length);
-      /*  if (e.results.length === 0) return; */
-      setListType(e.listType);
-      setRowData(e.results);
-      setReset(false);
-      setLoading(false);
-    };
+  const handleSendToChild = (e) => {
+    /* console.log('results: ', e.results, e.results.length); */
+    setListType(e.listType);
+    setRowData(e.results);
+    setReset(false);
+    setLoading(false);
+  };
 
-    window.metadataEditingApi.onSendToChild(handleSendToChild);
-
-    return () => {
-      window.metadataEditingApi.off('send-to-child', handleSendToChild);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useIpcEvent('send-to-child', handleSendToChild, 'tagEditApi');
 
   const myTheme = useMemo(() => {
     return themeQuartz
@@ -97,7 +90,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
 
   useEffect(() => {
     const loadPreferences = async () => {
-      const preferences = await window.metadataEditingApi.getPreferencesSync();
+      const preferences = await window.tagEditApi.invoke('get-preferences-sync');
       setHiddenColumns(preferences.hiddenColumns || []);
       setPrefsLoaded(true);
     };
@@ -114,7 +107,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
 
   useEffect(() => {
     const updateColPrefs = async () => {
-      await window.metadataEditingApi.savePreferences({ hiddenColumns });
+      await window.tagEditApi.invoke('save-preferences', { hiddenColumns });
     };
     if (hiddenColumns.length > 0) {
       updateColPrefs();
@@ -267,39 +260,34 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     };
   }, []); // subscribe once */
 
-  useEffect(() => {
-    const handleTagUpdateStatus = (val) => {
-      /* const currentFailedIds = tagReport?.failed?.map((item) => item.id) || []; */
-      switch (val.status) {
-        case 'success':
-          return setUndos([]);
+  const handleTagUpdateStatus = (val) => {
+    /* const currentFailedIds = tagReport?.failed?.map((item) => item.id) || []; */
+    switch (val.status) {
+      case 'success':
+        return setUndos([]);
 
-        case 'partial_status':
-          /* return setUndos([]); */
-          break;
-        case 'failed': {
-          const currentFailedIds = new Set(val.failed.map((f) => f.id));
-          const retainedUndos = undos.filter((u) => currentFailedIds.has(u.audiotrack));
-          console.log('retainedUndo: ', retainedUndos);
-          setUndos(retainedUndos);
-          break;
-        }
+      case 'partial_status':
         /* return setUndos([]); */
-        default:
-          break;
+        break;
+      case 'failed': {
+        const currentFailedIds = new Set(val.failed.map((f) => f.id));
+        const retainedUndos = undos.filter((u) => currentFailedIds.has(u.audiotrack));
+        console.log('retainedUndo: ', retainedUndos);
+        setUndos(retainedUndos);
+        break;
       }
-    };
+      /* return setUndos([]); */
+      default:
+        break;
+    }
+  };
 
-    window.metadataEditingApi.onUpdateTagsStatus(handleTagUpdateStatus);
-    return () => {
-      window.metadataEditingApi.off('updated-tags', handleTagUpdateStatus);
-    };
-  }, [tagReport, undos]);
+  useIpcEvent('updated-tags', handleTagUpdateStatus, 'tagEditApi');
 
   useEffect(() => {
     if (tempFolder) {
       console.log('select image from folder');
-      window.metadataEditingApi.selectImageFromFolder(tempFolder, true);
+      window.tagEditApi.invoke('select-image-from-folder', tempFolder, true);
     }
   }, [tempFolder]);
 
@@ -558,7 +546,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
   };
 
   const updateTags = async (arr) => {
-    await window.metadataEditingApi.updateTags(arr);
+    await window.tagEditApi.invoke('update-tags', arr);
   };
 
   const handleGridMenu = (e) => {

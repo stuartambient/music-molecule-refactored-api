@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import useIpcEvent from '../../../hooks/useIpcEvent';
 import './style.css';
 
 const CoverSearchAltApp = () => {
@@ -16,7 +17,6 @@ const CoverSearchAltApp = () => {
   const [div2StartHeight, setDiv2StartHeight] = useState(0);
   const [, /* windowWidth */ setWindowWidth] = useState(window.innerWidth);
   const [layout, setLayout] = useState('row');
-  const [notified, setNotified] = useState(false);
 
   /*   const isListenerAttached = useRef(false); */
 
@@ -116,47 +116,43 @@ const CoverSearchAltApp = () => {
   };
   const [nonce] = useState(generateNonce());
 
-  useEffect(() => {
-    const handleDownloadCompleted = (val) => {
-      console.log('val: ', val[0]);
-      /* if (val[0] === 'download successful' && listType === 'cover-search-alt-tags') {
-        setDownload(false);
-        console.log('downloaded: ', val);
-      } */
-      if (val[0] === 'download-successful' || val[0] === 'download successful') {
-        setDownload(false);
-        setImageUrl('');
-      } else if (val[0] === 'download-cancelled' || val[0] === 'download cancelled') {
-        setDownload(false);
-        setImageUrl('');
-      }
-    };
+  const handleDownloadCompleted = (val) => {
+    console.log('val: ', val);
+    if (val === 'download-successful' || val === 'download successful') {
+      setDownload(false);
+      setImageUrl('');
+    } else if (val === 'download-cancelled' || val === 'download cancelled') {
+      setDownload(false);
+      setImageUrl('');
+    }
+  };
 
-    window.coverSearchAltApi.onDownloadFile(handleDownloadCompleted);
-
-    return () => {
-      window.coverSearchAltApi.off('download-completed', handleDownloadCompleted);
-    };
-  }, []);
+  useIpcEvent('download-completed', handleDownloadCompleted, 'coverSearchApi');
 
   useEffect(() => {
     if (download && imageUrl && listType === 'cover-search-alt') {
-      window.coverSearchAltApi.downloadFile(imageUrl, savePath /* , listType */);
+      window.coverSearchApi.invoke('download-file', imageUrl, savePath /* , listType */);
     } else if (download && imageUrl && listType === 'cover-search-alt-tags') {
-      window.coverSearchAltApi.downloadTagImage(imageUrl, savePath, /* listType, */ delayDownload);
-    } else if (download && imageUrl && listType === 'cover-search-alt=tags' && delayDownload) {
-      window.coverSearchAltApi.downloadTagImage(imageUrl, savePath, /* listType, */ delayDownload);
+      window.coverSearchApi.invoke('download-tag-image', imageUrl, savePath, delayDownload);
     }
-    /* return setDownload(false); */
   }, [delayDownload, download, imageUrl, listType, savePath]);
 
-  useEffect(() => {
+  /*   useEffect(() => {
     window.coverSearchAltApi.onContextMenuCommand((value) => {
       if (value === 'save image') {
         setDownload(true);
       }
     });
-  }, []);
+  }, []); */
+
+  const handleDownload = (value) => {
+    console.log('value: ', value);
+    if (value === 'save image') {
+      setDownload(true);
+    }
+  };
+
+  useIpcEvent('context-menu-command', handleDownload, 'coverSearchApi');
 
   useEffect(() => {
     const metaTag = document.createElement('meta');
@@ -186,33 +182,36 @@ const CoverSearchAltApp = () => {
     };
   }, [nonce]);
 
-  useEffect(() => {
+  /*   useEffect(() => {
     if (!notified) {
       window.coverSearchAltApi.notifyReady();
       setNotified(true);
       console.log('Notified parent that child is ready');
-    }
+    } */
 
-    const handleSearchParams = (args) => {
-      console.log('args: ', args);
+  //}
+
+  useEffect(() => {
+    // fire-and-forget; no need for state
+    window.coverSearchApi.send('child-ready');
+    console.log('Notified parent that child is ready');
+  }, []);
+
+  const handleSearchParams = useCallback(
+    (args) => {
       /* if (!args.results.artist) return; */
       setArtist(args.results.artist ? args.results.artist : '');
       setAlbum(args.results.title ? args.results.title : '');
       setListType(args.listType);
       setSavePath(args.results.path);
-      if (args.results.type === 'form-search-online') {
+      if (args.results?.type === 'form-search-online') {
         setDelayDownload(true);
       }
+    },
+    [setArtist, setAlbum, setListType, setSavePath, setDelayDownload]
+  );
 
-      //}
-    };
-
-    window.coverSearchAltApi.onSendToChild(handleSearchParams);
-
-    return () => {
-      window.coverSearchAltApi.off('send-to-child', handleSearchParams);
-    };
-  }, [notified]); // Empty array to set up the listener once
+  useIpcEvent('send-to-child', handleSearchParams, 'coverSearchApi');
 
   useEffect(() => {
     const messageHandler = (event) => {
@@ -249,7 +248,7 @@ const CoverSearchAltApp = () => {
   const handleContextMenu = (event) => {
     event.preventDefault();
 
-    window.coverSearchAltApi.showContextMenu(listType, 'cover');
+    window.coverSearchApi.send('show-context-menu', listType, 'cover');
   };
 
   useEffect(() => {
