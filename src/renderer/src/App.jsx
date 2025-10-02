@@ -38,9 +38,9 @@ function App() {
   }, [state.mainTheme, dispatch]);
 
   // Run check when mainTheme changes
-  /*   useEffect(() => {
+  useEffect(() => {
     handleThemeUpdate();
-  }, [handleThemeUpdate]); */
+  }, [handleThemeUpdate]);
 
   const checkMainTheme = () => {
     handleThemeUpdate();

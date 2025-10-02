@@ -216,7 +216,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     return { artist, title, path: paths };
   }, []);
 
-  const embedPictureHandlerRef = useRef();
+  /*  const embedPictureHandlerRef = useRef();
 
   useEffect(() => {
     embedPictureHandlerRef.current = (values) => {
@@ -258,7 +258,41 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     return () => {
       window.metadataEditingApi.off('context-menu-command', wrapped);
     };
-  }, []); // subscribe once */
+  }, []); */ // subscribe once */
+
+  useIpcEvent(
+    'context-menu-command',
+    (values) => {
+      let artist, title, path;
+      const { type, params } = values;
+
+      if (type === 'single-track') {
+        artist = params.artist;
+        title = params.album;
+        path = params.path;
+      } else if (type === 'search-folder-single') {
+        setTempFolder(params.path);
+        return;
+      }
+
+      openChildWindow(
+        'cover-search-alt-tags',
+        'cover-search-alt-tags',
+        {
+          width: 700,
+          height: 600,
+          show: false,
+          resizable: true,
+          preload: 'coverSearchAlt',
+          sandbox: true,
+          webSecurity: true,
+          contextIsolation: true
+        },
+        { artist, title, path, type }
+      );
+    },
+    'tagEditApi'
+  );
 
   const handleTagUpdateStatus = (val) => {
     /* const currentFailedIds = tagReport?.failed?.map((item) => item.id) || []; */
@@ -301,30 +335,23 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     }
   }, [pendingPictureEdit]);
 
-  useEffect(() => {
-    const handleForSubmit = (values) => {
-      if (nodesSelected.length > 1) return;
-      setPendingPictureEdit((prev) => {
-        if (!prev?.track_id) return prev;
-        return { ...prev, newValue: values.tempFile };
-      });
-    };
+  const handleForSubmit = (values) => {
+    if (nodesSelected.length > 1) return;
+    setPendingPictureEdit((prev) => {
+      if (!prev?.track_id) return prev;
+      return { ...prev, newValue: values.tempFile };
+    });
+  };
 
-    const handleImageFolder = (values) => {
-      setPendingPictureEdit((prev) => {
-        if (!prev?.track_id) return prev;
-        return { ...prev, newValue: values };
-      });
-    };
+  const handleImageFolder = (values) => {
+    setPendingPictureEdit((prev) => {
+      if (!prev?.track_id) return prev;
+      return { ...prev, newValue: values };
+    });
+  };
 
-    window.metadataEditingApi.onImagesForSubmit(handleForSubmit);
-    window.metadataEditingApi.onSaveImageFolder(handleImageFolder);
-
-    return () => {
-      window.metadataEditingApi.off('for-submit-form', handleForSubmit);
-      window.metadataEditingApi.off('save-image-folder', handleImageFolder);
-    };
-  }, [nodesSelected.length]);
+  useIpcEvent('for-submit-form', handleForSubmit, 'tagEditApi');
+  useIpcEvent('save-image-folder', handleImageFolder, 'tagEditApi');
 
   const togglePanelVisibility = () => {
     setIsPanelVisible(!isPanelVisible);
@@ -613,7 +640,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     const allowedColumns = ['pictures', 'picture-location'];
     console.log('column: ', params.column.getColId());
     if (!allowedColumns.includes(params.column.getColId())) {
-      return window.metadataEditingApi.showContextMenu({}, 'tag-context-menu');
+      return window.tagEditApi.send('show-context-menu', {}, 'tag-context-menu');
     }
     setPendingPictureEdit({ track_id: params.data.track_id, newValue: null });
     const album = params.data.album ? params.data.album : '';
@@ -623,7 +650,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
         ? params.data.performers
         : '';
     const path = params.data.audiotrack;
-    window.metadataEditingApi.showContextMenu({ artist, album, path }, 'picture');
+    window.tagEditApi.send('show-context-menu', { artist, album, path }, 'picture');
   }, []);
 
   const onColumnVisible = useCallback(() => {

@@ -523,6 +523,7 @@ export const AudioPlayerProvider = ({ children }) => {
 
   useEffect(() => {
     const startTheme = window.initialMainTheme || 'basic';
+    console.log('startTheme: ', startTheme);
     dispatch({ type: 'set-main-theme', mainTheme: startTheme });
   }, []);
 

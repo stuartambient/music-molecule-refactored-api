@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { editableColumns } from './EditableColumns';
 import { openChildWindow } from '../ChildWindows/openChildWindow';
 import { useTheme } from '../../ThemeContext';
+import useIpcEvent from '../../hooks/useIpcEvent';
 import './styles/EditForm.css';
 import '../../themes.css';
 
@@ -37,9 +38,8 @@ function EditForm({
 
   const handleMenu = (col) => {
     console.log('col: ', col.target.id);
-    /*     window.metadataEditingApi.showContextMenu({}, 'tag-context-menu'); */
     if (col.target.id !== 'picture-location') {
-      return window.metadataEditingApi.showContextMenu({}, 'tag-context-menu');
+      return window.tagEditApi.send('show-context-menu', {}, 'tag-context-menu');
     } else {
       const selectedNode = nodesSelected[0];
       const album = selectedNode.data.album ? selectedNode.data.album : '';
@@ -50,39 +50,30 @@ function EditForm({
           : '';
       const path = selectedNode.data.audiotrack;
       console.log('album: ', album, 'artist: ', artist, 'path: ', path);
-      window.metadataEditingApi.showContextMenu({ artist, album, path }, 'form-picture');
+      window.tagEditApi.send('show-context-menu', { artist, album, path }, 'form-picture');
     }
   };
 
-  useEffect(() => {
-    const handleForSubmit = (values) => {
-      console.log('values: ', values);
-      /*   setSavedImage(values); */
-      setFormData((prevFormData) => ({
-        ...prevFormData,
-        'picture-location': values.tempFile
-      }));
-    };
-    window.metadataEditingApi.onImagesForSubmit(handleForSubmit);
-    return () => {
-      window.metadataEditingApi.off('for-submit-form', handleForSubmit);
-    };
-  }, []);
+  const handleForSubmit = (values) => {
+    console.log('values: ', values);
+    /*   setSavedImage(values); */
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      'picture-location': values.tempFile
+    }));
+  };
 
-  useEffect(() => {
-    const handleSaveImageFolder = (value) => {
-      /* setSavedFolder(value); */
-      setFormData((prevFormData) => ({
-        ...prevFormData,
-        'picture-location': value
-      }));
-    };
+  useIpcEvent('for-submit-form', handleForSubmit, 'tagEditApi');
 
-    window.metadataEditingApi.onSaveImageFolder(handleSaveImageFolder);
-    return () => {
-      window.metadataEditingApi.off('save-image-folder', handleSaveImageFolder);
-    };
-  }, []);
+  const handleSaveImageFolder = (value) => {
+    /* setSavedFolder(value); */
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      'picture-location': value
+    }));
+  };
+
+  useIpcEvent('save-image-folder', handleSaveImageFolder, 'tagEditApi');
 
   const formSearchOnline = (params) => {
     console.log('params: ', params);
@@ -103,23 +94,19 @@ function EditForm({
     );
   };
 
-  useEffect(() => {
-    const handleFormMenu = (option) => {
-      const nodesObj = getSelectedNodes();
-      const artist = nodesObj.artist;
-      const title = nodesObj.title;
-      const path = nodesObj.path;
-      if (option.type === 'form-search-online') {
-        formSearchOnline({ artist, title, path, type: option.type });
-      } else {
-        setImageFolder(path);
-      }
-    };
-    window.metadataEditingApi.onFormMenuCommand(handleFormMenu);
-    return () => {
-      window.metadataEditingApi.off('form-menu-command', handleFormMenu);
-    };
-  }, [getSelectedNodes]);
+  const handleFormMenu = (option) => {
+    const nodesObj = getSelectedNodes();
+    const artist = nodesObj.artist;
+    const title = nodesObj.title;
+    const path = nodesObj.path;
+    if (option.type === 'form-search-online') {
+      formSearchOnline({ artist, title, path, type: option.type });
+    } else {
+      setImageFolder(path);
+    }
+  };
+
+  useIpcEvent('form-menu-command', handleFormMenu, 'tagEditApi');
 
   // Utility function to convert data types based on the field name
   function convertToCorrectType(key, value) {

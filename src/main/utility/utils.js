@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import { v4 as uuidv4 } from 'uuid';
-import Database from 'better-sqlite3';
 import { File, MpegAudioFileSettings, FlacFileSettings, TagTypes } from 'node-taglib-sharp';
 import decodeTagTypes from '../decodeTagTypes.js';
 import { getTagInfo } from '../musicMetadata.js';

@@ -129,7 +129,7 @@ const getTheme = () => {
   console.log('mainTheme: ', mainTheme); */
 };
 
-/* getTheme(); */
+getTheme();
 
 let currentSchedule;
 let cronSchedule = [];
@@ -583,6 +583,7 @@ ipcMain.handle('update-folders', async () => {
     await createUpdateFoldersWorker({ workerData: workerPath })
       .on('message', (message) => {
         //console.log('message from worker: ', message);
+        console.log('update-folders message: ', message);
         mainWindow.webContents.send('update-complete', 'folders', message.result);
       })
       .on('error', (err) => {
@@ -654,7 +655,7 @@ ipcMain.handle('update-meta', async () => {
     const workerPath = process.resourcesPath;
     await createUpdateMetadataWorker({ workerData: workerPath })
       .on('message', (message) => {
-        //console.log('message from worker: ', message);
+        console.log('metadata message: ', message);
         mainWindow.webContents.send(
           'update-complete',
           'metadata',

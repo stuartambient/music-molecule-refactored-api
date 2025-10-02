@@ -37,19 +37,19 @@ contextBridge.exposeInMainWorld('metadataEditingApi', {
   /* getPreferencesSync: () => ipcRenderer.invoke('get-preferences-sync'), */
   /* getPreferences: () => ipcRenderer.invoke('get-preferences'), */
   /* savePreferences: (preferences) => ipcRenderer.invoke('save-preferences', preferences), */
-  showContextMenu: (id, itemType) => ipcRenderer.send('show-context-menu', id, itemType),
-  onContextMenuCommand: (callback) => {
+  /*  showContextMenu: (id, itemType) => ipcRenderer.send('show-context-menu', id, itemType), */
+  /*   onContextMenuCommand: (callback) => {
     ipcRenderer.on('context-menu-command', (event, command) => callback(command));
-  },
+  }, */
   /* onSendingRowData: (cb) => ipcRenderer.on('did-finish-load', (event, msg) => cb(msg)), */
-  onFormMenuCommand: (callback) => {
+  /*   onFormMenuCommand: (callback) => {
     ipcRenderer.on('form-menu-command', (event, command) => callback(command));
-  },
-  onImagesForSubmit: (callback) => {
+  }, */
+  /*   onImagesForSubmit: (callback) => {
     ipcRenderer.on('for-submit-form', (event, command) => callback(command));
   },
   onSaveImageFolder: (callback) => {
     ipcRenderer.on('save-image-folder', (event, command) => callback(command));
   },
-  off: (channel, callback) => ipcRenderer.removeListener(channel, callback)
+  off: (channel, callback) => ipcRenderer.removeListener(channel, callback) */
 });
