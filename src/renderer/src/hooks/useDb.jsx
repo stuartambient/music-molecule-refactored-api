@@ -34,7 +34,7 @@ const useTracks = (
       /* console.log('case #: ', 6); */
       return true;
     }
-  }, [tracksPageNumber, state.tracks.length]);
+  }, [tracksPageNumber, state.tracks.length, state.tracksShuffle, state.listType]);
 
   useEffect(() => {
     //let isSubscribed = true;

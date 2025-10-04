@@ -129,7 +129,7 @@ const getTheme = () => {
   console.log('mainTheme: ', mainTheme); */
 };
 
-getTheme();
+/* getTheme(); */
 
 let currentSchedule;
 let cronSchedule = [];

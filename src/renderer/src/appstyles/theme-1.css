@@ -26,7 +26,7 @@
   --active: var(--active-2);
   --active-album: var(--active-1);
   --active-album-color: var(--text-light);
-  --active-border: var(--active-2);
+  --active-border: var(--active-1);
   --active-color: var(--text-dark);
   --active-controls: var(--active-3);
   --active-controls-font: var(--text-light);

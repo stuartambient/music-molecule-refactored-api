@@ -1,5 +1,5 @@
 // hooks/useIpcEvent.js
-import { useEffect, useRef } from 'react';
+import { useEffect, useEffectEvent } from 'react';
 
 /**
  * React hook to subscribe to an IPC event in any renderer.
@@ -11,12 +11,13 @@ import { useEffect, useRef } from 'react';
 
 export default function useIpcEvent(channel, handler, apiKey = 'ipcApi') {
   /*   console.log('channel: ', channel, 'handler: ', handler); */
-  const handlerRef = useRef(handler);
+  /* const handlerRef = useRef(handler); */
+  const stableHandler = useEffectEvent(handler);
 
   // Always keep the ref updated with the latest handler
-  useEffect(() => {
+  /*   useEffect(() => {
     handlerRef.current = handler;
-  }, [handler]);
+  }, [handler]); */
 
   /*   useEffect(() => {
     if (!channel) return;
@@ -33,7 +34,8 @@ export default function useIpcEvent(channel, handler, apiKey = 'ipcApi') {
       return;
     }
 
-    const cleanup = api.on(channel, (...args) => handlerRef.current?.(...args));
+    /* const cleanup = api.on(channel, (...args) => handlerRef.current?.(...args)); */
+    const cleanup = api.on(channel, stableHandler);
     return cleanup; // remove listener on unmount
-  }, [channel, apiKey]);
+  }, [channel, stableHandler, apiKey]);
 }
