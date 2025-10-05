@@ -1,7 +1,7 @@
 .highlighted {
   height: 3rem;
   background: var(--tags-list-header-background);
-  color: var(--tags-list-header-color);
+  /* color: var(--tags-list-header-color); */
   z-index: 2;
 }
 

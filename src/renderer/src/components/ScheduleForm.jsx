@@ -204,8 +204,8 @@ const ScheduleForm = () => {
               width: '100%',
               padding: '10px',
               marginTop: '15px',
-              backgroundColor: 'var(--button-1)',
-              color: 'var(--text-dark)',
+              backgroundColor: 'var(--form-button-background)',
+              color: 'var(--form-button-color)',
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer'

@@ -37,7 +37,7 @@
 .main-nav--center li {
   margin: 0 0.5rem;
   height: 1.8rem;
-  color: var(--main-nav-font-color);
+  /* color: var(--main-nav-font-color); */
   text-align: center;
   padding: 0 0.5rem;
   display: flex;
@@ -114,8 +114,14 @@
   color: var(--main-nav-font-color);
 }
 
-.highlight {
+/* .highlight {
   border-bottom: 1px solid var(--highlight);
+} */
+
+.main-nav-active {
+  border-bottom: 1px solid var(--highlight);
+  background: var(--main-nav-active);
+  color: var(--main-nav-active-color);
 }
 
 .main-nav--minimal .main-nav--left {

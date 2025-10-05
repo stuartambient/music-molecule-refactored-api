@@ -8,8 +8,6 @@
   --background-3: #000000;
   --background-4: #dedede;
 
-  --button-1: #7395ff;
-
   --text-light: #ffffff;
   --text-dark: #000000;
 
@@ -52,41 +50,41 @@
   --covers-scrollbar-buttons: var(--background-3);
   --covers-scrollbar-thumb: var(--background-3);
   --form-background: var(--background-2);
-  --form-button-background: var(--button-1);
-  --form-button-color: var(--text-dark);
+  --form-button-background: var(--active-3);
+  --form-button-color: var(--text-light);
   --form-color: var(--text-dark);
   --form-label: var(--background-4);
   --form-radio-checked: var(--active-3);
-  --highlight: var(--active-1);
   --item-hover: var(--hover-4);
   --likedBtn: var(--active-3);
   --list-background: var(--background-1);
   --list-font-color: var(--text-dark);
   --list-scroll-active: var(--active-1);
   --list-scroll-inactive: var(--icons-2);
+  --main-nav-active: var(--active-1);
+  --main-nav-active-color: var(--text-light);
   --main-nav-background: var(--background-1);
   --main-nav-font-color: var(--text-dark);
-  --main-nav-hover-menu: var(--hover-3);
+  --main-nav-hover-menu: var(--hover-1);
   --main-nav-hover-menu-color: var(--text-light);
   --overlay: var(--overlay-background);
   --overlay-color: var(--text-light);
   --player-background: var(--background-1);
   --player-font-color: var(--text-dark);
-  /*--root-highlight	active state
---root-highlight-color	color */
+  --root-highlight: var(--active-3);
+  --root-highlight-color: var(--text-light);
   --sort-icon-active: var(--background-3);
   --sort-icon-inactive: var(--background-2);
-  /*--status-loader-background	status load background (animation)*/
-  --status-loader-bar: var(--active-1);
+  --status-loader-background: var(--active-1);
+  --status-loader-bar: var(--background-2);
   --tab-background-active: var(--active-2);
   --tab-font-active: var(--text-dark);
   --tab-font-inactive: var(--text-dark);
   --tags-list-header-background: var(--background-1);
-  /* --tags-list-header-color	text */
   --tags-list-header-controls-background: var(--background-2);
-  /* --tags-list-header-icon	icon
---tags-list-header-input	text
---tags-list-header-text-color	text */
+  --tags-list-header-icon: var(--icons-1);
+  --tags-list-header-input: var(--text-dark);
+  --tags-list-header-text-color: var(--text-dark);
   --tags-nav-background: var(--background-1);
   --tags-nav-color: var(--text-dark);
   --tags-nav-menu-background-hover: var(--hover-1);

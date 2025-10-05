@@ -3,7 +3,7 @@ import { Virtuoso } from 'react-virtuoso';
 import { useAudioPlayer } from '../mainAudioContext';
 import Row from './Row';
 /* import { MdDeselect } from 'react-icons/md'; */
-import { FaAsterisk } from 'react-icons/fa';
+import { MdDeselect } from 'react-icons/md';
 import '../style/List.css';
 
 const Header = ({
@@ -85,7 +85,7 @@ const Header = ({
               }
               onClick={handleDeselect}
             >
-              <FaAsterisk />
+              <MdDeselect />
             </span>
           </>
           {/*  )} */}
