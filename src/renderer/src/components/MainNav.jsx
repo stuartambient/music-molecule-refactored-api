@@ -205,26 +205,34 @@ const MainNav = ({ onClick }) => {
             </li>
           </ul>
           <ul className="main-nav--center">
-            <li onClick={onClick} id="player" className={state.player ? 'main-nav-active' : ''}>
+            <li
+              onClick={onClick}
+              id="player"
+              className={state.player ? 'main-nav-active' : 'main-nav-inactive'}
+            >
               <span>Player</span>
             </li>
             <li
               onClick={onClick}
               id="playerplaylist"
-              className={state.player ? 'main-nav-active' : ''}
+              className={state.player ? 'main-nav-active' : 'main-nav-inactive'}
             >
               <span>Lists</span>
             </li>
-            <li onClick={onClick} id="mini-mode" className="endline">
+            <li onClick={onClick} id="mini-mode" className="endline main-nav-inactive">
               <span>Miniplayer</span>
             </li>
-            <li onClick={onClick} id="albums" className={state.home ? 'main-nav-active' : ''}>
+            <li
+              onClick={onClick}
+              id="albums"
+              className={state.home ? 'main-nav-active' : 'main-nav-inactive'}
+            >
               <span>Covers</span>
             </li>
             <li
               onClick={onClick}
               id="tag-editor"
-              className={state.tagEditor ? 'main-nav-active' : ''}
+              className={state.tagEditor ? 'main-nav-active' : 'main-nav-inactive'}
             >
               <span>Tags</span>
             </li>
