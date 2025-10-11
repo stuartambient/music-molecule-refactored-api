@@ -38,13 +38,13 @@
 
 .missingcovers li {
   margin: 0.2rem 0;
-  border: 1px solid var(--color3);
+  /* border: 1px solid var(--color3); */
   border-radius: 5px;
 }
 
 .missingcovers li:hover {
   cursor: pointer;
-  background: var(--color3);
+  /* background: var(--color3); */
   border: 1px solid white;
 }
 
@@ -53,7 +53,7 @@
   grid-row: 1 / 2;
   align-self: center;
   width: 80%;
-  background: var(--color3);
+  /* background: var(--color3); */
   justify-self: center;
   border-radius: 5px;
   padding: 0.2rem 0.5rem;

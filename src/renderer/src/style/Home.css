@@ -127,15 +127,6 @@
   display: none;
 }
 
-/* #view-more-logo {
-  color: var(--color2);
-} */
-
-/* .recent-additions--albums li {
-  width: 100%;
-  height: 100%;
-} */
-
 .cover-icons:hover {
   cursor: pointer;
 }

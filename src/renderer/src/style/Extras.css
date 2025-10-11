@@ -22,8 +22,6 @@
   align-items: center;
   justify-content: center;
   padding: 0.2rem;
-  /* position: relative; */
-  /* background: var(--color4); */
 }
 
 .extras .btn svg {
@@ -43,8 +41,6 @@
 }
 
 .audio-player .extras .on {
-  /* border: 1px solid darkgreen; */
-  /* background-color: var(--color3) */
   background: var(--active-controls);
   border-radius: 3px;
   color: var(--active-controls-font);

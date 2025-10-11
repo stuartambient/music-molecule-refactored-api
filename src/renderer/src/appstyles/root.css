@@ -16,10 +16,6 @@
   --borders: #26b0ff;
   --button-hover: #ff0080;
   --button-on: #ff0080;
-  --color1: #26b0ff;
-  --color2: #2686ff;
-  --color3: #ffffff;
-  --color4: #0064d3;
   --container-home-background: #000000;
   --control-on: #ff0080;
   --controls-background: #0064d3;
@@ -40,12 +36,15 @@
   --form-button-color: #ffffff;
   --highlight: #ffffff;
   --item-hover: #265bff;
+  --item-hover-color: #ffffff;
   --likedBtn: #ff0080;
   --list-background: #2686ff;
   --list-font-color: #ffffff;
   --list-scroll-active: #26b0ff;
   --list-scroll-inactive: lightgray;
   --main-nav-background: #2d2d2d;
+  --main-nav-active: #2686ff;
+  --main-nav-active-color: #ffffff;
   --main-nav-font-color: #ffffff;
   --main-nav-hover-color: #26b0ff;
   --main-nav-hover-menu: #2686ff;

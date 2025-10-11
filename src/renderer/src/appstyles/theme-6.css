@@ -1,14 +1,14 @@
-.theme-5 {
-  --background-1: #7c7287;
-  --background-2: #9dc0bc;
-  --non-active-icons: #254e36;
-  --active-icons: #c1fff2;
-  --hover: #6bb98b;
+.theme-6 {
+  --background-1: #dd5588;
+  --background-2: #ff7687;
+  --non-active-icons: #ffdf7b;
+  --active-icons: #fff4b3;
+  --hover: #77b5bd;
   --text-light: #ffffff;
   --text-dark: #000000;
-  --text-accent: #c1fff2;
-  --track-background: #3d3842;
-  --track-foreground: #0affca;
+  --text-accent: #ffdf7b;
+  --track-background: #77b5bd;
+  --track-foreground: #ff7687;
 
   --active: var(--active-icons);
   --active-album: var(--active-icons);
@@ -26,6 +26,7 @@
   --bar-outline-background: var(--track-background);
   --borders: var(--background-2);
   --button-on: var(--active-icons);
+  /*   --color4: var(--background-1); */
   --container-home-background: var(--background-1);
   --control-on: var(--active-icons);
   --controls-background: none;
@@ -44,10 +45,7 @@
   --form-label: var(--background-2);
   --form-radio-checked: var(--active-icons);
   --form-title: var(--text-accent);
-  --item-background: var(--background-1);
   --item-hover: var(--hover);
-  --item-hover-color: var(--text-dark);
-  --item-menu: var(--non-active-icons);
   --likedBtn: var(--active-icons);
   --list-background: var(--background-1);
   --list-font-color: var(--text-light);

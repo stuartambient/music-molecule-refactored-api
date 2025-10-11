@@ -22,18 +22,20 @@ const MainPreferences = () => {
     <form className="roots-form" onSubmit={handleSubmit}>
       <h2>Select a Theme</h2>
       <div className="radio-group">
-        {['basic', 'theme-1', 'theme-2', 'theme-3', 'theme-4', 'theme-5'].map((theme, index) => (
-          <label key={index} className="radio-option">
-            <input
-              type="radio"
-              name="theme"
-              value={theme}
-              checked={selectedTheme === theme}
-              onChange={(e) => setSelectedTheme(e.target.value)}
-            />
-            {theme}
-          </label>
-        ))}
+        {['basic', 'theme-1', 'theme-2', 'theme-3', 'theme-4', 'theme-5', 'theme-6'].map(
+          (theme, index) => (
+            <label key={index} className="radio-option">
+              <input
+                type="radio"
+                name="theme"
+                value={theme}
+                checked={selectedTheme === theme}
+                onChange={(e) => setSelectedTheme(e.target.value)}
+              />
+              {theme}
+            </label>
+          )
+        )}
       </div>
       <button type="submit" className="submit-button">
         Apply Theme

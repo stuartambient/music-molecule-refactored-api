@@ -1,14 +1,26 @@
-.theme-5 {
-  --background-1: #7c7287;
-  --background-2: #9dc0bc;
-  --non-active-icons: #254e36;
-  --active-icons: #c1fff2;
-  --hover: #6bb98b;
+.theme-7 {
+  --background-1: #2d2d2d;
+  --background-2: #373737;
+  --non-active-icons: #808080;
+  --active-icons: #ff0080;
+  --hover: #26b0ff;
   --text-light: #ffffff;
   --text-dark: #000000;
-  --text-accent: #c1fff2;
+  --text-accent: #191970;
   --track-background: #3d3842;
-  --track-foreground: #0affca;
+  --track-foreground: #265bff;
+
+  /*   --active: #203c56;
+  --active-album: #0064d3;
+  --album-cover-tools-extra-icons-icon: #265bff;
+
+  --color2: #2686ff;
+  --container-home-background: #000000;
+  --controls-button-hover: lightgray;
+
+  --cover-tools-range-thumb: #ff1d58;
+  --form-label: #414141;
+  --sort-icon-active: #ff0000; */
 
   --active: var(--active-icons);
   --active-album: var(--active-icons);
