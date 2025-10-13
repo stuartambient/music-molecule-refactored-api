@@ -1,0 +1,101 @@
+.theme-1 {
+  --active-1: #000000;
+  --active-2: #dbd7d2;
+  --active-3: #ff0080;
+
+  --background-1: #ffffff;
+  --background-2: #adadad;
+  --background-3: #000000;
+  --background-4: #dedede;
+
+  --text-light: #ffffff;
+  --text-dark: #000000;
+
+  --hover-1: #adadad;
+  --hover-2: #265bff;
+  --hover-3: #000000;
+  --hover-4: #e8e8e8;
+
+  --icons-1: #000000;
+  --icons-2: #adadad;
+
+  --overlay-background: #390502;
+
+  --active: var(--active-2);
+  --active-album: var(--active-1);
+  --active-album-color: var(--text-light);
+  --active-border: var(--active-1);
+  --active-color: var(--text-dark);
+  --active-controls: var(--active-3);
+  --active-controls-font: var(--text-light);
+  --album-cover-tools: var(--background-1);
+  --album-cover-tools-extra-icons-bkgd: var(--background-2);
+  --album-cover-tools-extra-icons-bkgd-hover: var(--hover-3);
+  --album-cover-tools-extra-icons-icon: var(--icons-1);
+  --album-cover-tools-extra-icons-icon-hover: var(--hover-1);
+  --bar: var(--background-2);
+  --bar-outline-background: var(--background-3);
+  --borders: var(--background-3);
+  --button-on: var(--active-3);
+  /* --color4: var(--background-1); */
+  --container-home-background: var(--background-1);
+  --control-on: var(--active-3);
+  --controls-background: none;
+  --controls-button-icon-hover: var(--hover-2);
+  --controls-icon: var(--icons-1);
+  --cover-tools-range-thumb: var(--background-2);
+  --cover-tools-range-track: var(--background-3);
+  --covers-loading: var(--background-2);
+  --covers-scrollbar: var(--background-2);
+  --covers-scrollbar-buttons: var(--background-3);
+  --covers-scrollbar-thumb: var(--background-3);
+  --form-background: var(--background-2);
+  --form-button-background: var(--active-3);
+  --form-button-color: var(--text-light);
+  --form-color: var(--text-dark);
+  --form-label: var(--background-4);
+  --form-radio-checked: var(--active-3);
+  --item-hover: var(--hover-4);
+  --likedBtn: var(--active-3);
+  --list-background: var(--background-1);
+  --list-font-color: var(--text-dark);
+  --list-scroll-active: var(--active-1);
+  --list-scroll-inactive: var(--icons-2);
+  --main-nav-active: var(--active-1);
+  --main-nav-active-color: var(--text-light);
+  --main-nav-background: var(--background-1);
+  --main-nav-font-color: var(--text-dark);
+  --main-nav-hover-menu: var(--hover-1);
+  --main-nav-hover-menu-color: var(--text-light);
+  --overlay: var(--overlay-background);
+  --overlay-color: var(--text-light);
+  --player-background: var(--background-1);
+  --player-font-color: var(--text-dark);
+  --root-highlight: var(--active-3);
+  --root-highlight-color: var(--text-light);
+  --sort-icon-active: var(--background-3);
+  --sort-icon-inactive: var(--background-2);
+  --status-loader-background: var(--active-1);
+  --status-loader-bar: var(--background-2);
+  --tab-background-active: var(--active-2);
+  --tab-font-active: var(--text-dark);
+  --tab-font-inactive: var(--text-dark);
+  --tags-list-header-background: var(--background-1);
+  --tags-list-header-controls-background: var(--background-2);
+  --tags-list-header-icon: var(--icons-1);
+  --tags-list-header-input: var(--text-dark);
+  --tags-list-header-text-color: var(--text-dark);
+  --tags-nav-background: var(--background-1);
+  --tags-nav-color: var(--text-dark);
+  --tags-nav-menu-background-hover: var(--hover-1);
+  --tags-nav-menu-color-hover: var(--text-dark);
+  --tags-nav-selected: var(--active-1);
+  --tags-nav-selected-color: var(--text-light);
+  --tags-results-background: var(--background-1);
+  --tags-results-color: var(--text-dark);
+  --tags-row-even: var(--background-1);
+  --tags-row-even-color: var(--text-dark);
+  --tags-row-odd: var(--background-2);
+  --tags-row-odd-color: var(--text-dark);
+  --update-container-background: var(--background-1);
+}

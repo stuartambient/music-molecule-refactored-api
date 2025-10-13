@@ -1,7 +1,7 @@
 .theme-6 {
   --background-1: #dd5588;
   --background-2: #ff7687;
-  --non-active-icons: #ffdf7b;
+  --non-active-icons: #7b9bff;
   --active-icons: #fff4b3;
   --hover: #77b5bd;
   --text-light: #ffffff;
@@ -45,7 +45,10 @@
   --form-label: var(--background-2);
   --form-radio-checked: var(--active-icons);
   --form-title: var(--text-accent);
+  --item-background: var(--background-1);
   --item-hover: var(--hover);
+  --item-hover-color: var(--text-dark);
+  --item-menu: var(--non-active-icons);
   --likedBtn: var(--active-icons);
   --list-background: var(--background-1);
   --list-font-color: var(--text-light);

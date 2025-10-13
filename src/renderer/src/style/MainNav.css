@@ -127,7 +127,7 @@
 } */
 
 .main-nav-active {
-  border-bottom: 1px solid var(--highlight);
+  /* border-bottom: 1px solid var(--highlight); */
   background: var(--main-nav-active);
   color: var(--main-nav-active-color);
 }
