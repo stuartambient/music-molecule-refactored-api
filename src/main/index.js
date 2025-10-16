@@ -262,6 +262,7 @@ function createWindow() {
     frame: false,
     useContentSize: true,
     transparent: true,
+    alwaysOnTop: true,
     show: false,
     ...(process.platform === 'linux' ? { icon: path.join(__dirname, '../../build/icon.png') } : {}),
     webPreferences: {

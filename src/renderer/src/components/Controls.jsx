@@ -1,6 +1,7 @@
 import { useAudioPlayer } from '../mainAudioContext';
-import { FaHeart, FaBackward, FaForward, FaListUl, FaRandom } from 'react-icons/fa';
+import { FaHeart, FaBackward, FaForward, FaRandom } from 'react-icons/fa';
 import { GiPauseButton, GiPlayButton } from 'react-icons/gi';
+import { AiFillHome } from 'react-icons/ai';
 /* import Icon1 from '../assets/icon_1.png'; */
 import '../style/Controls.css';
 
@@ -39,11 +40,19 @@ const Controls = ({ handlePlayerControls }) => {
       </li>
 
       {state.pause ? (
-        <li className="btn" id="pauseplay" onClick={handlePlayerControls}>
+        <li
+          className={state.active ? 'btn btn-blink' : 'btn'}
+          id="pauseplay"
+          onClick={handlePlayerControls}
+        >
           <GiPlayButton />
         </li>
       ) : (
-        <li className="btn" id="pauseplay" onClick={handlePlayerControls}>
+        <li
+          className={state.active ? 'btn btn-blink' : 'btn'}
+          id="pauseplay"
+          onClick={handlePlayerControls}
+        >
           <GiPauseButton />
         </li>
       )}
@@ -65,7 +74,7 @@ const Controls = ({ handlePlayerControls }) => {
           id="playlist"
           onClick={handlePlayerControls}
         >
-          <FaListUl />
+          <AiFillHome />
         </li>
       )}
     </ul>
