@@ -67,7 +67,7 @@
   --overlay-color: var(--text-1);
   --player-background: var(--background-1);
   --player-font-color: var(--accent-primary);
-  --root-highlight: var(--active-3);
+  --root-highlight: var(--active-icons);
   --root-highlight-color: var(--text-1);
   --sort-icon-active: var(--active-icons);
   --sort-icon-inactive: var(--non-active-icons);
@@ -89,6 +89,8 @@
   --tags-nav-selected-color: var(--text-2);
   --tags-results-background: var(--background-1);
   --tags-results-color: var(--accent-primary);
+  --tags-root-hover: var(--hover);
+  --tags-root-hover-color: var(--text-2);
   --tags-row-even: var(--background-1);
   --tags-row-even-color: var(--text-1);
   --tags-row-odd: var(--background-2);

@@ -198,6 +198,12 @@
   margin-left: 1rem;
 }
 
+.directories .directory-name:hover {
+  background: var(--tags-root-hover);
+  border-radius: 5px;
+  color: var(--tags-root-hover-color);
+}
+
 .directories > span > svg {
   fill: gray;
   background-color: #525252;
