@@ -128,7 +128,7 @@ const ScheduleForm = () => {
         </div>
       )}
       {!schedulingResults && (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="schedule-form">
           <h3 style={{ textAlign: 'center' }}>Schedule Operations</h3>
 
           <div style={{ marginBottom: '15px' }}>

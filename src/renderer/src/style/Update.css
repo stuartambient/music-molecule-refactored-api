@@ -8,10 +8,9 @@
   grid-template-rows: 3rem 1fr 3rem 1fr;
   row-gap: 10px; */
   display: flex;
-  color: white;
+  /* color: white; */
   justify-items: center;
   align-items: center;
-  background: red'
 }
 
 /* .update-container button {
@@ -46,33 +45,52 @@
 }
 
 .roots-form {
-  height: 90%;
-  width: 90%;
+  /* height: 90%; */
+  width: 100%;
   grid-column: 1 / 2;
   grid-row: 2 / 5;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  /* flex-direction: column; */
+  /* justify-content: center; */
   overflow-y: scroll;
   overflow-x: hidden;
 
-  color: var(--form-color);
-  padding: 20px;
+  /* color: var(--form-color); */
+  padding: 0.5rem;
   max-width: 400px;
   margin: auto;
   border: 1px solid #ccc;
   border-radius: 8px;
-  background-color: var(--form-background);
-
+  /* background-color: var(--form-background); */
 }
 
+.roots-form .schedule-form {
+  background-color: var(--schedule-form-background);
+  color: var(--schedule-form-color);
+}
 
+.roots-form .setup-form {
+  color: var(--schedule-form-color);
+  display: grid;
+}
+
+.roots-form .themes-form {
+  background: var(--themes-form-background);
+  color: var(--themes-form-color);
+  width: 100%;
+}
+
+.roots-form .radio-group {
+  overflow-y: hidden;
+  overflow-x: hidden;
+}
 
 .roots-form .radio-group label {
   background-color: var(--form-label);
   height: 3rem;
 }
 
-.roots-form .radio-group input[type="radio"] {
+.roots-form .radio-group input[type='radio'] {
   appearance: none;
   width: 20px;
   height: 20px;
@@ -81,13 +99,13 @@
   background-color: transparent;
 }
 
-.roots-form .radio-group input[type="radio"]:checked {
+.roots-form .radio-group input[type='radio']:checked {
   background-color: var(--form-radio-checked);
 }
 
 .roots-form .submit-button,
 .roots-form .roots-update {
-  width: 50%;
+  width: 100%;
   height: 3rem;
   justify-self: center;
   border-radius: 10px;
@@ -101,8 +119,7 @@
   color: var(--form-title);
 }
 
-
-.roots-form::-webkit-scrollbar {
+.::-webkit-scrollbar {
   display: none;
   /*  background: aquamarine;
   width: 10px; */
