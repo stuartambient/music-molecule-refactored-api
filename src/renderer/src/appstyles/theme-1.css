@@ -25,21 +25,21 @@
   --active-controls: var(--active-icons);
   --active-controls-font: var(--text-inverse);
   --album-cover-tools: var(--background-1);
-  --album-cover-tools-extra-icons-bkgd: var(--background-2);
+  /* --album-cover-tools-extra-icons-bkgd: var(--background-2); */
   --album-cover-tools-extra-icons-bkgd-hover: var(--hover);
-  --album-cover-tools-extra-icons-icon: var(--non-active-icons);
-  --album-cover-tools-extra-icons-icon-hover: var(--hover);
+  --album-cover-tools-extra-icons-icon: var(--accent-primary);
+  --album-cover-tools-extra-icons-icon-hover: var(--accent-secondary);
   --bar: var(--control-fill);
   --bar-outline-background: var(--control-track);
   --borders: var(--background-2);
   --button-on: var(--active-icons);
   --container-home-background: var(--background-1);
-  --control-on: var(--active-icons);
+  --control-on: var(--accent-secondary);
   --controls-background: none;
-  --controls-blink: var(--accent-primary);
-  --controls-blink-hover: var(--accent-primary);
-  --controls-button-icon-hover: var(--hover);
-  --controls-icon: var(--accent-secondary);
+  --controls-blink: var(--accent-secondary);
+  --controls-blink-hover: var(--accent-secondary);
+  --controls-button-icon-hover: var(--accent-secondary);
+  --controls-icon: var(--accent-primary);
   --cover-tools-range-thumb: var(--control-fill);
   --cover-tools-range-track: var(--control-track);
   --covers-loading: var(--background-2);
@@ -62,16 +62,17 @@
   --item-hover: var(--hover);
   --item-hover-color: var(--text-inverse);
   --item-menu: var(--non-active-icons);
-  --likedBtn: var(--active-icons);
+  --likedBtn: var(--accent-secondary);
   --list-background: var(--background-1);
   --list-font-color: var(--text-secondary);
+  --list-noresults-color: var(--text-primary);
   --list-scroll-active: var(--active-icons);
   --list-scroll-inactive: var(--non-active-icons);
   --main-nav-active: var(--active-icons);
   --main-nav-active-color: var(--text-inverse);
   --main-nav-background: var(--background-1);
   --main-nav-font-color: var(--text-primary);
-  --main-nav-hover-menu: var(--hover);
+  --main-nav-hover-menu: var(--accent-secondary);
   --main-nav-hover-menu-color: var(--text-secondary);
   --overlay: var(--background-2);
   --overlay-color: var(--text-inverse);
@@ -88,7 +89,8 @@
   --tab-font-inactive: var(--text-primary);
   --tags-list-header-background: var(--background-1);
   --tags-list-header-controls-background: var(--background-1);
-  --tags-list-header-icon: var(--non-active-icons);
+  --tags-list-header-icon: var(--accent-primary);
+  --tags-list-header-icon-hover: var(--accent-secondary);
   --tags-list-header-input: var(--text-secondary);
   --tags-list-header-text-color: var(--text-primary);
   --tags-nav-background: var(--background-1);
@@ -105,5 +107,7 @@
   --tags-row-even-color: var(--text-secondary);
   --tags-row-odd: var(--background-2);
   --tags-row-odd-color: var(--text-inverse);
+  --text-input-background: var(--background-1);
+  --text-input-color: var(--text-secondary);
   --update-container-background: var(--background-1);
 }

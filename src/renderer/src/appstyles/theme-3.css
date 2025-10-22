@@ -1,4 +1,5 @@
 .theme-3 {
+  --scheme: three;
   --background-1: #314d7f;
   --background-2: #594465;
   --non-active-icons: #70526e;
@@ -14,7 +15,7 @@
   --control-fill: #b58d7a;
 
   --accent-primary: #b58d7a;
-  --accent-secondary: #ffffff;
+  --accent-secondary: #e6d9d2;
 
   --active: var(--active-icons);
   --active-album: var(--active-icons);
@@ -45,11 +46,16 @@
   --covers-scrollbar: var(--control-track);
   --covers-scrollbar-buttons: var(--background-2);
   --covers-scrollbar-thumb: var(--background-2);
-  --form-background: var(--background-1);
+  --schedule-form-background: var(--background-1);
+  --schedule-form-color: var(--text-secondary);
+  --setup-form-background: var(--background-1);
+  --setup-form-color: var(--text-secondary);
+  --themes-form-background: var(--background-1);
+  --themes-form-color: var(--text-secondary);
   --form-button-background: var(--active-icons);
   --form-button-color: var(--text-inverse);
-  --form-color: var(--text-inverse);
-  --form-label: var(--background-2);
+  --form-color: var(--text-secondary);
+  --form-label: var(--background-1);
   --form-radio-checked: var(--active-icons);
   --form-title: var(--accent-primary);
   --item-background: var(--background-1);
@@ -67,7 +73,7 @@
   --main-nav-font-color: var(--text-primary);
   --main-nav-hover-menu: var(--hover);
   --main-nav-hover-menu-color: var(--text-secondary);
-  --overlay: var(--background-2);
+  --overlay: /* var(--background-2) */ if(style(--scheme: three): red; else: white;);
   --overlay-color: var(--text-inverse);
   --player-background: var(--background-1);
   --player-font-color: var(--accent-primary);
@@ -88,7 +94,7 @@
   --tags-nav-background: var(--background-1);
   --tags-nav-color: var(--accent-primary);
   --tags-nav-menu-background-hover: var(--hover);
-  --tags-nav-menu-color-hover: var(--text-inverse);
+  --tags-nav-menu-color-hover: var(--text-secondary);
   --tags-nav-selected: var(--active-icons);
   --tags-nav-selected-color: var(--text-inverse);
   --tags-results-background: var(--background-1);
@@ -98,6 +104,6 @@
   --tags-row-even: var(--background-1);
   --tags-row-even-color: var(--text-secondary);
   --tags-row-odd: var(--background-2);
-  --tags-row-odd-color: var(--text-secondary);
+  --tags-row-odd-color: var(--text-inverse);
   --update-container-background: var(--background-1);
 }

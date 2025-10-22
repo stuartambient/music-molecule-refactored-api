@@ -163,6 +163,11 @@
   border: none;
 }
 
+.media-menu .form .formelements .textsearch:focus {
+  background: var(--text-input-background);
+  color: var(--text-input-color);
+}
+
 .media-menu .form .formelements .submitbtn {
   background: white;
 }

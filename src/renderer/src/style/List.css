@@ -43,6 +43,14 @@
   color: var(--tags-list-header-icon);
 }
 
+.highlighted .header-content svg:hover {
+  color: var(--tags-list-header-icon-hover);
+}
+
+.highlighted .header-content svg:active {
+  transform: translate(2px, 2px);
+}
+
 .list-header-button {
   color: white;
   padding: 0.2rem;
@@ -74,18 +82,20 @@
   transform: translateY(0);
 } */
 
+.list-header-deselect svg {
+  width: 1.5em;
+  height: 1.5em;
+}
+
 @keyframes breathe {
   0% {
     transform: scale(1);
-    color: red;
   }
   50% {
-    transform: scale(1.5);
-    color: white;
+    transform: scale(1.1);
   }
   100% {
     transform: scale(1);
-    color: blue;
   }
 }
 
@@ -97,14 +107,15 @@
 
 @keyframes iconbreathe {
   0% {
-    transform: rotate(0);
+    transform: scale(1);
   }
   50% {
-    transform: rotate(180deg);
+    transform: scale(1.1);
+    color: var(--tags-list-header-icon-hover);
   }
 
   100% {
-    transform: rotate(360deg);
+    transform: scale(1);
   }
 }
 

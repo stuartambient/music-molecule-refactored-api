@@ -200,7 +200,7 @@ const MainNav = ({ onClick }) => {
       {!state.minimalmode && (
         <>
           <ul className="main-nav--left" style={{ justifySelf: 'start' }}>
-            <li onClick={onClick} id="menu">
+            <li onClick={onClick} id="menu" className="main-nav-menu">
               <AiOutlineMenu />
             </li>
           </ul>
@@ -279,7 +279,7 @@ const MainNav = ({ onClick }) => {
       {state.minimalmode && (
         <>
           <ul className="main-nav--left-minimal">
-            <li onClick={onClick} id="menu">
+            <li onClick={onClick} id="menu" className="main-nav-menu">
               <AiOutlineMenu />
             </li>
             <li onClick={onClick} id="mini-mode" className="mini-mode on">

@@ -226,7 +226,7 @@
 }
 
 .noresults {
-  color: white;
+  color: var(--list-noresults-color);
   display: flex;
   align-items: center;
   justify-content: center;

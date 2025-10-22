@@ -105,6 +105,12 @@ const MediaMenu = ({
                 name="textsearch"
                 id="textsearch"
                 placeholder="   search tracks"
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    e.target.value = '';
+                    e.target.blur();
+                  }
+                }}
                 onContextMenu={async () => await window.ipcApi.invoke('show-text-input-menu')}
               />
 

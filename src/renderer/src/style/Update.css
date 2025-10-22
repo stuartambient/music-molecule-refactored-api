@@ -52,7 +52,7 @@
   display: grid;
   /* flex-direction: column; */
   /* justify-content: center; */
-  overflow-y: scroll;
+  overflow-y: auto;
   overflow-x: hidden;
 
   /* color: var(--form-color); */
