@@ -100,14 +100,14 @@
   color: black;
 } */
 
-.item:hover {
+.item:not(item-albumtrack):hover {
   background-color: var(--item-hover);
   color: var(--item-hover-color);
 }
 
-.item a:hover {
+/* .item a:hover {
   color: inherit;
-}
+} */
 
 .flash {
   animation-name: flash;
@@ -147,11 +147,16 @@
 }
 
 .item-menu svg {
-  fill: var(--list-font-color);
+  fill: var(--item-menu-color);
   grid-column: 2 / 3;
   grid-row: 2 / 3;
   /* width: 50px;
   height: 50px; */
+}
+
+.item-menu:hover {
+  cursor: pointer;
+  background: var(--item-menu-hover);
 }
 
 .item-albumname {
@@ -174,11 +179,17 @@
 .item-albumtrack {
   display: flex;
   justify-content: center;
+  background: var(--item-albumtrack-background);
 }
 
 .item-albumtrack svg {
   height: 1.5em;
-  color: green;
+}
+
+.item-albumtrack svg:hover {
+  height: 1.5em;
+  cursor: pointer;
+  fill: var(--item-albumtracks-hover);
 }
 
 /* .item-albumtrack svg {
@@ -234,10 +245,10 @@
   font-size: 2.2rem;
 }
 
-div #plus path,
+/* div #plus path,
 div #minus path {
   fill: var(--list-font-color);
-}
+} */
 
 .albumtracks {
   /* list-style: none; */

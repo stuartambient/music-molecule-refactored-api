@@ -25,8 +25,8 @@
   grid-auto-rows: 200px;
 }
 
-.albums-coverview li .overlay {
-  position: absolute; /* Position overlay relative to the li */
+/* .albums-coverview li .overlay {
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -43,25 +43,25 @@
   height: 100%;
   width: 100%;
   font-size: 0.8rem;
-}
+} */
 
-.albums-coverview li .overlay span {
+/* .albums-coverview li .overlay span {
   text-align: center;
   margin: 0 0.1rem;
-}
+} */
 
-.albums-coverview li:hover .overlay {
+/* .albums-coverview li:hover .overlay {
   transform: scale(1);
   cursor: pointer;
-}
+} */
 
-.albums-coverview li img {
+/* .albums-coverview li img {
   object-fit: cover;
   height: 100px;
   width: 100px;
   object-position: center;
 }
-
+ */
 .cover-image {
   object-fit: cover;
   object-position: center;

@@ -107,28 +107,9 @@
   padding: 20px;
 }
 
-/* .stats--nav .stat:not(.directories-list):hover {
-  cursor: pointer;
-  background: var(--tags-nav-menu-background-hover);
-  color: var(--tags-nav-menu-color-hover);
-}
-
-.directories-option:hover {
-  cursor: pointer;
-  background: var(--tags-nav-menu-background-hover);
-  color: var(--tags-nav-menu-color-hover);
-} */
-
 .stats--nav .stat p {
   padding: 0.5rem;
 }
-
-/* .stats--nav .stat p:hover, */
-/* .directories-option:hover {
-  cursor: pointer;
-  background: var(--tags-nav-menu-background-hover);
-  color: var(--tags-nav-menu-color-hover);
-} */
 
 .stats--results {
   grid-column: 2 / 3;
@@ -171,16 +152,7 @@
   justify-content: space-evenly;
   align-items: center;
 }
-/* .stats--genres li:nth-child(even) {
-  background-color: white;
-  color: black;
-}
 
-.stats--genres li:nth-child(odd) {
-  background-color: black;
-  color: white;
-}
- */
 .directories {
   display: flex;
   align-items: center;

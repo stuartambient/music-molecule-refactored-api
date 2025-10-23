@@ -197,6 +197,10 @@
   color: var(--tab-font-inactive);
 }
 
+.media-menu .tabs .tab:not(.active):hover {
+  color: var(--tab-font-inactive-hover);
+}
+
 .media-menu--minimal .tabs {
   grid-row: 2 / 3;
   grid-column: 1 / 2;

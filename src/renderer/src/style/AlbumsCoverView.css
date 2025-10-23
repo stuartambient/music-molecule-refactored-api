@@ -62,6 +62,16 @@
   margin: 0 0.1rem;
 }
 
+.overlay .play-stop-button svg {
+  color: var(--overlay-play-stop-button);
+  transition: all 0.5s;
+}
+
+.overlay .play-stop-button svg:hover {
+  color: var(--overlay-hover);
+  transform: scale(1.2);
+}
+
 .overlay-text.text-small {
   font-size: 0.6rem;
 }
@@ -81,9 +91,10 @@
 
 .overlay .item-menu {
   margin-top: 5px;
+  background: var(--overlay-menu);
 }
 .overlay .item-menu:hover {
-  background: orange;
+  background: var(--overlay-hover);
 }
 
 @keyframes albumAnimation {

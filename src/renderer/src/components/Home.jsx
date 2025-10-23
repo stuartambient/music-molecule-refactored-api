@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useAudioPlayer } from '../mainAudioContext';
-import { GiMagnifyingGlass } from 'react-icons/gi';
+import { SiOpensearch } from 'react-icons/si';
 import { AiFillDownSquare } from 'react-icons/ai';
 import { GrDocumentMissing } from 'react-icons/gr';
 import { IoIosRefresh } from 'react-icons/io';
@@ -101,7 +101,7 @@ const Home = () => {
               onChange={handleCoversSearchTerm} */
                 />
                 <button value="Submit">
-                  <GiMagnifyingGlass />
+                  <SiOpensearch />
                 </button>
               </form>
             </li>

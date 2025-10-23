@@ -119,11 +119,10 @@
   color: var(--form-title);
 }
 
-.::-webkit-scrollbar {
+/* .::-webkit-scrollbar {
   display: none;
-  /*  background: aquamarine;
-  width: 10px; */
-}
+
+} */
 
 .update-files,
 .update-folders,
