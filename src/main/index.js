@@ -25,6 +25,7 @@ import createUpdateFilesWorker from './updateFilesWorker?nodeWorker';
 import createUpdateFoldersWorker from './updateFoldersWorker?nodeWorker';
 import createUpdateCoversWorker from './updateCoversWorker?nodeWorker';
 import createUpdateMetadataWorker from './updateMetadataWorker?nodeWorker';
+import createLoadPlaylistWorker from './loadPlaylistWorker?nodeWorker';
 import createBackfillWorker from './backfillWorker?nodeWorker';
 import axios from 'axios';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
@@ -42,8 +43,6 @@ import {
   filesByAlbum,
   likeTrack,
   isLiked,
-  /*   getAlbum, */
-  getPlaylist,
   getAllPkeys,
   getAllTracks,
   getRoots,
@@ -958,9 +957,27 @@ ipcMain.handle('open-playlist', async () => {
     filters: [{ name: 'Playlist', extensions: ['m3u'] }]
   });
   if (open.canceled) return 'action cancelled';
-  const plfiles = await fs.promises.readFile(open.filePaths.join(), 'utf8');
-  const parsedPlFiles = plfiles.replaceAll('\\', '/').split('\n');
-  return getPlaylist(parsedPlFiles);
+
+  const workerPath = process.resourcesPath;
+
+  const result = await new Promise((resolve, reject) => {
+    const worker = createLoadPlaylistWorker({
+      workerData: { workerPath: workerPath, data: open.filePaths }
+    });
+
+    /*     await createLoadPlaylistWorker({
+      workerData: { workerPath: workerPath, data: open.filePaths }
+    }) */
+
+    worker.on('message', (msg) => resolve(msg.data));
+    worker.on('error', reject);
+    worker.on('exit', (code) => {
+      if (code !== 0) reject(new Error(`Worker stopped with exit code ${code}`));
+    });
+
+    worker.postMessage(''); // optional trigger
+  });
+  return result;
 });
 
 ipcMain.handle('save-playlist', async (_, args) => {

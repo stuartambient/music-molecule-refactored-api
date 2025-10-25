@@ -26,7 +26,6 @@
     "lyrics",
     "remixedBy",
     "like",
-    "error",
     "codecs",
     "replayGainAlbumGain",
     "replayGainAlbumPeak",
@@ -34,7 +33,7 @@
     "replayGainTrackPeak"
   ],
   "theme": "dark",
-  "mainTheme": "theme-3",
+  "mainTheme": "theme-1",
   "schedule": {
     "Monday": "",
     "Tuesday": "",
