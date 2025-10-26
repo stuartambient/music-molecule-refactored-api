@@ -15,8 +15,7 @@ const createRootsTable = `CREATE TABLE IF NOT EXISTS roots ( id INTEGER PRIMARY 
 db.exec(createRootsTable);
 
 const getPlaylist = (playlist) => {
-  /* console.log('playlist: ', playlist); */
-  if (!playlist || playlist.length === 0) {
+  /*  if (!playlist || playlist.length === 0) {
     console.log('Empty playlist');
     return [];
   }
@@ -39,7 +38,28 @@ const getPlaylist = (playlist) => {
     }
   });
   console.log(albumFiles);
-  return albumFiles;
+  return albumFiles; */
+  if (!playlist?.length) return [];
+
+  // Filter out empty lines and duplicates
+  const cleaned = playlist.filter(Boolean);
+
+  // Build a single SQL query
+  const placeholders = cleaned.map(() => '?').join(',');
+  const query = `
+    SELECT track_id, like, audiotrack, performers, title, album
+    FROM "audio-tracks"
+    WHERE audiotrack IN (${placeholders})
+  `;
+
+  const stmt = db.prepare(query);
+  const rows = stmt.all(...cleaned);
+
+  // Optionally, preserve playlist order (SQLite IN() doesn’t guarantee it)
+  const map = new Map(rows.map((r) => [r.audiotrack, r]));
+  const ordered = cleaned.map((path) => map.get(path)).filter(Boolean);
+
+  return ordered;
 };
 
 async function normalizePaths(paths) {

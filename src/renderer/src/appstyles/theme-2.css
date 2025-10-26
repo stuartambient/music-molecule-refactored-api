@@ -82,6 +82,9 @@
   --main-nav-hover-menu-color: var(--text-secondary);
   --overlay: var(--background-2);
   --overlay-color: var(--text-inverse);
+  --overlay-hover: var(--accent-secondary);
+  --overlay-play-stop-button: var(--active-icons);
+  --overlay-menu: var(--active-icons);
   --player-background: var(--background-1);
   --player-font-color: var(--accent-primary);
   --root-highlight: var(--active-icons);

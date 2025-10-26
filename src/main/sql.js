@@ -58,12 +58,18 @@ CREATE TABLE IF NOT EXISTS "audio-tracks" (
     tagTypes
 );`;
 
+const createIndexAudioTrack = `
+CREATE INDEX IF NOT EXISTS idx_audio_tracks_audiotrack
+ON "audio-tracks"(audiotrack COLLATE NOCASE);
+`;
+
 const createRootsTable = `CREATE TABLE IF NOT EXISTS roots ( id INTEGER PRIMARY KEY AUTOINCREMENT, root TEXT UNIQUE)`;
 
 const initializeDatabase = () => {
   db.exec(createAudioTracks);
   db.exec(createAlbumsTable);
   db.exec(createRootsTable);
+  db.exec(createIndexAudioTrack);
 };
 
 /* const insertFiles = (files) => {
