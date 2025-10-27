@@ -26,7 +26,6 @@ const allTracksByArtist = (artist) => {
       query = `SELECT * FROM "audio-tracks" WHERE performers IN (${placeholders})`;
       params = artist;
     } else {
-      // Standard query for a single artist
       query = `SELECT * FROM "audio-tracks" WHERE performers = ?`;
       params = [artist];
     }
@@ -39,7 +38,6 @@ const allTracksByArtist = (artist) => {
 };
 
 const allTracksByGenres = (genres) => {
-  /* console.log('genres: ', genres); */
   try {
     let query, params;
     if (genres === 'No Genres Specified') {
@@ -106,26 +104,6 @@ const genresWithCount = () => {
   return results;
 };
 
-/* const foldersWithCount = (dirs) => {
-  // Assuming dirs is an array of folder paths, e.g., ['path1', 'path2']
-  // Prepare a query string with placeholders for 'dirs' values
-  let placeholders = dirs.map(() => '?').join(', ');
-  let sql = `
-    SELECT root, COUNT(*) as count 
-    FROM "audio-tracks" 
-    WHERE root IN (${placeholders})
-    GROUP BY root 
-    ORDER BY lower(root)
-  `;
-
-  // Prepare the statement with the sql query
-  const stmt = db.prepare(sql);
-
-  // Execute the query with 'dirs' as the parameters for placeholders
-  const results = stmt.all(...dirs);
-  return results;
-}; */
-
 const albumsByTopFolder = (folder) => {
   const stmt = db.prepare('SELECT * FROM albums WHERE rootlocation = ?');
 
@@ -133,32 +111,13 @@ const albumsByTopFolder = (folder) => {
   return results;
 };
 
-/* const nullMetadata = () => {
-  const stmt = db.prepare(
-    `SELECT audiotrack FROM "audio-tracks" WHERE performers IS NULL OR title IS NULL OR album IS NULL ORDER BY audiotrack`
-  );
-  return stmt.all();
-}; */
-
 export {
   totalTracks,
   topHundredArtists,
   genresWithCount,
-  /*  foldersWithCount, */
-  /*   nullMetadata, */
   allTracksByArtist,
   allTracksByGenres,
   allTracksByRoot,
   distinctDirectories,
   albumsByTopFolder
 };
-
-/*
-SELECT COUNT(*) FROM tracks;
-
-// RETURNS NON NULL , DEDUCT FROM ABOVE FOR NULL //
-SELECT COUNT(artist) FROM tracks;
-
-
-SELECT artist, COUNT(*) FROM tracks GROUP BY artist ORDER BY COUNT(*) DESC;
-*/

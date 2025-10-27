@@ -396,22 +396,6 @@ const usePlaylistDialog = (req, playlistTracks, dispatch, setPlaylistReq) => {
   }, [req, playlistTracks, dispatch, setPlaylistReq]);
 };
 
-/* const useGetPlaylists = (setMyPlaylists) => {
-  useEffect(() => {
-    let subscribed = true;
-    const getmyplaylists = async () => {
-      const myplaylists = await window.api.getPlaylists();
-      if (myplaylists) {
-        setMyPlaylists(myplaylists);
-      }
-    };
-    if (subscribed) {
-      getmyplaylists();
-    }
-    return () => (subscribed = false);
-  }, [setMyPlaylists]);
-}; */
-
 const useDistinctDirectories = (setDirectories) => {
   useEffect(() => {
     let subscribed = true;
@@ -464,11 +448,8 @@ export {
   useAlbumTracks,
   useTopHundredArtistsStat,
   useGenres,
-  /*  usePlaylist, */
   usePlaylistDialog,
-  /* useGetPlaylists, */
   useAllAlbumsCovers,
   useDistinctDirectories,
   useTotalTracksStat
-  /* useTracksByRoot */
 };

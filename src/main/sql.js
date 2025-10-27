@@ -72,168 +72,11 @@ const initializeDatabase = () => {
   db.exec(createIndexAudioTrack);
 };
 
-/* const insertFiles = (files) => {
-  const insert = db.prepare(`
-  INSERT INTO "audio-tracks"
-            (track_id,
-             root,
-             audiotrack,
-             modified,
-             like,
-             error,
-             albumArtists,
-             album,
-             audioBitrate,
-             audioSamplerate,
-             beatsPerMinute,
-             codecs,
-             composers,
-             conductor,
-             copyright,
-             comment,
-             disc,
-             discCount,
-             description,
-             duration,
-             encoder,
-             encodedBy,
-             encoderSettings,
-             genres,
-             isCompilation,
-             isrc,
-             lyrics,
-             performers,
-             performersRole,
-             pictures,
-             publisher,
-             remixedBy,
-             replayGainAlbumGain,
-             replayGainAlbumPeak,
-             replayGainTrackGain,
-             replayGainTrackPeak,
-             title,
-             track,
-             trackCount,
-             year)
-VALUES      (@track_id,
-             @root,
-             @audiotrack,
-             @modified,
-             @like,
-             @error,
-             @albumArtists,
-             @album,
-             @audioBitrate,
-             @audioSampleRate,
-             @beatsPerMinute,
-             @codecs,
-             @composers,
-             @conductor,
-             @copyright,
-             @comment,
-             @disc,
-             @discCount,
-             @description,
-             @duration,
-             @encoder,
-             @encodedBy,
-             @encoderSettings,
-             @genres,
-             @isCompilation,
-             @isrc,
-             @lyrics,
-             @performers,
-             @performersRole,
-             @pictures,
-             @publisher,
-             @remixedBy,
-             @replayGainAlbumGain,
-             @replayGainAlbumPeak,
-             @replayGainTrackGain,
-             @replayGainTrackPeak,
-             @title,
-             @track,
-             @trackCount,
-             @year) `);
-
-  try {
-    const insertMany = db.transaction((files) => {
-      for (const f of files) insert.run(f);
-    });
-
-    insertMany(files);
-    return { success: true, message: 'Files inserted successfully' };
-  } catch (error) {
-    console.error('Error inserting files:', error);
-    return { success: false, message: `Error inserting files: ${error.message}` };
-  }
-}; */
-
-/* const deleteFiles = (files) => {
-  const deleteFile = db.prepare('DELETE FROM "audio-tracks" WHERE audiotrack = ?');
-
-  const deleteMany = db.transaction((files) => {
-    for (const f of files) deleteFile.run(f);
-  });
-
-  deleteMany(files);
-}; */
-
-/* const insertAlbums = (data) => {
-  const insert = db.prepare(
-    'INSERT INTO albums(id, rootlocation, foldername, fullpath, img) VALUES (@id, @root, @name, @fullpath, @img)'
-  );
-
-  const insertMany = db.transaction((albums) => {
-    for (const a of albums) {
-      if (!a.img) {
-        a.img = null;
-      }
-      insert.run(a);
-    }
-  });
-
-  insertMany(data);
-}; */
-
-/* const deleteAlbums = async (data) => {
-  const deleteA = db.prepare('DELETE FROM albums WHERE fullpath = ?');
-  const deleteMany = db.transaction((data) => {
-    for (const d of data) deleteA.run(d);
-  });
-  deleteMany(data);
-}; */
-
 const getAlbumsNullImg = () => {
   const getAllAlbums = db.prepare('SELECT fullpath, img FROM albums WHERE img IS NULL');
   const albums = getAllAlbums.all();
   return albums;
 };
-
-/* const getAlbum = (id) => {
-  const getAnAlbum = db.prepare('SELECT fullpath FROM albums WHERE id = ?');
-  const album = getAnAlbum.get(id);
-  const files = db.prepare('SELECT * FROM "audio-tracks" WHERE audiotrack LIKE ?');
-  const assocFiles = files.all(`${album.fullpath}%`);
-  const albumFiles = [];
-  assocFiles.forEach((a) => {
-    albumFiles.push(a);
-  });
-  return albumFiles;
-}; */
-
-/* const checkRecordsExist = (tracks) => {
-  for (const track of tracks) {
-    const record = db
-      .prepare(
-        `
-      SELECT * FROM "audio-tracks"
-      WHERE audiotrack = @audiotrack AND track_id = @track_id
-    `
-      )
-      .get({ audiotrack: track.audiotrack, track_id: track.track_id });
-  }
-}; */
 
 const getAllPkeys = () => {
   const alltracks = db.prepare('SELECT track_id FROM "audio-tracks"');
@@ -241,7 +84,7 @@ const getAllPkeys = () => {
   return alltracks.all();
 };
 const getAllTracks = (rows) => {
-  const tracks = db.prepare('SELECT * FROM "audio-tracks" WHERE track_id = ?');
+  /*   const tracks = db.prepare('SELECT * FROM "audio-tracks" WHERE track_id = ?');
 
   const shuffledTracks = [];
   for (const r of rows) {
@@ -257,7 +100,15 @@ const getAllTracks = (rows) => {
     }
   }
 
-  return shuffledTracks;
+  return shuffledTracks; */
+  if (!rows?.length) return [];
+
+  const ids = rows.map((r) => r.track_id).filter(Boolean);
+  const placeholders = ids.map(() => '?').join(',');
+  const sql = `SELECT * FROM "audio-tracks" WHERE track_id IN (${placeholders})`;
+  const result = db.prepare(sql).all(...ids);
+  const map = new Map(result.map((r) => [r.track_id, r]));
+  return ids.map((id) => map.get(id)).filter(Boolean);
 };
 
 const allTracksByScroll = (offsetNum, sort) => {
@@ -276,40 +127,7 @@ const allTracksBySearchTerm = (offsetNum, text, sort) => {
   return stmt.all(...params);
 };
 
-const getPlaylist = (playlist) => {
-  /* console.log('playlist: ', playlist);
-  console.log('getPlaylist'); */
-
-  if (!playlist || playlist.length === 0) {
-    console.log('Empty playlist');
-    return [];
-  }
-
-  const albumFiles = [];
-  const plfile = db.prepare(
-    'SELECT track_id, like, audiotrack, performers, title, album FROM "audio-tracks" WHERE audiotrack = ?'
-  );
-
-  playlist.forEach((pl) => {
-    try {
-      const file = plfile.get(pl);
-      if (file) {
-        albumFiles.push(file);
-      } else {
-        console.warn(`File for audiotrack ${pl} not found in the database.`);
-      }
-    } catch (error) {
-      console.error(`Error retrieving audiotrack ${pl}:`, error);
-    }
-  });
-
-  /* console.log('albumFiles: ', albumFiles); */
-  return albumFiles;
-};
-
 const allAlbumsByScroll = (offsetNum, sort) => {
-  /* console.log('allAlbumsByScroll'); */
-
   const query = `SELECT * FROM albums ORDER BY birthtime ${sort} LIMIT 200 OFFSET $offset`;
 
   try {
@@ -321,7 +139,6 @@ const allAlbumsByScroll = (offsetNum, sort) => {
 };
 
 const allAlbumsBySearchTerm = (offsetNum, text, sort) => {
-  /* console.log('allAlbumsBySearchTerm'); */
   const term = `%${text}%`;
 
   const query = `SELECT * FROM albums WHERE fullpath LIKE ? ORDER BY birthtime ${sort} LIMIT 200 OFFSET ?`;
@@ -373,17 +190,11 @@ const filesByAlbum = (albumPath) => {
     return [];
   }
 
-  /*  console.log('pathsArray: ', pathsArray); */
-
   const queryParts = pathsArray.map(() => 'audiotrack LIKE ?').join(' OR ');
-  /* console.log('queryParts: ', queryParts); */
   const query = `SELECT * FROM "audio-tracks" WHERE ${queryParts}`;
-  /* console.log('query: ', query); */
   const params = pathsArray.map((path) => `${path}%`);
-  /* console.log('params: ', params); */
 
   const albumFiles = db.prepare(query).all(...params);
-  /* console.log('albumFiles: ', albumFiles.length); */
   return albumFiles;
 };
 
@@ -398,15 +209,12 @@ const likeTrack = (fileId) => {
 };
 
 const isLiked = (id) => {
-  /* console.log('id: ', id); */
   const isLiked = db.prepare('SELECT like FROM "audio-tracks" WHERE track_id = ?');
   const status = isLiked.get(id);
-  /* console.log('isLiked.like: ', status); */
   return status;
 };
 
 const updateCoversInDatabase = (coversArray) => {
-  /* coversArray.forEach((cover) => console.log(cover)); */
   const updateStmt = db.prepare(`
     UPDATE albums
     SET img = @img
@@ -435,7 +243,6 @@ const getRoots = () => {
 const updateRoots = (roots) => {
   const result = [];
   if (roots.length === 0) {
-    // If the array is empty, delete all entries in the table
     const deleteAllQuery = `DELETE FROM roots`;
     const empty = db.prepare(deleteAllQuery).run();
     result.push({ Deleted: empty.changes });
@@ -443,7 +250,6 @@ const updateRoots = (roots) => {
   }
   const placeholders = roots.map(() => '?').join(',');
 
-  // Delete entries in the database that are not in the array
   const deleteQuery = `
     DELETE FROM roots
     WHERE root NOT IN (${placeholders})
@@ -451,7 +257,6 @@ const updateRoots = (roots) => {
   const info = db.prepare(deleteQuery).run(...roots);
   result.push({ Deleted: info.changes });
 
-  // Insert new values and ignore duplicates
   const insertQuery = `
     INSERT OR IGNORE INTO roots (root)
     VALUES ${roots.map(() => '(?)').join(',')}
@@ -463,11 +268,6 @@ const updateRoots = (roots) => {
 };
 
 export {
-  /* insertFiles,
-  insertAlbums,
-  deleteAlbums,
-  deleteFiles,
-  getAlbum, */
   getAllPkeys,
   allTracksByScroll,
   allTracksBySearchTerm,
@@ -476,12 +276,10 @@ export {
   filesByAlbum,
   likeTrack,
   isLiked,
-  getPlaylist,
   allCoversByScroll,
   allMissingCoversByScroll,
   getAllTracks,
   updateCoversInDatabase,
-  /* checkRecordsExist, */
   getAlbumsNullImg,
   getRoots,
   updateRoots,
