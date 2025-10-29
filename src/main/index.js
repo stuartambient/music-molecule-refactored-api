@@ -539,6 +539,48 @@ ipcMain.on('toggle-resizable', (event, isResizable) => {
   }
 });
 
+function isDbHealthy(db) {
+  try {
+    const res = db.prepare('PRAGMA quick_check').get();
+
+    return res.quick_check === 'ok';
+  } catch {
+    return false;
+  }
+}
+
+async function backupDatabase() {
+  if (!isDbHealthy(db)) {
+    console.warn('Skipping backup — database integrity check failed.');
+    return;
+  }
+  const prod = import.meta.env.PROD;
+  const prodPath = app.getPath('userData');
+  const prodDirectory = path.join(prodPath, 'backups');
+  fs.mkdirSync(prodDirectory, { recursive: true });
+  const devDirectory = path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_BACKUP_DEV, 'backups');
+  fs.mkdirSync(devDirectory, { recursive: true });
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const backupPath = prod
+    ? path.join(prodDirectory, `backup-${stamp}.db` /* import.meta.env.MAIN_VITE_DB_PATH_PROD */)
+    : path.join(devDirectory, `backup-${stamp}.db`);
+  /*  const dest = `backup-${Date.now()}.db`; */
+  try {
+    await db.backup(backupPath, {
+      progress({ totalPages, remainingPages }) {
+        console.log(
+          `Backing up: ${(((totalPages - remainingPages) / totalPages) * 100).toFixed(1)}%`
+        );
+      }
+    });
+    console.log('Backup complete:', backupPath);
+  } catch (err) {
+    console.error('Backup failed:', err);
+  }
+}
+
+backupDatabase();
+
 ipcMain.handle('get-roots', async () => {
   const rootFolders = await getRoots();
   return rootFolders;

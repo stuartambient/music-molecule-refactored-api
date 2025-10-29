@@ -126,16 +126,13 @@ const difference = (setA, setB) => {
   return _difference;
 };
 
-const checkAgainstEntries = (data) => {
-  /* console.log('data: ', data); */
+/* const checkAgainstEntries = (data) => {
   return new Promise((resolve, reject) => {
     let status = { deleted: 0, new: 0, nochange: false };
 
     try {
       const dbAlbums = getAlbums();
       const dbAlbumsFullpath = dbAlbums.map((album) => album.fullpath);
-      /* console.log('DB sample:', dbAlbumsFullpath.slice(0, 3));
-      console.log('FS sample:', data.slice(0, 3)); */
       const allAlbums = new Set(data);
       const dbEntries = new Set(dbAlbumsFullpath);
 
@@ -165,7 +162,37 @@ const checkAgainstEntries = (data) => {
       reject(error);
     }
   });
-};
+}; */
+
+async function checkAgainstEntries(data) {
+  const status = { deleted: 0, new: 0, nochange: false };
+
+  const dbAlbums = getAlbums();
+  const dbAlbumsFullpath = dbAlbums.map((a) => a.fullpath);
+
+  const allAlbums = new Set(data);
+  const dbEntries = new Set(dbAlbumsFullpath);
+
+  const newEntries = Array.from(difference(allAlbums, dbEntries));
+  const missingEntries = Array.from(difference(dbEntries, allAlbums));
+
+  if (newEntries.length > 0) {
+    const newAlbums = await parseNewEntries(newEntries);
+    await insertAlbums(newAlbums);
+    status.new = newEntries.length;
+  }
+
+  if (missingEntries.length > 0) {
+    await deleteAlbums(missingEntries);
+    status.deleted = missingEntries.length;
+  }
+
+  if (!newEntries.length && !missingEntries.length) {
+    status.nochange = true;
+  }
+
+  return status;
+}
 
 const topDirs = async (root) => {
   /*  const entries = await fsPromises.readdir(root);
@@ -183,22 +210,6 @@ const topDirs = async (root) => {
     return [];
   }
 };
-
-/* const topDirs = async (root) => {
-  try {
-    // Ask for Dirent objects (not just strings)
-    const entries = await fsPromises.readdir(root, { withFileTypes: true });
-
-    // Only keep directories (ignores files, shortcuts, symlinks, etc.)
-    return entries
-      .filter((dirent) => dirent.isDirectory())
-      .map((dirent) => path.join(root, dirent.name));
-  } catch (err) {
-    // Root itself might not exist or be a shortcut
-    console.error(`Error reading root ${root}:`, err.message);
-    return [];
-  }
-}; */
 
 const run = async (cb) => {
   let dirs = [];
@@ -229,9 +240,11 @@ parentPort.on('message', async (message) => {
   console.log('message: ', message);
   try {
     const result = await initAlbums();
-    /* const result = addTwoNums(2, 3); */
     parentPort.postMessage({ result });
   } catch (error) {
     parentPort.postMessage({ error: error.message });
+  } finally {
+    db.close();
+    process.exit(0);
   }
 });

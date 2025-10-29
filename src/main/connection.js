@@ -22,10 +22,14 @@ const extensionsPath = prod
 
 db.loadExtension(path.join(extensionsPath, 'unicode'));
 
-/* console.log('better-sqlite3 version:', require('better-sqlite3/package.json').version);
-console.log('SQLite runtime version:', db.prepare('SELECT sqlite_version()').pluck().get()); */
-
-/* 
-db.loadExtension(`${process.cwd()}/src/db/extensions/unicode`); */
+process.on('exit', () => {
+  try {
+    db.pragma('optimize'); // safe: quick, sync
+    db.close(); // safe: sync
+    console.log('Database optimized and closed cleanly.');
+  } catch (err) {
+    console.error('Error during DB cleanup:', err);
+  }
+});
 
 export default db;

@@ -3,18 +3,20 @@ function performDatabaseMaintenance() {
 
   try {
     // Set PRAGMA settings for maintenance
-    db.pragma('journal_mode = WAL');
+    /*     db.pragma('journal_mode = WAL');
     db.pragma('synchronous = normal');
-    db.pragma('temp_store = memory');
+    db.pragma('temp_store = memory'); */
 
     // Perform an explicit checkpoint
     db.pragma('wal_checkpoint(FULL)');
 
     // Temporarily switch to DELETE mode and back to WAL
-    db.pragma('journal_mode = DELETE');
-    db.pragma('journal_mode = WAL');
+    /*  You’d normally only do this to recover from a persistent WAL issue or after copying the file. */
+    /* db.pragma('journal_mode = DELETE');
+    db.pragma('journal_mode = WAL'); */
 
     // Perform VACUUM to optimize database
+    /* Best run occasionally, not every startup — maybe weekly or after mass deletions. */
     db.exec('VACUUM');
   } catch (error) {
     console.error('Error during database maintenance:', error);

@@ -13,9 +13,6 @@ const dbPath =
     : path.join(workerData.workerPath, 'music.db');
 
 const db = new Database(dbPath);
-/* const createRootsTable = `CREATE TABLE IF NOT EXISTS roots ( id INTEGER PRIMARY KEY AUTOINCREMENT, root TEXT UNIQUE)`;
-db.exec(createRootsTable); */
-
 const getPlaylist = (playlist) => {
   if (!playlist?.length) return [];
 
@@ -43,7 +40,10 @@ const getPlaylist = (playlist) => {
 async function normalizePaths(input) {
   const paths = Array.isArray(input) ? input : input.data;
   const plfiles = await fsPromises.readFile(paths[0], 'utf8');
-  const parsed = plfiles.replaceAll('\\', '/').split('\n');
+  const parsed = plfiles
+    .replaceAll('\\', '/')
+    .split('\n')
+    .filter((line) => line.trim() && !line.startsWith('#'));
   return getPlaylist(parsed);
 }
 
@@ -54,6 +54,10 @@ parentPort.on('message', async () => {
     const paths = await normalizePaths(data);
     parentPort.postMessage({ data: paths });
   } catch (error) {
+    console.error('Playlist worker error:', error);
     parentPort.postMessage({ error: error.message });
+  } finally {
+    db.close();
+    process.exit(0);
   }
 });

@@ -392,5 +392,8 @@ parentPort.on('message', async () => {
       error: error instanceof Error ? error.message : String(error),
       stack: error?.stack || null
     });
+  } finally {
+    db.close();
+    process.exit(0);
   }
 });

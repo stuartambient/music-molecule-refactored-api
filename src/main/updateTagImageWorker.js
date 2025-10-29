@@ -115,5 +115,8 @@ parentPort.on('message', async () => {
     parentPort.postMessage({ result });
   } catch (error) {
     parentPort.postMessage({ error: error.message });
+  } finally {
+    db.close();
+    process.exit(0);
   }
 });
