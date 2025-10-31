@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import { v4 as uuidv4 } from 'uuid';
 import { File, MpegAudioFileSettings, FlacFileSettings, TagTypes } from 'node-taglib-sharp';
 import decodeTagTypes from '../decodeTagTypes.js';
@@ -46,49 +47,84 @@ export function insertFiles(db, files) {
 }
 
 export function updateFiles(db, files) {
+  // Log the files being passed in for debugging
+  /* console.log('updateFiles: ', files); */
+
+  // A cache to store prepared SQL statements, keyed by the column set being updated
+  // In this app, since every file object likely includes *all* columns, only one cached
+  // statement will typically be created and reused for all updates.
   const stmtCache = new Map();
 
+  /**
+   * Helper function that generates (or retrieves from cache) an UPDATE statement
+   * for a given object shape.
+   *
+   * If all objects in the `files` array include all columns, this will generate
+   * one statement and reuse it. If some objects omit certain columns (e.g. partial
+   * updates), then separate statements will be generated and cached by column set.
+   *
+   * @param {Object} obj - A file record with keys representing DB columns.
+   * @returns {Statement} A prepared SQLite statement ready for execution.
+   */
   const getUpdateStmt = (obj) => {
-    // exclude WHERE key from SET list
+    // Get all keys except the primary key (WHERE condition key)
     const keys = Object.keys(obj)
-      .filter((k) => k !== 'audiotrack')
-      .sort();
+      .filter((k) => k !== 'track_id') // exclude WHERE key
+      .sort(); // sort for consistent cache key order
+
+    // Create a cache key based on sorted column names
     const cacheKey = keys.join(',');
 
+    console.log('keys: ', keys, 'cacheKey: ', cacheKey);
+
+    // If a matching statement exists in cache, reuse it
     if (stmtCache.has(cacheKey)) {
       return stmtCache.get(cacheKey);
     }
 
+    // Build the SQL string dynamically based on the object keys
     const assignments = keys.map((k) => `"${k}" = @${k}`).join(', ');
     const sql = `
-      UPDATE "audio-tracks"
-      SET ${assignments}
-      WHERE audiotrack = @audiotrack
-    `;
+UPDATE "audio-tracks"
+SET ${assignments}
+WHERE track_id = @track_id
+`;
 
+    // Prepare the statement and store it in the cache
     const stmt = db.prepare(sql);
     stmtCache.set(cacheKey, stmt);
     return stmt;
   };
 
   try {
+    /**
+     * Wrap the updates in a transaction to ensure atomicity.
+     * If any update fails, the whole batch is rolled back.
+     */
     const updateMany = db.transaction((files) => {
       for (const f of files) {
-        // strip undefined only, allow nulls if explicit
+        // Remove undefined values only (leave explicit nulls intact)
         const cleaned = Object.fromEntries(Object.entries(f).filter(([_, v]) => v !== undefined));
 
-        if (!cleaned.audiotrack) {
-          throw new Error('Missing audiotrack for update');
+        // Ensure primary key (track_id) is present
+        if (!cleaned.track_id) {
+          throw new Error('Missing track_id for update');
         }
 
+        // Get the appropriate prepared statement for this file shape
         const stmt = getUpdateStmt(cleaned);
+
+        // Execute the statement with the file's data
         stmt.run(cleaned);
       }
     });
 
+    // Run the transaction
     updateMany(files);
+
     return { success: true, message: 'Files updated successfully' };
   } catch (error) {
+    // Handle and log any errors during the update process
     console.error('Error updating files:', error);
     return { success: false, message: `Error updating files: ${error.message}` };
   }
@@ -201,4 +237,24 @@ export async function parseMeta(files, op, findRoot) {
     }
   }
   return filesMetadata;
+}
+export async function pruneBackups(dir, max = 10) {
+  try {
+    const files = fs
+      .readdirSync(dir)
+      .filter((f) => f.startsWith('backup-') && f.endsWith('.db'))
+      .map((f) => ({
+        name: f,
+        time: fs.statSync(path.join(dir, f)).mtime.getTime()
+      }))
+      .sort((a, b) => b.time - a.time); // newest first
+
+    const old = files.slice(max);
+    for (const file of old) {
+      fs.unlinkSync(path.join(dir, file.name));
+      console.log(`Pruned old backup: ${file.name}`);
+    }
+  } catch (err) {
+    console.error('Backup pruning failed:', err.message);
+  }
 }

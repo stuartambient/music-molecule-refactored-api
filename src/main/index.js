@@ -17,6 +17,7 @@ import { fileURLToPath } from 'url';
 import process from 'node:process';
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
+import { pruneBackups } from './utility/utils.js';
 import { createOrUpdateChildWindow, getWindowNames, getWindow } from './windowManager.js';
 import mime from 'mime-types';
 import { File } from 'node-taglib-sharp';
@@ -123,17 +124,10 @@ const getTheme = () => {
   theme = preferences?.theme || 'light';
   mainTheme = preferences?.mainTheme;
   global.currentTheme = mainTheme;
-
-  /*  mainTheme = preferences?.mainTheme || 'basic';
-  console.log('mainTheme: ', mainTheme); */
 };
-
-/* getTheme(); */
 
 let currentSchedule;
 let cronSchedule = [];
-
-/* console.log('cronSchedule: ', cronSchedule); */
 
 const getCurrentSchedule = async () => {
   console.log('get-current-schedule');
@@ -276,10 +270,6 @@ function createWindow() {
     }
   });
 
-  /*   mainWindow.on('ready-to-show', () => {
-    mainWindow.show();
-  }); */
-
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url);
     return { action: 'deny' };
@@ -334,8 +324,6 @@ function launchDevTools() {
 app.whenReady().then(async () => {
   const createRootsTable = `CREATE TABLE IF NOT EXISTS roots ( id INTEGER PRIMARY KEY AUTOINCREMENT, root TEXT UNIQUE)`;
   db.exec(createRootsTable);
-
-  /*   console.log('Using colors for menu:', colors.background, colors.foreground); */
 
   await session.defaultSession.clearCache().then(() => console.log('Cache cleared!'));
 
@@ -429,49 +417,6 @@ app.whenReady().then(async () => {
       });
     }
   });
-
-  /* TO REPLACE REGISTER FILEPROTOCOL 
-  protocol.handle('some-protocol', () => {
-    return net.fetch('file:///path/to/my/file')
-  })
-    */
-
-  /*   protocol.registerFileProtocol('cover', (request, callback) => {
-    let url = decodeURI(request.url.substr(8));
-
-    // If the URL is for a Windows path (e.g., starts with a drive letter), add the colon back after the drive letter
-    if (/^[a-zA-Z]\//.test(url)) {
-      url = `${url[0]}:${url.slice(1)}`;
-    }
-
-    const filePath = path.normalize(url);
-
-    fs.access(filePath, fs.constants.F_OK, (err) => {
-      if (err) {
-        console.error('File does not exist:', filePath);
-        callback({ error: -6 }); // -6 corresponds to FILE_NOT_FOUND
-      } else {
-        callback({ path: filePath });
-      }
-    });
-  }); */
-
-  /*   protocol.handle('cover', async (request) => {
-    try {
-      let url = decodeURI(request.url.substr(8));
-
-      if (/^[a-zA-Z]\//.test(url)) {
-        url = `${url[0]}:${url.slice(1)}`;
-      }
-      const filePath = path.normalize(url);
-      await fs.promises.access(filePath);
-
-      return net.fetch(`file:///${filePath}`);
-    } catch (err) {
-      console.log('error: ', err.message);
-      throw new Error('FILE_NOT_FOUND');
-    }
-  }); */
 
   protocol.handle('cover', async (request) => {
     try {
@@ -574,6 +519,8 @@ async function backupDatabase() {
       }
     });
     console.log('Backup complete:', backupPath);
+    const backupDir = prod ? prodDirectory : devDirectory;
+    pruneBackups(backupDir, 3); // keep last 10
   } catch (err) {
     console.error('Backup failed:', err);
   }
