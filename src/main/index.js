@@ -29,6 +29,9 @@ import createUpdateMetadataWorker from './updateMetadataWorker?nodeWorker';
 import createLoadPlaylistWorker from './loadPlaylistWorker?nodeWorker';
 import createBackfillWorker from './backfillWorker?nodeWorker';
 import axios from 'axios';
+import { dbHealthCheck, dbDiagnosticRepair } from './dbMaintenance.js';
+import { simulateCorruption } from './simulateDbCorruption.js';
+import { restoreLatestBackup } from './restoreBackup.js';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 import searchCover from './folderImageCheck.js';
 import db from './connection.js';
@@ -113,6 +116,38 @@ function shouldRestartOnError(err) {
 const task = (label) => {
   console.log(`Task ran for ${label} at ${new Date().toLocaleString()}`);
 };
+
+async function backupDatabase() {
+  /*   if (!isDbHealthy(db)) {
+    console.warn('Skipping backup — database integrity check failed.');
+    return;
+  } */
+  const prod = import.meta.env.PROD;
+  const prodPath = app.getPath('userData');
+  const prodDirectory = path.join(prodPath, 'backups');
+  fs.mkdirSync(prodDirectory, { recursive: true });
+  const devDirectory = path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_BACKUP_DEV, 'backups');
+  fs.mkdirSync(devDirectory, { recursive: true });
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const backupPath = prod
+    ? path.join(prodDirectory, `backup-${stamp}.db` /* import.meta.env.MAIN_VITE_DB_PATH_PROD */)
+    : path.join(devDirectory, `backup-${stamp}.db`);
+  /*  const dest = `backup-${Date.now()}.db`; */
+  try {
+    await db.backup(backupPath, {
+      progress({ totalPages, remainingPages }) {
+        console.log(
+          `Backing up: ${(((totalPages - remainingPages) / totalPages) * 100).toFixed(1)}%`
+        );
+      }
+    });
+    console.log('Backup complete:', backupPath);
+    const backupDir = prod ? prodDirectory : devDirectory;
+    pruneBackups(backupDir, 3); // keep last 10
+  } catch (err) {
+    console.error('Backup failed:', err);
+  }
+}
 
 export let theme;
 export let mainTheme;
@@ -335,6 +370,8 @@ app.whenReady().then(async () => {
   console.log('V8:', process.versions.v8);
   console.log(process.arch);
 
+  simulateCorruption();
+
   getTheme();
   setTimeout(() => {
     getCurrentSchedule(); // ⚠️ delay to avoid slowing HMR boot
@@ -484,7 +521,18 @@ ipcMain.on('toggle-resizable', (event, isResizable) => {
   }
 });
 
-function isDbHealthy(db) {
+/* function checkDatabase() {
+  if (!dbHealthCheck(db)) {
+    console.warn('Database failed health check.');
+    dbDiagnosticRepair(db);
+  } else {
+    console.log('Database health checked passed');
+    backupDatabase();
+    return true;
+  }
+} */
+
+/* function isDbHealthy(db) {
   try {
     const res = db.prepare('PRAGMA quick_check').get();
 
@@ -493,40 +541,24 @@ function isDbHealthy(db) {
     return false;
   }
 }
+ */
+/* backupDatabase(); */
 
-async function backupDatabase() {
-  if (!isDbHealthy(db)) {
-    console.warn('Skipping backup — database integrity check failed.');
-    return;
-  }
-  const prod = import.meta.env.PROD;
-  const prodPath = app.getPath('userData');
-  const prodDirectory = path.join(prodPath, 'backups');
-  fs.mkdirSync(prodDirectory, { recursive: true });
-  const devDirectory = path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_BACKUP_DEV, 'backups');
-  fs.mkdirSync(devDirectory, { recursive: true });
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const backupPath = prod
-    ? path.join(prodDirectory, `backup-${stamp}.db` /* import.meta.env.MAIN_VITE_DB_PATH_PROD */)
-    : path.join(devDirectory, `backup-${stamp}.db`);
-  /*  const dest = `backup-${Date.now()}.db`; */
-  try {
-    await db.backup(backupPath, {
-      progress({ totalPages, remainingPages }) {
-        console.log(
-          `Backing up: ${(((totalPages - remainingPages) / totalPages) * 100).toFixed(1)}%`
-        );
-      }
-    });
-    console.log('Backup complete:', backupPath);
-    const backupDir = prod ? prodDirectory : devDirectory;
-    pruneBackups(backupDir, 3); // keep last 10
-  } catch (err) {
-    console.error('Backup failed:', err);
-  }
-}
+ipcMain.handle('db-check', async () => {
+  const ok = dbHealthCheck(db);
+  console.log('dbHealthCheck passed');
+  backupDatabase();
+  return { ok };
+});
 
-backupDatabase();
+ipcMain.handle('db-repair', async () => {
+  const fixed = dbDiagnosticRepair(db);
+  return { fixed };
+});
+
+ipcMain.handle('db-restore', async () => {
+  return restoreLatestBackup();
+});
 
 ipcMain.handle('get-roots', async () => {
   const rootFolders = await getRoots();
