@@ -30,7 +30,7 @@ import createLoadPlaylistWorker from './loadPlaylistWorker?nodeWorker';
 import createBackfillWorker from './backfillWorker?nodeWorker';
 import axios from 'axios';
 import { dbHealthCheck, dbDiagnosticRepair } from './dbMaintenance.js';
-import { simulateCorruption } from './simulateDbCorruption.js';
+/* import { simulateCorruption } from './simulateDbCorruption.js'; */
 import { restoreLatestBackup } from './restoreBackup.js';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 import searchCover from './folderImageCheck.js';
@@ -370,7 +370,7 @@ app.whenReady().then(async () => {
   console.log('V8:', process.versions.v8);
   console.log(process.arch);
 
-  simulateCorruption();
+  /*   simulateCorruption(); */
 
   getTheme();
   setTimeout(() => {
