@@ -34,7 +34,8 @@ import { dbHealthCheck, dbDiagnosticRepair } from './dbMaintenance.js';
 import { restoreLatestBackup } from './restoreBackup.js';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 import searchCover from './folderImageCheck.js';
-import db from './connection.js';
+/* import db from './connection.js'; */
+import { openDatabase, getDB } from './connection.js';
 
 import { getPreferencesSync, getPreferences, savePreferences } from './preferences.js';
 import {
@@ -284,6 +285,30 @@ const capitalizeDriveLetter = (str) => {
 
 export let mainWindow;
 
+export function createRecoveryWindow() {
+  const win = new BrowserWindow({
+    width: 500,
+    height: 300,
+    show: true,
+    resizable: false,
+    autoHideMenuBar: true,
+    webPreferences: {
+      preload: path.join(__dirname, '../preload/index.js'),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+
+  // Load the same app URL — StartupGuard handles rendering the right UI
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    win.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/index.html`);
+  } else {
+    win.loadFile(path.join(__dirname, '../renderer/index.html'));
+  }
+
+  return win;
+}
+
 function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
@@ -357,6 +382,16 @@ function launchDevTools() {
 /* launchDevTools(); */
 
 app.whenReady().then(async () => {
+  const db = openDatabase();
+
+  if (!db) {
+    console.warn('DB corrupt or unreadable — launching recovery mode');
+    // create browser window to load StartupGuard UI
+    createRecoveryWindow();
+  } else {
+    // normal app start
+    createWindow();
+  }
   const createRootsTable = `CREATE TABLE IF NOT EXISTS roots ( id INTEGER PRIMARY KEY AUTOINCREMENT, root TEXT UNIQUE)`;
   db.exec(createRootsTable);
 
@@ -490,12 +525,11 @@ app.whenReady().then(async () => {
   });
   // Create the initial window
 
-  createWindow();
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  app.on('activate', function () {
+  /*   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
+  }); */
   // Optional: Watch for window shortcuts if needed
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window);
@@ -545,6 +579,7 @@ ipcMain.on('toggle-resizable', (event, isResizable) => {
 /* backupDatabase(); */
 
 ipcMain.handle('db-check', async () => {
+  const db = getDB();
   const ok = dbHealthCheck(db);
   console.log('dbHealthCheck passed');
   backupDatabase();
@@ -552,6 +587,7 @@ ipcMain.handle('db-check', async () => {
 });
 
 ipcMain.handle('db-repair', async () => {
+  const db = getDB();
   const fixed = dbDiagnosticRepair(db);
   return { fixed };
 });

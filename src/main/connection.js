@@ -9,18 +9,32 @@ const dbPath = prod
   ? path.join(resourcesPath, 'music.db' /* import.meta.env.MAIN_VITE_DB_PATH_PROD */)
   : path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_PATH_DEV);
 
-const db = new Database(dbPath /* , { verbose: console.log } */);
+let db = null;
 
-db.pragma('journal_mode = WAL');
-db.pragma('synchronous = normal');
-db.pragma('temp_store = memory');
-db.prepare('PRAGMA main.wal_checkpoint(TRUNCATE);').run();
+export function openDatabase() {
+  try {
+    db = new Database(dbPath);
+    db.pragma('journal_mode = WAL');
+    db.pragma('synchronous = normal');
+    db.pragma('temp_store = memory');
+    db.prepare('PRAGMA main.wal_checkpoint(TRUNCATE);').run();
 
-const extensionsPath = prod
+    return db;
+  } catch (err) {
+    console.error('❌ Failed to open DB', err.message);
+    return null;
+  }
+}
+
+/* const extensionsPath = prod
   ? path.join(resourcesPath, 'extensions')
   : path.join(process.cwd(), 'src/db/extensions');
 
-db.loadExtension(path.join(extensionsPath, 'unicode'));
+db.loadExtension(path.join(extensionsPath, 'unicode')); */
+
+export function getDB() {
+  return db;
+}
 
 process.on('exit', () => {
   try {

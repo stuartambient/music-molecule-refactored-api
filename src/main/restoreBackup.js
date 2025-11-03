@@ -43,9 +43,14 @@ export function restoreLatestBackup() {
   const newestBackup = backups[backups.length - 1];
 
   // 3) Close active DB if open (renderer must NOT be using it now)
+  // Force close the actual shared DB connection if open
   try {
-    Database(dbPath).close();
-  } catch {}
+    const { getDB } = require('./connection.js'); // or import if ESM
+    const liveDB = getDB && getDB();
+    if (liveDB) liveDB.close();
+  } catch (e) {
+    console.warn('No live DB to close, continuing restore');
+  }
 
   // 4) Move corrupted DB aside
   if (fs.existsSync(dbPath)) {
