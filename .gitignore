@@ -3,7 +3,18 @@ assets
 dist
 out
 *.log*
-db
 .env
 *.local
 ProfilingData
+*.db
+*.db-shm
+*.db-wal
+# ignore app-specific corruption/restore files
+#music-corrupt-*.db
+#backup-*.db
+#music.db-*.db
+
+# ignore backup folders if inside repo
+backups/
+src/db/
+src/db/backups/
