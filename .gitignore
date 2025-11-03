@@ -7,14 +7,17 @@ out
 *.local
 ProfilingData
 *.db
+*.db-*
 *.db-shm
 *.db-wal
-# ignore app-specific corruption/restore files
-#music-corrupt-*.db
-#backup-*.db
-#music.db-*.db
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.sqlite-shm
+*.sqlite-wal
 
-# ignore backup folders if inside repo
-backups/
-src/db/
-src/db/backups/
+# SQLite extension plugins (DLL modules)
+*.dll
+
+# DB backup folders (if you ever store backups under project root)
+**/backups/**
