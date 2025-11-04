@@ -4,7 +4,12 @@ import path from 'path';
 function simulateDBCorruption() {
   const dbDir = path.join(process.cwd(), 'src/db');
   const mainDB = path.join(dbDir, 'music.db');
-  const backupDB = path.join(dbDir, `music-db-before-test-${Date.now()}.db`);
+  const backupDir = path.join(dbDir, 'backups');
+  fs.mkdirSync(backupDir, { recursive: true });
+  const backupDB = path.join(
+    backupDir,
+    `backup-test-${Date.now()}.db` // match restore naming
+  );
   const corruptDB = path.join(dbDir, 'music-corrupt-temp.db');
 
   console.log(`\n🧪 Simulating DB corruption...\n`);

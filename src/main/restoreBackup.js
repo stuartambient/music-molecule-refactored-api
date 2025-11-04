@@ -21,7 +21,7 @@ export function restoreLatestBackup() {
     ? path.join(app.getPath('userData'), 'backups')
     : path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_BACKUP_DEV, 'backups');
 
-  const dbDir = prod ? app.getPath('userData') : process.cwd();
+  const dbDir = prod ? app.getPath('userData') : path.join(process.cwd(), 'src/db');
   const dbPath = path.join(dbDir, 'music.db'); // adjust if your DB file path differs
 
   // 1) Locate backup directory

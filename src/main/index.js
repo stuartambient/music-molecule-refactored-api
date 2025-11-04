@@ -70,6 +70,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 app.disableHardwareAcceleration();
 
+const prod = import.meta.env.PROD;
+/* const isDev = import.meta.env.MODE === 'development'; */
+const resourcesPath = process.resourcesPath;
+
+const dbPath = prod
+  ? path.join(resourcesPath, 'music.db' /* import.meta.env.MAIN_VITE_DB_PATH_PROD */)
+  : path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_PATH_DEV);
+
 protocol.registerSchemesAsPrivileged([
   {
     scheme: 'streaming',
@@ -123,6 +131,8 @@ async function backupDatabase() {
     console.warn('Skipping backup — database integrity check failed.');
     return;
   } */
+  const db = getDB();
+  if (!db) return;
   const prod = import.meta.env.PROD;
   const prodPath = app.getPath('userData');
   const prodDirectory = path.join(prodPath, 'backups');
@@ -383,6 +393,7 @@ function launchDevTools() {
 
 app.whenReady().then(async () => {
   const db = openDatabase();
+  /* launchDevTools(); */
 
   if (!db) {
     console.warn('DB corrupt or unreadable — launching recovery mode');

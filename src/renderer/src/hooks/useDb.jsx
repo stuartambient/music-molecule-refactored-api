@@ -204,41 +204,6 @@ const useAlbumTracks = (pattern) => {
   return { albumTracks, setAlbumTracks, error };
 };
 
-/* const usePlaylist = (id, dispatch) => {
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    let subscribed = true;
-
-    const loadAlbum = async () => {
-      try {
-        const playlistTracksRequest = await window.api.getAlbum(id);
-        if (playlistTracksRequest && subscribed) {
-          dispatch({
-            type: 'current-playlist',
-            playlistTracks: playlistTracksRequest
-          });
-        }
-      } catch (err) {
-        if (subscribed) {
-          console.error('Error loading playlist:', err);
-          setError(err.message || 'An error occurred while fetching the playlist.');
-        }
-      }
-    };
-
-    if (id) {
-      loadAlbum();
-    }
-
-    return () => {
-      subscribed = false;
-    };
-  }, [dispatch, id]);
-
-  return { error };
-}; */
-
 const useTopHundredArtistsStat = () => {
   const [topHundredArtists, setTopHundredArtists] = useState([]);
   useEffect(() => {
