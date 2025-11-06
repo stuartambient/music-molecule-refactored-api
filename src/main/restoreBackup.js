@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import Database from 'better-sqlite3';
 import { app } from 'electron';
+import { getDB } from './connection';
 
 function integrityOK(dbPath) {
   try {
@@ -23,6 +24,7 @@ export function restoreLatestBackup() {
 
   const dbDir = prod ? app.getPath('userData') : path.join(process.cwd(), 'src/db');
   const dbPath = path.join(dbDir, 'music.db'); // adjust if your DB file path differs
+  console.log('dbDir: ', dbDir, 'dbPath: ', dbPath, 'backupDir: ', backupDir);
 
   // 1) Locate backup directory
   if (!fs.existsSync(backupDir)) {
@@ -45,20 +47,28 @@ export function restoreLatestBackup() {
   // 3) Close active DB if open (renderer must NOT be using it now)
   // Force close the actual shared DB connection if open
   try {
-    const { getDB } = require('./connection.js'); // or import if ESM
-    const liveDB = getDB && getDB();
+    /* const { getDB } = require('./connection.js'); */ // or import if ESM
+    const liveDB = getDB?.();
     if (liveDB) liveDB.close();
   } catch (e) {
     console.warn('No live DB to close, continuing restore');
   }
 
-  // 4) Move corrupted DB aside
-  if (fs.existsSync(dbPath)) {
-    const corruptName = `music-corrupt-${Date.now()}.db`;
-    fs.renameSync(dbPath, path.join(dbDir, corruptName));
+  try {
+    fs.accessSync(dbPath, fs.constants.W_OK);
+    console.log('DB file is writable');
+  } catch {
+    console.warn('DB file is NOT writeable — still locked!');
   }
 
+  // 4) Move corrupted DB aside
+  /*   if (fs.existsSync(dbPath)) {
+    const corruptName = `music-corrupt-${Date.now()}.db`;
+    fs.renameSync(dbPath, path.join(dbDir, corruptName));
+  } */
+
   // 5) Copy backup to DB path
+  console.log('newest: ', newestBackup, 'dbPath: ', dbPath);
   fs.copyFileSync(newestBackup, dbPath);
 
   // 6) Remove WAL & SHM in case they exist from corrupt run

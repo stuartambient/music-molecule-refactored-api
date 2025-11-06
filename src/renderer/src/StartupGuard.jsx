@@ -4,7 +4,7 @@ async function onRestore() {
   const res = await window.ipcApi.invoke('db-restore');
   if (res.restored) {
     alert('Database restored. Restarting app…');
-    window.location.reload();
+    window.ipcApi.send('app-restart');
   } else {
     alert('Restore failed: ' + res.error);
   }
@@ -15,7 +15,7 @@ function RepairScreen() {
 
   useEffect(() => {
     window.ipcApi.invoke('db-repair').then((res) => {
-      if (res.fixed) window.location.reload();
+      if (res.fixed) window.ipcApi.send('app-restart');
       else setMsg('Unable to repair. Please restore backup.');
     });
   }, []);

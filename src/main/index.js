@@ -29,7 +29,7 @@ import createUpdateMetadataWorker from './updateMetadataWorker?nodeWorker';
 import createLoadPlaylistWorker from './loadPlaylistWorker?nodeWorker';
 import createBackfillWorker from './backfillWorker?nodeWorker';
 import axios from 'axios';
-import { dbHealthCheck, dbDiagnosticRepair } from './dbMaintenance.js';
+import { dbDiagnosticRepair } from './dbMaintenance.js';
 /* import { simulateCorruption } from './simulateDbCorruption.js'; */
 import { restoreLatestBackup } from './restoreBackup.js';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
@@ -146,11 +146,11 @@ async function backupDatabase() {
   /*  const dest = `backup-${Date.now()}.db`; */
   try {
     await db.backup(backupPath, {
-      progress({ totalPages, remainingPages }) {
+      /* progress({ totalPages, remainingPages }) {
         console.log(
           `Backing up: ${(((totalPages - remainingPages) / totalPages) * 100).toFixed(1)}%`
         );
-      }
+      } */
     });
     console.log('Backup complete:', backupPath);
     const backupDir = prod ? prodDirectory : devDirectory;
@@ -566,6 +566,8 @@ ipcMain.on('toggle-resizable', (event, isResizable) => {
   }
 });
 
+ipcMain.on('app-restart', () => app.exit(0));
+
 /* function checkDatabase() {
   if (!dbHealthCheck(db)) {
     console.warn('Database failed health check.');
@@ -589,21 +591,50 @@ ipcMain.on('toggle-resizable', (event, isResizable) => {
  */
 /* backupDatabase(); */
 
-ipcMain.handle('db-check', async () => {
+/* ipcMain.handle('db-check', async () => {
   const db = getDB();
   const ok = dbHealthCheck(db);
   console.log('dbHealthCheck passed');
   backupDatabase();
   return { ok };
+}); */
+
+/* DB CHECK — use temporary DB, never the app DB connection */
+ipcMain.handle('db-check', async () => {
+  try {
+    const { default: Database } = await import('better-sqlite3');
+    const tempDb = new Database(dbPath, { readonly: true, fileMustExist: true });
+    const result = tempDb.prepare('PRAGMA integrity_check').get();
+    tempDb.close();
+
+    const ok = result?.integrity_check === 'ok';
+
+    console.log('db-check:', ok ? 'healthy' : 'corrupt');
+
+    if (ok) {
+      // ✅ Only backup if DB is confirmed healthy
+      backupDatabase();
+    }
+
+    return { ok };
+  } catch (e) {
+    console.log('db-check failed, DB likely missing/corrupt');
+    return { ok: false };
+  }
 });
 
 ipcMain.handle('db-repair', async () => {
-  const db = getDB();
+  const { default: Database } = await import('better-sqlite3');
+  const db = new Database(dbPath);
   const fixed = dbDiagnosticRepair(db);
+  db.close();
   return { fixed };
 });
 
 ipcMain.handle('db-restore', async () => {
+  const { default: Database } = await import('better-sqlite3');
+  const db = new Database(dbPath);
+  db.close();
   return restoreLatestBackup();
 });
 

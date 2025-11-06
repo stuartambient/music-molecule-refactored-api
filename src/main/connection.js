@@ -33,14 +33,24 @@ export function openDatabase() {
 db.loadExtension(path.join(extensionsPath, 'unicode')); */
 
 export function getDB() {
+  if (!db) db = new Database(dbPath);
   return db;
+}
+
+export function closeDB() {
+  return db.close();
 }
 
 process.on('exit', () => {
   try {
-    db.pragma('optimize'); // safe: quick, sync
-    db.close(); // safe: sync
-    console.log('Database optimized and closed cleanly.');
+    if (db && db.open) {
+      // ← only run if still open
+      db.pragma('optimize');
+      db.close();
+      console.log('Database optimized and closed cleanly.');
+    } else {
+      console.log('DB already closed — skipping optimize/close.');
+    }
   } catch (err) {
     console.error('Error during DB cleanup:', err);
   }
