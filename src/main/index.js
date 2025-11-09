@@ -296,27 +296,32 @@ const capitalizeDriveLetter = (str) => {
 export let mainWindow;
 
 export function createRecoveryWindow() {
-  const win = new BrowserWindow({
-    width: 500,
-    height: 300,
+  recWindow = new BrowserWindow({
+    frame: true,
     show: true,
     resizable: false,
+    width: 300,
+    height: 200,
     autoHideMenuBar: true,
+    backgroundColor: '#0000ff',
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
+      additionalArguments: [`--mainTheme=${mainTheme}`],
+      sandbox: true,
+      webSecurity: true,
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: true
     }
   });
 
   // Load the same app URL — StartupGuard handles rendering the right UI
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    win.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/index.html`);
+    recWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/index.html`);
   } else {
-    win.loadFile(path.join(__dirname, '../renderer/index.html'));
+    recWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
 
-  return win;
+  return recWindow;
 }
 
 function createWindow() {
@@ -326,7 +331,7 @@ function createWindow() {
     useContentSize: true,
     transparent: true,
     alwaysOnTop: true,
-    show: false,
+    show: true,
     ...(process.platform === 'linux' ? { icon: path.join(__dirname, '../../build/icon.png') } : {}),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
@@ -374,6 +379,7 @@ function createWindow() {
   } else {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
+  return mainWindow;
 }
 
 function launchDevTools() {
@@ -391,7 +397,23 @@ function launchDevTools() {
 
 /* launchDevTools(); */
 
+function startNormalApp() {
+  // open DB freshrecovery-complete
+  const db = openDatabase();
+  if (!db) {
+    console.error('Failed to open DB after restore');
+    return;
+  }
+
+  // build main window
+  createWindow();
+
+  // if you have IPCs or menus that need setup, do them here too
+  // setupAppMenus();
+}
+
 app.whenReady().then(async () => {
+  console.log('whenReady hit');
   const db = openDatabase();
   /* launchDevTools(); */
 
@@ -401,7 +423,7 @@ app.whenReady().then(async () => {
     createRecoveryWindow();
   } else {
     // normal app start
-    createWindow();
+    startNormalApp();
   }
   const createRootsTable = `CREATE TABLE IF NOT EXISTS roots ( id INTEGER PRIMARY KEY AUTOINCREMENT, root TEXT UNIQUE)`;
   db.exec(createRootsTable);
@@ -566,7 +588,14 @@ ipcMain.on('toggle-resizable', (event, isResizable) => {
   }
 });
 
-ipcMain.on('app-restart', () => app.exit(0));
+ipcMain.on('recovery-complete', (event) => {
+  app.relaunch();
+  app.quit();
+});
+
+ipcMain.on('app-restart', () => {
+  console.log('app-restarted');
+});
 
 /* function checkDatabase() {
   if (!dbHealthCheck(db)) {

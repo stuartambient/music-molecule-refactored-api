@@ -1,0 +1,26 @@
+.repair-screen-dialog {
+  position: fixed; /* position relative to viewport, not parent */
+  top: 0;
+  left: 0;
+  width: 100vw; /* viewport width */
+  height: 100vh; /* viewport height */
+  z-index: 9999; /* ensure it's above everything else */
+  background: var(--background-1, rgba(0, 0, 0, 0.85));
+  display: flex; /* center contents */
+  align-items: center;
+  justify-content: center;
+  color: var(--text-1, #fff);
+}
+
+.repair-screen-dialog .panel {
+  background: var(--background-2, #222);
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  max-width: 480px;
+  width: 90%;
+  text-align: center;
+}
+.repair-screen-dialog button {
+  margin-top: 1.5rem; /* or 2rem for more space */
+}

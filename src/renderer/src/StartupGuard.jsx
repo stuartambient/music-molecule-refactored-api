@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react';
+import './StartupGuard.css';
 
 async function onRestore() {
   const res = await window.ipcApi.invoke('db-restore');
   if (res.restored) {
     alert('Database restored. Restarting app…');
-    window.ipcApi.send('app-restart');
+    /*  window.ipcApi.send('recovery-complete'); */
+    /* setTimeout(() => window.location.reload(), 1000); */
+    /*  setStatus('ok'); */
+    window.ipcApi.send('recovery-complete');
+    /* setTimeout(() => window.location.reload(), 2000); */
   } else {
     alert('Restore failed: ' + res.error);
   }
@@ -21,9 +26,13 @@ function RepairScreen() {
   }, []);
 
   return (
-    <div>
-      <p>{msg}</p>
-      {!msg.startsWith('Attempting') && <button onClick={onRestore}>Restore Latest Backup</button>}
+    <div className="repair-screen-dialog">
+      <div className="panel">
+        <p>{msg}</p>
+        {!msg.startsWith('Attempting') && (
+          <button onClick={onRestore}>Restore Latest Backup</button>
+        )}
+      </div>
     </div>
   );
 }
@@ -40,7 +49,7 @@ export function StartupGuard({ children }) {
 
   if (status === 'checking') return <div>Checking database...</div>;
 
-  if (status === 'repair') return <RepairScreen />; // runs diagnostic + backup restore UI
+  if (status === 'repair') return <RepairScreen />;
 
   return children; // load real app
 }
