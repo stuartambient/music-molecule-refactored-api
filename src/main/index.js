@@ -88,6 +88,21 @@ console.log('appData: ', app.getPath('appData'));
 console.log('temp: ', app.getPath('temp'));
 console.log('userData: ', app.getPath('userData')); */
 
+function ensurePreferencesFile() {
+  const src = path.join(process.resourcesPath, 'preferences.json'); // inside resources/
+  const dest = paths.preferences; // userData/preferences.json
+
+  try {
+    // only copy if missing in userData
+    if (!fs.existsSync(dest) && fs.existsSync(src)) {
+      fs.copyFileSync(src, dest);
+      console.log('✅ Copied default preferences to userData folder.');
+    }
+  } catch (err) {
+    console.error('❌ Failed to copy default preferences:', err);
+  }
+}
+
 const playlistsFolder = paths.playlists;
 if (!fs.existsSync(playlistsFolder)) {
   fs.mkdirSync(playlistsFolder, { recursive: true });
@@ -361,7 +376,7 @@ app.whenReady().then(async () => {
   db.exec(createRootsTable);
 
   await session.defaultSession.clearCache().then(() => console.log('Cache cleared!'));
-
+  ensurePreferencesFile();
   electronApp.setAppUserModelId(process.execPath);
 
   console.log('Electron:', process.versions.electron);

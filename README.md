@@ -1,4 +1,4 @@
-# music-molecule-ev4
+# music-molecule
 
 An Electron application with React
 

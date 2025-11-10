@@ -1,5 +1,5 @@
 {
-  "name": "music-molecule-ev4",
+  "name": "music-molecule",
   "version": "1.0.0",
   "description": "An Electron application with React",
   "main": "./out/main/index.js",

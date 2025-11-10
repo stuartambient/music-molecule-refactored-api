@@ -12,6 +12,9 @@ extraResources:
     to: './extensions'
     filter:
       - '**/*.dll'
+  - from: './src/main/preferences.json'
+    to: './preferences.json'
+
 asarUnpack:
   - '**/*.{node,dll}'
 win:
