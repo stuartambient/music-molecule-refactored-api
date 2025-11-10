@@ -4,7 +4,7 @@ import Database from 'better-sqlite3';
 
 const prod = import.meta.env.PROD;
 /* const isDev = import.meta.env.MODE === 'development'; */
-const resourcesPath = process.resourcesPath;
+const resourcesPath = paths.resources;
 
 const dbPath = prod ? paths.db : path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_PATH_DEV);
 

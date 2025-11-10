@@ -230,7 +230,7 @@ const getCurrentSchedule = async () => {
 
 async function updateFolders() {
   try {
-    const workerPath = process.resourcesPath;
+    const workerPath = paths.db;
     await createUpdateFoldersWorker({ workerData: workerPath })
       .on('message', (message) => {
         console.log('updateFolders Message: ', message.result);
@@ -255,7 +255,7 @@ async function updateFolders() {
 async function updateFiles() {
   try {
     /* console.log('createUpdateFilesWorker', createUpdateFilesWorker()); */
-    const workerPath = process.resourcesPath;
+    const workerPath = paths.db;
     await createUpdateFilesWorker({ workerData: workerPath })
       .on('message', (message) => {
         console.log('updateFiles Message: ', getObjectWithLengths(message.result));
