@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import Database from 'better-sqlite3';
-import { app } from 'electron';
+import { paths } from './paths.js';
 
 function integrityOK(dbPath) {
   try {
@@ -18,10 +18,12 @@ export function restoreLatestBackup() {
   const prod = import.meta.env.PROD;
 
   const backupDir = prod
-    ? path.join(app.getPath('userData'), 'backups')
+    ? paths.backups
     : path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_BACKUP_DEV, 'backups');
 
-  const dbDir = prod ? app.getPath('userData') : process.cwd();
+  const dbDir = prod
+    ? paths.local
+    : path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_BACKUP_DEV);
   const dbPath = path.join(dbDir, 'music.db'); // adjust if your DB file path differs
 
   // 1) Locate backup directory

@@ -9,6 +9,7 @@ export const paths = {
   playlists: path.join(app.getPath('userData'), 'playlists'),
 
   // --- large, not synced ---
+  local: localDataRoot,
   db: path.join(localDataRoot, 'music.db'),
   backups: path.join(localDataRoot, 'backups'),
 

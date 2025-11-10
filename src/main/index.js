@@ -1114,7 +1114,7 @@ ipcMain.handle('update-tags', async (event, arr) => {
   ); */
   targetWindow.webContents.send('updated-tags', { status: 'starting' });
   try {
-    const workerPath = process.resourcesPath;
+    const workerPath = paths.db;
     await createUpdateTagsWorker({ workerData: { workerPath: workerPath, data: arr } })
       .on('message', (message) => {
         /*  console.log('update tags: ', message); */
@@ -1412,7 +1412,7 @@ ipcMain.handle('download-tag-image', async (event, ...args) => {
   const targetWindow = await getWindow('table-data');
 
   const [fileUrl, filePath, delayDownload] = args;
-  console.log('fileUrl: ', fileUrl, 'filePath: ', filePath, 'delayDownload: ', delayDownload);
+
   const tempKey = crypto.randomBytes(16).toString('hex');
   /*  if (!delayDownload) {
     targetWindow.webContents.send('update-tags', 'starting');

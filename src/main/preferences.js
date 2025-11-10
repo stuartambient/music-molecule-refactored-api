@@ -1,12 +1,13 @@
 import { promises as fs } from 'fs';
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
+import { paths } from './paths.js';
 
 const __dirname = path.resolve();
 const preferencesPath =
   import.meta.env.MODE === 'development'
     ? path.join(__dirname, 'src', 'main', 'preferences.json')
-    : path.join(process.resourcesPath, 'preferences.json');
+    : paths.preferences;
 
 export const getPreferences = async () => {
   try {

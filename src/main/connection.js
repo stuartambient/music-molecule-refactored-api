@@ -1,13 +1,12 @@
 import path from 'node:path';
+import { paths } from './paths.js';
 import Database from 'better-sqlite3';
 
 const prod = import.meta.env.PROD;
 /* const isDev = import.meta.env.MODE === 'development'; */
 const resourcesPath = process.resourcesPath;
 
-const dbPath = prod
-  ? path.join(resourcesPath, 'music.db' /* import.meta.env.MAIN_VITE_DB_PATH_PROD */)
-  : path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_PATH_DEV);
+const dbPath = prod ? paths.db : path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_PATH_DEV);
 
 const db = new Database(dbPath /* , { verbose: console.log } */);
 
