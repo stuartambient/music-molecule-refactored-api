@@ -10,7 +10,7 @@ const mode = import.meta.env.MODE;
 const dbPath =
   mode === 'development'
     ? path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_PATH_DEV)
-    : path.join(workerData.workerPath, 'music.db');
+    : workerData.workerPath;
 
 const db = new Database(dbPath);
 const getPlaylist = (playlist) => {

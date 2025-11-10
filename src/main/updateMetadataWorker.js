@@ -9,7 +9,7 @@ const mode = import.meta.env.MODE;
 const dbPath =
   mode === 'development'
     ? path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_PATH_DEV)
-    : path.join(workerData, 'music.db');
+    : workerData;
 
 const db = new Database(dbPath);
 const createRootsTable = `CREATE TABLE IF NOT EXISTS roots ( id INTEGER PRIMARY KEY AUTOINCREMENT, root TEXT UNIQUE)`;

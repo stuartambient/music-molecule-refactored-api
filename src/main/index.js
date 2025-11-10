@@ -637,7 +637,7 @@ function getObjectWithLengths(obj) {
 ipcMain.handle('update-files', async () => {
   try {
     /* console.log('createUpdateFilesWorker', createUpdateFilesWorker()); */
-    const workerPath = process.resourcesPath;
+    const workerPath = paths.db;
     await createUpdateFilesWorker({ workerData: workerPath })
       .on('message', (message) => {
         //console.log('message from worker: ', message);
@@ -673,7 +673,7 @@ ipcMain.handle('update-meta', async () => {
   const targetWindow = BrowserWindow.fromId(senderWindow.id); */
 
   try {
-    const workerPath = process.resourcesPath;
+    const workerPath = paths.db;
     await createUpdateMetadataWorker({ workerData: workerPath })
       .on('message', (message) => {
         console.log('metadata message: ', message);
@@ -709,7 +709,7 @@ ipcMain.handle('update-covers', async () => {
   //console.log('update-covers');
   try {
     /* console.log('createUpdateFilesWorker', createUpdateFilesWorker()); */
-    const workerPath = process.resourcesPath;
+    const workerPath = paths.db;
     await createUpdateCoversWorker({ workerData: workerPath })
       .on('message', (message) => {
         //console.log('message from worker: ', message);
@@ -979,7 +979,7 @@ ipcMain.handle('open-playlist', async () => {
   });
   if (open.canceled) return 'action cancelled';
 
-  const workerPath = process.resourcesPath;
+  const workerPath = paths.db;
 
   const result = await new Promise((resolve, reject) => {
     const worker = createLoadPlaylistWorker({
