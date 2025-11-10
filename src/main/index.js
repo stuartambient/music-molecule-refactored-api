@@ -27,7 +27,6 @@ import createUpdateFoldersWorker from './updateFoldersWorker?nodeWorker';
 import createUpdateCoversWorker from './updateCoversWorker?nodeWorker';
 import createUpdateMetadataWorker from './updateMetadataWorker?nodeWorker';
 import createLoadPlaylistWorker from './loadPlaylistWorker?nodeWorker';
-import createBackfillWorker from './backfillWorker?nodeWorker';
 import axios from 'axios';
 import { dbHealthCheck, dbDiagnosticRepair } from './dbMaintenance.js';
 /* import { simulateCorruption } from './simulateDbCorruption.js'; */
@@ -35,7 +34,7 @@ import { restoreLatestBackup } from './restoreBackup.js';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 import searchCover from './folderImageCheck.js';
 import db from './connection.js';
-
+import { paths } from './paths.js';
 import { getPreferencesSync, getPreferences, savePreferences } from './preferences.js';
 import {
   allTracksByScroll,
@@ -89,7 +88,7 @@ console.log('appData: ', app.getPath('appData'));
 console.log('temp: ', app.getPath('temp'));
 console.log('userData: ', app.getPath('userData')); */
 
-const playlistsFolder = `${app.getPath('documents')}\\Music-Molecule\\playlists`;
+const playlistsFolder = paths.playlists;
 if (!fs.existsSync(playlistsFolder)) {
   fs.mkdirSync(playlistsFolder, { recursive: true });
 }
@@ -123,15 +122,17 @@ async function backupDatabase() {
     return;
   } */
   const prod = import.meta.env.PROD;
-  const prodPath = app.getPath('userData');
-  const prodDirectory = path.join(prodPath, 'backups');
-  fs.mkdirSync(prodDirectory, { recursive: true });
-  const devDirectory = path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_BACKUP_DEV, 'backups');
-  fs.mkdirSync(devDirectory, { recursive: true });
+  /* const prodPath = app.getPath('userData'); */
+  const prodBackups = paths.backups;
+  fs.mkdirSync(prodBackups, { recursive: true });
+
+  const devBackups = path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_BACKUP_DEV, 'backups');
+  fs.mkdirSync(devBackups, { recursive: true });
+
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   const backupPath = prod
-    ? path.join(prodDirectory, `backup-${stamp}.db` /* import.meta.env.MAIN_VITE_DB_PATH_PROD */)
-    : path.join(devDirectory, `backup-${stamp}.db`);
+    ? path.join(prodBackups, `backup-${stamp}.db`)
+    : path.join(devBackups, `backup-${stamp}.db`);
   /*  const dest = `backup-${Date.now()}.db`; */
   try {
     await db.backup(backupPath, {
@@ -142,7 +143,7 @@ async function backupDatabase() {
       }
     });
     console.log('Backup complete:', backupPath);
-    const backupDir = prod ? prodDirectory : devDirectory;
+    const backupDir = prod ? prodBackups : devBackups;
     pruneBackups(backupDir, 3); // keep last 10
   } catch (err) {
     console.error('Backup failed:', err);
@@ -204,8 +205,7 @@ const getCurrentSchedule = async () => {
   }
 };
 
-// eslint-disable-next-line no-unused-vars, unused-imports/no-unused-vars
-async function backfillTags() {
+/* async function backfillTags() {
   try {
     // eslint-disable-next-line no-unused-vars, unused-imports/no-unused-vars
     const workerPath = process.resourcesPath;
@@ -225,7 +225,7 @@ async function backfillTags() {
 
     console.log('Handling subsequent code after worker error.');
   }
-}
+} */
 /* backfillTags(); */
 
 async function updateFolders() {
@@ -600,7 +600,7 @@ ipcMain.handle('get-folder-path', (event, folderName) => {
 
 ipcMain.handle('update-folders', async () => {
   try {
-    const workerPath = process.resourcesPath;
+    const workerPath = paths.db;
     await createUpdateFoldersWorker({ workerData: workerPath })
       .on('message', (message) => {
         //console.log('message from worker: ', message);

@@ -7,10 +7,11 @@ import Database from 'better-sqlite3';
 import searchCover from './utility/searchCover.js';
 
 const mode = import.meta.env.MODE;
+console.log('workerData: ', workerData);
 const dbPath =
   mode === 'development'
     ? path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_PATH_DEV)
-    : path.join(workerData, 'music.db');
+    : workerData;
 
 const db = new Database(dbPath);
 const createRootsTable = `CREATE TABLE IF NOT EXISTS roots ( id INTEGER PRIMARY KEY AUTOINCREMENT, root TEXT UNIQUE)`;
