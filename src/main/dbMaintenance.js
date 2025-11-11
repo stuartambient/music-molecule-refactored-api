@@ -32,6 +32,10 @@ export function dbHealthCheck(db) {
 }
 
 export function dbDiagnosticRepair(db) {
+  /*   if (!db) {
+    console.log('⚠️ Skipping deep diagnostic — DB not open yet');
+    return { fixed: false };
+  } */
   try {
     console.warn('Running deep DB diagnostic...');
 

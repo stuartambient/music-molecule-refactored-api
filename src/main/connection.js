@@ -8,24 +8,48 @@ const resourcesPath = paths.resources;
 
 const dbPath = prod ? paths.db : path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_PATH_DEV);
 
-const db = new Database(dbPath /* , { verbose: console.log } */);
+let db = null;
 
-db.pragma('journal_mode = WAL');
-db.pragma('synchronous = normal');
-db.pragma('temp_store = memory');
-db.prepare('PRAGMA main.wal_checkpoint(TRUNCATE);').run();
+export function openDatabase() {
+  try {
+    db = new Database(dbPath);
+    db.pragma('journal_mode = WAL');
+    db.pragma('synchronous = normal');
+    db.pragma('temp_store = memory');
+    db.prepare('PRAGMA main.wal_checkpoint(TRUNCATE);').run();
 
-const extensionsPath = prod
+    return db;
+  } catch (err) {
+    console.error('❌ Failed to open DB', err.message);
+    return null;
+  }
+}
+
+/* const extensionsPath = prod
   ? path.join(resourcesPath, 'extensions')
   : path.join(process.cwd(), 'src/db/extensions');
 
-db.loadExtension(path.join(extensionsPath, 'unicode'));
+db.loadExtension(path.join(extensionsPath, 'unicode')); */
+
+export function getDB() {
+  if (!db) db = new Database(dbPath);
+  return db;
+}
+
+export function closeDB() {
+  return db.close();
+}
 
 process.on('exit', () => {
   try {
-    db.pragma('optimize'); // safe: quick, sync
-    db.close(); // safe: sync
-    console.log('Database optimized and closed cleanly.');
+    if (db && db.open) {
+      // ← only run if still open
+      db.pragma('optimize');
+      db.close();
+      console.log('Database optimized and closed cleanly.');
+    } else {
+      console.log('DB already closed — skipping optimize/close.');
+    }
   } catch (err) {
     console.error('Error during DB cleanup:', err);
   }

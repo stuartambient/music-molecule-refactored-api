@@ -28,13 +28,13 @@ import createUpdateCoversWorker from './updateCoversWorker?nodeWorker';
 import createUpdateMetadataWorker from './updateMetadataWorker?nodeWorker';
 import createLoadPlaylistWorker from './loadPlaylistWorker?nodeWorker';
 import axios from 'axios';
-import { dbHealthCheck, dbDiagnosticRepair } from './dbMaintenance.js';
+import { dbDiagnosticRepair } from './dbMaintenance.js';
 /* import { simulateCorruption } from './simulateDbCorruption.js'; */
 import { restoreLatestBackup } from './restoreBackup.js';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 import searchCover from './folderImageCheck.js';
 import db from './connection.js';
-import { paths } from './paths.js';
+
 import { getPreferencesSync, getPreferences, savePreferences } from './preferences.js';
 import {
   allTracksByScroll,
@@ -67,6 +67,14 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 app.disableHardwareAcceleration();
+
+const prod = import.meta.env.PROD;
+/* const isDev = import.meta.env.MODE === 'development'; */
+const resourcesPath = process.resourcesPath;
+
+const dbPath = prod
+  ? path.join(resourcesPath, 'music.db' /* import.meta.env.MAIN_VITE_DB_PATH_PROD */)
+  : path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_PATH_DEV);
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -136,6 +144,8 @@ async function backupDatabase() {
     console.warn('Skipping backup — database integrity check failed.');
     return;
   } */
+  const db = getDB();
+  if (!db) return;
   const prod = import.meta.env.PROD;
   /* const prodPath = app.getPath('userData'); */
   const prodBackups = paths.backups;
@@ -151,11 +161,11 @@ async function backupDatabase() {
   /*  const dest = `backup-${Date.now()}.db`; */
   try {
     await db.backup(backupPath, {
-      progress({ totalPages, remainingPages }) {
+      /* progress({ totalPages, remainingPages }) {
         console.log(
           `Backing up: ${(((totalPages - remainingPages) / totalPages) * 100).toFixed(1)}%`
         );
-      }
+      } */
     });
     console.log('Backup complete:', backupPath);
     const backupDir = prod ? prodBackups : devBackups;
@@ -298,6 +308,37 @@ const capitalizeDriveLetter = (str) => {
 };
 
 export let mainWindow;
+let recWindow;
+
+export function createRecoveryWindow() {
+  recWindow = new BrowserWindow({
+    frame: true,
+    show: true,
+    resizable: false,
+    width: 300,
+    height: 200,
+    alwaysOnTop: true,
+    autoHideMenuBar: true,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    webPreferences: {
+      preload: path.join(__dirname, '../preload/index.js'),
+      additionalArguments: [`--mainTheme=${mainTheme}`],
+      sandbox: true,
+      webSecurity: true,
+      contextIsolation: true,
+      nodeIntegration: true
+    }
+  });
+
+  // Load the same app URL — StartupGuard handles rendering the right UI
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    recWindow.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/index.html`);
+  } else {
+    recWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+  }
+
+  return recWindow;
+}
 
 function createWindow() {
   // Create the browser window.
@@ -306,7 +347,7 @@ function createWindow() {
     useContentSize: true,
     transparent: true,
     alwaysOnTop: true,
-    show: false,
+    show: true,
     ...(process.platform === 'linux' ? { icon: path.join(__dirname, '../../build/icon.png') } : {}),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
@@ -354,6 +395,7 @@ function createWindow() {
   } else {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
+  return mainWindow;
 }
 
 function launchDevTools() {
@@ -371,7 +413,34 @@ function launchDevTools() {
 
 /* launchDevTools(); */
 
+function startNormalApp() {
+  // open DB freshrecovery-complete
+  const db = openDatabase();
+  if (!db) {
+    console.error('Failed to open DB after restore');
+    return;
+  }
+
+  // build main window
+  createWindow();
+
+  // if you have IPCs or menus that need setup, do them here too
+  // setupAppMenus();
+}
+
 app.whenReady().then(async () => {
+  console.log('whenReady hit');
+  const db = openDatabase();
+  /* launchDevTools(); */
+
+  if (!db) {
+    console.warn('DB corrupt or unreadable — launching recovery mode');
+    // create browser window to load StartupGuard UI
+    createRecoveryWindow();
+  } else {
+    // normal app start
+    startNormalApp();
+  }
   const createRootsTable = `CREATE TABLE IF NOT EXISTS roots ( id INTEGER PRIMARY KEY AUTOINCREMENT, root TEXT UNIQUE)`;
   db.exec(createRootsTable);
 
@@ -505,12 +574,11 @@ app.whenReady().then(async () => {
   });
   // Create the initial window
 
-  createWindow();
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  app.on('activate', function () {
+  /*   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
+  }); */
   // Optional: Watch for window shortcuts if needed
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window);
@@ -536,6 +604,15 @@ ipcMain.on('toggle-resizable', (event, isResizable) => {
   }
 });
 
+ipcMain.on('recovery-complete', (event) => {
+  app.relaunch();
+  app.quit();
+});
+
+ipcMain.on('app-restart', () => {
+  console.log('app-restarted');
+});
+
 /* function checkDatabase() {
   if (!dbHealthCheck(db)) {
     console.warn('Database failed health check.');
@@ -559,19 +636,50 @@ ipcMain.on('toggle-resizable', (event, isResizable) => {
  */
 /* backupDatabase(); */
 
-ipcMain.handle('db-check', async () => {
+/* ipcMain.handle('db-check', async () => {
+  const db = getDB();
   const ok = dbHealthCheck(db);
   console.log('dbHealthCheck passed');
   backupDatabase();
   return { ok };
+}); */
+
+/* DB CHECK — use temporary DB, never the app DB connection */
+ipcMain.handle('db-check', async () => {
+  try {
+    const { default: Database } = await import('better-sqlite3');
+    const tempDb = new Database(dbPath, { readonly: true, fileMustExist: true });
+    const result = tempDb.prepare('PRAGMA integrity_check').get();
+    tempDb.close();
+
+    const ok = result?.integrity_check === 'ok';
+
+    console.log('db-check:', ok ? 'healthy' : 'corrupt');
+
+    if (ok) {
+      // ✅ Only backup if DB is confirmed healthy
+      backupDatabase();
+    }
+
+    return { ok };
+  } catch (e) {
+    console.log('db-check failed, DB likely missing/corrupt');
+    return { ok: false };
+  }
 });
 
 ipcMain.handle('db-repair', async () => {
+  const { default: Database } = await import('better-sqlite3');
+  const db = new Database(dbPath);
   const fixed = dbDiagnosticRepair(db);
+  db.close();
   return { fixed };
 });
 
 ipcMain.handle('db-restore', async () => {
+  const { default: Database } = await import('better-sqlite3');
+  const db = new Database(dbPath);
+  db.close();
   return restoreLatestBackup();
 });
 

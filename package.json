@@ -8,7 +8,8 @@
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",
-    "start": "electron-vite preview",
+    "copy-assets": "node scripts/copy-assets.js",
+    "start": "npm run copy-assets && electron-vite preview",
     "dev": "electron-vite dev --watch",
     "build": "electron-vite build",
     "postinstall": "electron-builder install-app-deps",
