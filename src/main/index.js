@@ -294,6 +294,7 @@ const capitalizeDriveLetter = (str) => {
 };
 
 export let mainWindow;
+let recWindow;
 
 export function createRecoveryWindow() {
   recWindow = new BrowserWindow({
@@ -302,8 +303,9 @@ export function createRecoveryWindow() {
     resizable: false,
     width: 300,
     height: 200,
+    alwaysOnTop: true,
     autoHideMenuBar: true,
-    backgroundColor: '#0000ff',
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       additionalArguments: [`--mainTheme=${mainTheme}`],
