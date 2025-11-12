@@ -43,7 +43,6 @@ const tagKeys = {
   performers: (param) => param?.trim()?.split(', ') || [],
   performersRole: (param) => param?.trim()?.split(', ') || [],
   pictures: (param) => {
-    console.log('params: ', param);
     Picture.fromFullData(
       ByteVector.fromByteArray(param.data),
       param.type ? (PictureType[param.type] ?? PictureType.FrontCover) : PictureType.FrontCover,
@@ -65,7 +64,43 @@ const tagKeys = {
   year: (param) => (param?.toString().trim() ? Number(param) : null)
 };
 
+function normalizeTagValue(key, value) {
+  if (value == null) return null;
+  const str = value.toString().trim();
+
+  // handle numeric-type fields
+  if (['track', 'trackCount', 'disc', 'discCount', 'year', 'beatsPerMinute', 'bpm'].includes(key)) {
+    // extract first numeric part (e.g. "A1"→"1", "2018/9"→"2018")
+    const match = str.match(/\d+/);
+    return match ? Number(match[0]) : null;
+  }
+
+  return value; // leave all other fields unchanged
+}
+
+function safeAssignTag(myFile, key, value) {
+  try {
+    const converter = tagKeys[key];
+    const converted = converter
+      ? converter(normalizeTagValue(key, value))
+      : normalizeTagValue(key, value);
+    myFile.tag[key] = converted;
+    return true;
+  } catch (err) {
+    // Retry using string fallback
+    try {
+      console.warn(`⚠️ TagLib rejected '${key}' (${value}) — writing as string fallback`);
+      myFile.tag.setTextFrame?.(key, String(value)); // optional if TagLib supports direct text frames
+      return true;
+    } catch (innerErr) {
+      console.error(`❌ Failed to set tag '${key}'`, innerErr.message);
+      return false;
+    }
+  }
+}
+
 const updateTags = async (arr) => {
+  console.log('update tags, # of tags: ', arr.length);
   MpegAudioFileSettings.defaultTagTypes = TagTypes.Id3v2;
   FlacFileSettings.defaultTagTypes = TagTypes.Xiph;
   const errors = [];
@@ -81,15 +116,20 @@ const updateTags = async (arr) => {
 
       const fromMM = extractPresentFields(mmInfo.tags); // your fn
       /* console.log('fromMM: ', fromMM); */
+      /* console.log('fromMM: ', fromMM); */
       //console.log('updates: ', a.updates);
 
       const mergedUpdates = { ...fromMM, ...(a.updates ?? {}) }; // pick ONE style and use it below
 
       let myFile = File.createFromPath(a.id);
 
+      console.log('Has v1:', !!(myFile.tagTypesOnDisk & TagTypes.Id3v1));
+      console.log('Has v2:', !!(myFile.tagTypesOnDisk & TagTypes.Id3v2));
+
       let info = await inspectTags(myFile);
 
       const ttod = myFile.tagTypesOnDisk;
+      console.log('ttod: ', ttod);
       if (ttod === 2) {
         const id3v1 = myFile.getTag(TagTypes.Id3v1, false);
         const id3v2 = myFile.getTag(TagTypes.Id3v2, true);
@@ -107,14 +147,35 @@ const updateTags = async (arr) => {
 
       //console.log('mergedUpdated: ', mergedUpdates);
       /* console.log('merged: ', mergedUpdates); */
-      for (const [key, value] of Object.entries(mergedUpdates)) {
-        console.log(key, '---', value);
+      for (const [key, value] of Object.entries(a.updates)) {
+        /* console.log('merged updates: ', mergedUpdates); */
         if (key === 'picture-location') {
           const pic = Picture.fromPath(value);
           myFile.tag.pictures = [pic];
         } else if (key !== 'picture-location') {
+          /* safeAssignTag(myFile, key, value); */
           const t = tagKeys[key](value);
           myFile.tag[key] = t;
+          /*  safeAssignTag(myFile, key, value); */
+          /* try {
+            const t = tagKeys[key](value);
+            myFile.tag[key] = t;
+          } catch (err) {
+            console.error(
+              `❌ Error setting tag '${key}'`,
+              '\n   value:',
+              value,
+              '\n   type:',
+              typeof value,
+              '\n   converted:',
+              tagKeys[key] ? tagKeys[key](value) : '(no converter)',
+              '\n   message:',
+              err.message,
+              '\n   stack:',
+              err.stack
+            );
+            throw err; // rethrow if you want to stop execution
+          } */
         }
       }
       myFile.save();

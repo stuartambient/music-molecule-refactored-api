@@ -15,9 +15,9 @@ import cron from 'node-cron';
 import { logger } from './utility/logger.js';
 import { fileURLToPath } from 'url';
 import process from 'node:process';
-import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import { pruneBackups } from './utility/utils.js';
+import { paths } from './paths.js';
 import { createOrUpdateChildWindow, getWindowNames, getWindow } from './windowManager.js';
 import mime from 'mime-types';
 import { File } from 'node-taglib-sharp';
@@ -27,13 +27,13 @@ import createUpdateFoldersWorker from './updateFoldersWorker?nodeWorker';
 import createUpdateCoversWorker from './updateCoversWorker?nodeWorker';
 import createUpdateMetadataWorker from './updateMetadataWorker?nodeWorker';
 import createLoadPlaylistWorker from './loadPlaylistWorker?nodeWorker';
+import { openDatabase, getDB } from './connection';
 import axios from 'axios';
 import { dbDiagnosticRepair } from './dbMaintenance.js';
 /* import { simulateCorruption } from './simulateDbCorruption.js'; */
 import { restoreLatestBackup } from './restoreBackup.js';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
 import searchCover from './folderImageCheck.js';
-import db from './connection.js';
 
 import { getPreferencesSync, getPreferences, savePreferences } from './preferences.js';
 import {
@@ -64,18 +64,6 @@ import {
   albumsByTopFolder
 } from './stats';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-app.disableHardwareAcceleration();
-
-const prod = import.meta.env.PROD;
-/* const isDev = import.meta.env.MODE === 'development'; */
-const resourcesPath = process.resourcesPath;
-
-const dbPath = prod
-  ? path.join(resourcesPath, 'music.db' /* import.meta.env.MAIN_VITE_DB_PATH_PROD */)
-  : path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_PATH_DEV);
-
 protocol.registerSchemesAsPrivileged([
   {
     scheme: 'streaming',
@@ -89,6 +77,15 @@ protocol.registerSchemesAsPrivileged([
     privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true }
   }
 ]);
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.disableHardwareAcceleration();
+
+const prod = import.meta.env.PROD;
+/* const isDev = import.meta.env.MODE === 'development'; */
+
+const dbPath = prod ? paths.db : path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_PATH_DEV);
 
 /* IN DOCUMENTS/ELECTRONMUSICPLAYER */
 /* console.log('home: ', app.getPath('home'));
@@ -398,7 +395,7 @@ function createWindow() {
   return mainWindow;
 }
 
-function launchDevTools() {
+/* function launchDevTools() {
   try {
     const bin = process.platform === 'win32' ? 'react-devtools.cmd' : 'react-devtools';
 
@@ -409,7 +406,7 @@ function launchDevTools() {
   } catch (e) {
     console.error('devtools error: ', e.message);
   }
-}
+} */
 
 /* launchDevTools(); */
 
@@ -429,37 +426,8 @@ function startNormalApp() {
 }
 
 app.whenReady().then(async () => {
-  console.log('whenReady hit');
-  const db = openDatabase();
-  /* launchDevTools(); */
-
-  if (!db) {
-    console.warn('DB corrupt or unreadable — launching recovery mode');
-    // create browser window to load StartupGuard UI
-    createRecoveryWindow();
-  } else {
-    // normal app start
-    startNormalApp();
-  }
-  const createRootsTable = `CREATE TABLE IF NOT EXISTS roots ( id INTEGER PRIMARY KEY AUTOINCREMENT, root TEXT UNIQUE)`;
-  db.exec(createRootsTable);
-
-  await session.defaultSession.clearCache().then(() => console.log('Cache cleared!'));
-  ensurePreferencesFile();
-  electronApp.setAppUserModelId(process.execPath);
-
-  console.log('Electron:', process.versions.electron);
-  console.log('Chromium:', process.versions.chrome);
-  console.log('Node:', process.versions.node);
-  console.log('V8:', process.versions.v8);
-  console.log(process.arch);
-
-  /*   simulateCorruption(); */
-
-  getTheme();
-  setTimeout(() => {
-    getCurrentSchedule(); // ⚠️ delay to avoid slowing HMR boot
-  }, 500);
+  console.log('is music-molecule handled?', await protocol.isProtocolHandled('streaming'));
+  console.log('is app handled?', await protocol.isProtocolHandled('cover'));
 
   protocol.registerStreamProtocol('streaming', async (request, cb) => {
     try {
@@ -568,6 +536,36 @@ app.whenReady().then(async () => {
       throw new Error('FILE_NOT_FOUND');
     }
   });
+  const db = openDatabase();
+  /* launchDevTools(); */
+
+  if (!db) {
+    console.warn('DB corrupt or unreadable — launching recovery mode');
+    // create browser window to load StartupGuard UI
+    createRecoveryWindow();
+  } else {
+    // normal app start
+    startNormalApp();
+  }
+  const createRootsTable = `CREATE TABLE IF NOT EXISTS roots ( id INTEGER PRIMARY KEY AUTOINCREMENT, root TEXT UNIQUE)`;
+  db.exec(createRootsTable);
+
+  await session.defaultSession.clearCache().then(() => console.log('Cache cleared!'));
+  ensurePreferencesFile();
+  electronApp.setAppUserModelId('com.electron.app');
+
+  console.log('Electron:', process.versions.electron);
+  console.log('Chromium:', process.versions.chrome);
+  console.log('Node:', process.versions.node);
+  console.log('V8:', process.versions.v8);
+  console.log(process.arch);
+
+  /*   simulateCorruption(); */
+
+  getTheme();
+  setTimeout(() => {
+    getCurrentSchedule(); // ⚠️ delay to avoid slowing HMR boot
+  }, 500);
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window);
