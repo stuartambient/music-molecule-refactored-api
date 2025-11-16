@@ -23,7 +23,7 @@ const tableStatus = async () => {
   try {
     const openTable = await window.ipcApi.invoke('check-for-open-table', 'table-data');
     if (openTable) {
-      await window.ipcApi.send('clear-table');
+      window.ipcApi.send('clear-table');
 
       return true;
     }
@@ -74,6 +74,7 @@ const loadedMsgMap = {
   root: 'root-tracks-loaded'
 };
 const useTrackLoader = (type, value, reset) => {
+  console.log('type: ', type, 'value: ', value);
   useEffect(() => {
     if (!value) return;
 
@@ -85,8 +86,12 @@ const useTrackLoader = (type, value, reset) => {
           await initTable(tableName);
         }
 
-        console.log('stats-components');
-        window.ipcApi.invoke('get-tracks-by-category', { listType: tableName, value }); // generic IPC sender
+        window.ipcApi.send('clear-table');
+        window.ipcApi.invoke('get-tracks-by-category', { listType: tableName, value });
+        /*    setTimeout(
+          () => window.ipcApi.invoke('get-tracks-by-category', { listType: tableName, value }),
+          0
+        ); */ // generic IPC sender
       } catch (error) {
         console.error(`Error loading ${type} tracks:`, error);
       }
@@ -94,6 +99,7 @@ const useTrackLoader = (type, value, reset) => {
 
     loadTracks();
   }, [type, value]);
+
   useIpcEvent('tracks-loaded', (msg) => {
     if (msg === loadedMsgMap[type]) {
       reset(null);

@@ -9,7 +9,7 @@ contextBridge.exposeInMainWorld('coverSearchApi', {
 
     const wrapped = (event, ...args) => listener(...args);
     ipcRenderer.on(channel, wrapped);
-    console.log('listener added for', channel, ipcRenderer.listenerCount(channel));
+    /* console.log('listener added for', channel, ipcRenderer.listenerCount(channel)); */
     return () => ipcRenderer.removeListener(channel, wrapped);
   },
   once: (channel, listener) => {

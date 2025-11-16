@@ -4,7 +4,6 @@ import useIpcEvent from '../../../hooks/useIpcEvent';
 import './style.css';
 
 const MetadataEditingApp = () => {
-  // eslint-disable-next-line unused-imports/no-unused-vars
   const [listType, setListType] = useState([]);
   const [reset, setReset] = useState(false);
   /* const [data, setData] = useState([]); */
@@ -14,7 +13,8 @@ const MetadataEditingApp = () => {
     /* setData([]); */
   };
 
-  useIpcEvent('clear-table', handleClearTable, 'tagEditApi');
+  /*  useIpcEvent('clear-table', handleClearTable, 'tagEditApi'); */
+  useIpcEvent('reset-table', () => setReset(true), 'tagEditApi');
 
   return <AGGrid reset={reset} setListType={setListType} setReset={setReset} /* data={data} */ />;
 };

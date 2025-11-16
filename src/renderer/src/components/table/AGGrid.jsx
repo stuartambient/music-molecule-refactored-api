@@ -72,12 +72,19 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
 
   /*--------------------------------------------------*/
 
+  const insertData = (data) => {
+    setRowData(data);
+  };
+
   const handleSendToChild = (e) => {
-    /* console.log('results: ', e.results, e.results.length); */
-    setListType(e.listType);
-    setRowData(e.results);
-    setReset(false);
+    console.log('handleSendToChild');
+    console.log('results: ', e.results, e.results.length, e.listType);
     setLoading(false);
+    setListType(e.listType);
+    /* setRowData(e.results); */
+
+    insertData(e.results);
+    setReset(false);
   };
 
   useIpcEvent('send-to-child', handleSendToChild, 'tagEditApi');
@@ -127,8 +134,10 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
 
   useEffect(() => {
     if (reset) {
+      console.log('reset');
       setRowData([]);
       setLoading(true);
+      /* setReset(false); */
     }
   }, [reset]);
 

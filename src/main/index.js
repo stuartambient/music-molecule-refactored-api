@@ -992,10 +992,10 @@ ipcMain.handle('artists-by-num-tracks', async () => {
 
 async function openWindowAndSendData(queryResults, listType) {
   const targetWindow = await getWindow('table-data');
+  console.log('list-type: ', listType);
 
   if (targetWindow) {
     if (targetWindow.webContents.isLoading()) {
-      /* targetWindow.webContents.sent('sending-row-data', 'sending-row-data'); */
       targetWindow.webContents.once('did-finish-load', () => {
         targetWindow.webContents.send('send-to-child', { listType, results: queryResults });
       });
@@ -1008,7 +1008,6 @@ async function openWindowAndSendData(queryResults, listType) {
 }
 
 ipcMain.handle('get-tracks-by-category', async (event, obj) => {
-  console.log('object: ', obj);
   const { listType, value } = obj;
   /*  console.log('-----> ', listType, value); */
   try {
@@ -1074,7 +1073,8 @@ ipcMain.handle('check-for-open-table', async (event, name) => {
 
 ipcMain.on('clear-table', () => {
   const targetWindow = getWindow('table-data');
-  targetWindow.webContents.send('clear-table', 'clear');
+  /* targetWindow.webContents.send('clear-table', 'clear'); */
+  targetWindow.webContents.send('reset-table');
 });
 
 ipcMain.handle('get-albums-by-root', async (event, dirs) => {
