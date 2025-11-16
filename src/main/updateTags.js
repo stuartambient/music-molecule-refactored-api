@@ -100,7 +100,7 @@ function safeAssignTag(myFile, key, value) {
 }
 
 const updateTags = async (arr) => {
-  console.log('update tags, # of tags: ', arr.length);
+  console.log('update tags, # of tags: ', arr);
   MpegAudioFileSettings.defaultTagTypes = TagTypes.Id3v2;
   FlacFileSettings.defaultTagTypes = TagTypes.Xiph;
   const errors = [];
@@ -126,7 +126,7 @@ const updateTags = async (arr) => {
       console.log('Has v1:', !!(myFile.tagTypesOnDisk & TagTypes.Id3v1));
       console.log('Has v2:', !!(myFile.tagTypesOnDisk & TagTypes.Id3v2));
 
-      let info = await inspectTags(myFile);
+      /* let info = await inspectTags(myFile); */
 
       const ttod = myFile.tagTypesOnDisk;
       console.log('ttod: ', ttod);
@@ -137,7 +137,7 @@ const updateTags = async (arr) => {
         myFile.save();
       }
 
-      info = await inspectTags(myFile);
+      let info = await inspectTags(myFile);
       const removeMask = await extraneousTags(info.fileType, info.typesList);
 
       if (removeMask) {
@@ -149,15 +149,16 @@ const updateTags = async (arr) => {
       /* console.log('merged: ', mergedUpdates); */
       for (const [key, value] of Object.entries(a.updates)) {
         /* console.log('merged updates: ', mergedUpdates); */
+        console.log('key: ', key, 'value: ', value);
         if (key === 'picture-location') {
           const pic = Picture.fromPath(value);
           myFile.tag.pictures = [pic];
         } else if (key !== 'picture-location') {
           /* safeAssignTag(myFile, key, value); */
-          const t = tagKeys[key](value);
-          myFile.tag[key] = t;
+          /*  const t = tagKeys[key](value);
+          myFile.tag[key] = t; */
           /*  safeAssignTag(myFile, key, value); */
-          /* try {
+          try {
             const t = tagKeys[key](value);
             myFile.tag[key] = t;
           } catch (err) {
@@ -175,20 +176,22 @@ const updateTags = async (arr) => {
               err.stack
             );
             throw err; // rethrow if you want to stop execution
-          } */
+          }
         }
       }
       myFile.save();
       myFile.dispose();
     } catch (e) {
+      console.error('🔴 Outer error caught for file:', a.id, '\n', e);
+
       let errMessage;
 
       if (e instanceof Error) {
-        errMessage = e.message;
+        errMessage = e.stack || e.message;
       } else if (typeof e === 'object' && e !== null) {
         errMessage = JSON.stringify(e);
       } else {
-        errMessage = String(e); // handles `false`, `null`, `undefined`, numbers, etc.
+        errMessage = String(e);
       }
 
       //console.error(`Error processing file ${a.id}: ${errMessage}`);
