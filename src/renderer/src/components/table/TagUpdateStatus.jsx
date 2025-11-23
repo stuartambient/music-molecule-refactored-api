@@ -24,7 +24,7 @@ const TagUpdateState = ({ updateStatus, setUpdateStatus, tagReport, setTagReport
   }; */
 
   const handleView = () => {
-    console.log('view');
+    console.log('view', tagReport);
   };
 
   const handleDismiss = () => {

@@ -8,18 +8,22 @@ import {
   ByteVector
 } from 'node-taglib-sharp';
 import { inspectTags, extraneousTags } from './tag-inspector.js';
-import { getTagInfo } from './musicMetadata.js';
-import { extractPresentFields } from './tags/index.js';
 import checkAndRemoveReadOnly from './utility/checkAndRemoveReadOnly';
+import { isValidImageFile, findBadFrames, extractMetadata } from './utility/utils.js';
 
-/* const PICTURE_TYPE_MAP = {
-  Other: 'Other',
-  Front: 'FrontCover',
-  FrontCover: 'FrontCover',
-  'Cover (front)': 'FrontCover',
-  0: 'Other',
-  3: 'FrontCover'
-}; */
+function cleanObject(obj) {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([_, v]) => {
+      if (v == null) return false; // null or undefined
+      if (typeof v === 'number' && Number.isNaN(v)) return false;
+      if (typeof v === 'string' && v.trim() === '') return false;
+      if (Array.isArray(v) && v.length === 0) return false;
+      if (typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 0) return false;
+
+      return true; // keep
+    })
+  );
+}
 
 const tagKeys = {
   albumArtists: (param) => param?.trim()?.split(', ') || null,
@@ -64,41 +68,6 @@ const tagKeys = {
   year: (param) => (param?.toString().trim() ? Number(param) : null)
 };
 
-function normalizeTagValue(key, value) {
-  if (value == null) return null;
-  const str = value.toString().trim();
-
-  // handle numeric-type fields
-  if (['track', 'trackCount', 'disc', 'discCount', 'year', 'beatsPerMinute', 'bpm'].includes(key)) {
-    // extract first numeric part (e.g. "A1"→"1", "2018/9"→"2018")
-    const match = str.match(/\d+/);
-    return match ? Number(match[0]) : null;
-  }
-
-  return value; // leave all other fields unchanged
-}
-
-function safeAssignTag(myFile, key, value) {
-  try {
-    const converter = tagKeys[key];
-    const converted = converter
-      ? converter(normalizeTagValue(key, value))
-      : normalizeTagValue(key, value);
-    myFile.tag[key] = converted;
-    return true;
-  } catch (err) {
-    // Retry using string fallback
-    try {
-      console.warn(`⚠️ TagLib rejected '${key}' (${value}) — writing as string fallback`);
-      myFile.tag.setTextFrame?.(key, String(value)); // optional if TagLib supports direct text frames
-      return true;
-    } catch (innerErr) {
-      console.error(`❌ Failed to set tag '${key}'`, innerErr.message);
-      return false;
-    }
-  }
-}
-
 const updateTags = async (arr) => {
   console.log('update tags, # of tags: ', arr);
   MpegAudioFileSettings.defaultTagTypes = TagTypes.Id3v2;
@@ -107,29 +76,53 @@ const updateTags = async (arr) => {
 
   for (const a of arr) {
     try {
-      // 0) Access
       const ok = await checkAndRemoveReadOnly(a.id);
       if (!ok) throw new Error('File is not writable');
 
-      // 1) Build updates (user wins; mm fills blanks)
-      const mmInfo = await getTagInfo(a.id); // { warnings, tags: meta.native }
-
-      const fromMM = extractPresentFields(mmInfo.tags); // your fn
-      /* console.log('fromMM: ', fromMM); */
-      /* console.log('fromMM: ', fromMM); */
-      //console.log('updates: ', a.updates);
-
-      const mergedUpdates = { ...fromMM, ...(a.updates ?? {}) }; // pick ONE style and use it below
-
       let myFile = File.createFromPath(a.id);
+      let allUpdates = a.updates;
 
+      try {
+        const badFrames = findBadFrames(myFile);
+        if (badFrames.length > 0) {
+          console.log('bad frames - ', badFrames.length);
+          const meta = cleanObject(extractMetadata(myFile));
+
+          ['composers', 'genres', 'performers', 'performersRole', 'albumArtists'].forEach((k) => {
+            if (Array.isArray(meta[k])) {
+              meta[k] = meta[k].filter(Boolean).join(', ');
+            }
+          });
+          /* console.log('meta: ', meta); */
+
+          meta.pictures = meta.pictures?.[0]
+            ? {
+                data: meta.pictures[0].data.toByteArray(),
+                type: meta.pictures[0].type,
+                format: meta.pictures[0].mimeType,
+                description: meta.pictures[0].description ?? ''
+              }
+            : delete meta.pictures;
+
+          allUpdates = { ...meta, ...a.updates };
+
+          console.log('all updates: ', allUpdates);
+          myFile.removeTags(4294967295);
+          myFile.save();
+          myFile.dispose();
+
+          myFile = File.createFromPath(a.id);
+        }
+      } catch (err) {
+        console.error('badFrames Error: ', err);
+      }
+
+      console.log('allUpdates: ', allUpdates);
       console.log('Has v1:', !!(myFile.tagTypesOnDisk & TagTypes.Id3v1));
       console.log('Has v2:', !!(myFile.tagTypesOnDisk & TagTypes.Id3v2));
 
-      /* let info = await inspectTags(myFile); */
-
       const ttod = myFile.tagTypesOnDisk;
-      console.log('ttod: ', ttod);
+
       if (ttod === 2) {
         const id3v1 = myFile.getTag(TagTypes.Id3v1, false);
         const id3v2 = myFile.getTag(TagTypes.Id3v2, true);
@@ -145,19 +138,17 @@ const updateTags = async (arr) => {
         myFile.save();
       }
 
-      //console.log('mergedUpdated: ', mergedUpdates);
-      /* console.log('merged: ', mergedUpdates); */
-      for (const [key, value] of Object.entries(a.updates)) {
-        /* console.log('merged updates: ', mergedUpdates); */
-        console.log('key: ', key, 'value: ', value);
+      for (const [key, value] of Object.entries(allUpdates)) {
+        /* console.log('a.updates ', a.updates); */
         if (key === 'picture-location') {
-          const pic = Picture.fromPath(value);
-          myFile.tag.pictures = [pic];
+          if (isValidImageFile(value)) {
+            const pic = Picture.fromPath(value);
+            myFile.tag.pictures = [pic];
+          } else {
+            console.warn(`⚠️ Invalid image:`, value);
+            errors.push({ track_id: a.track_id, id: a.id, error: 'Invalid image' });
+          }
         } else if (key !== 'picture-location') {
-          /* safeAssignTag(myFile, key, value); */
-          /*  const t = tagKeys[key](value);
-          myFile.tag[key] = t; */
-          /*  safeAssignTag(myFile, key, value); */
           try {
             const t = tagKeys[key](value);
             myFile.tag[key] = t;

@@ -75,7 +75,7 @@ export function updateFiles(db, files) {
     // Create a cache key based on sorted column names
     const cacheKey = keys.join(',');
 
-    console.log('keys: ', keys, 'cacheKey: ', cacheKey);
+    /*   console.log('keys: ', keys, 'cacheKey: ', cacheKey); */
 
     // If a matching statement exists in cache, reuse it
     if (stmtCache.has(cacheKey)) {
@@ -257,4 +257,214 @@ export async function pruneBackups(dir, max = 10) {
   } catch (err) {
     console.error('Backup pruning failed:', err.message);
   }
+}
+
+export function sanitizeTag(myFile) {
+  const pics = myFile.tag.pictures;
+
+  if (!pics || !Array.isArray(pics)) return;
+
+  myFile.tag.pictures = pics.filter((pic) => {
+    try {
+      return pic && pic.data && Buffer.isBuffer(pic.data) && pic.data.length > 0;
+    } catch {
+      return false;
+    }
+  });
+}
+
+export function isValidImageFile(path) {
+  try {
+    const stats = fs.statSync(path);
+    if (stats.size === 0) return false;
+
+    const buf = fs.readFileSync(path);
+
+    // JPEG magic number
+    if (buf.slice(0, 2).equals(Buffer.from([0xff, 0xd8]))) return true;
+
+    // PNG magic number
+    if (buf.slice(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])))
+      return true;
+
+    // WebP magic
+    if (buf.slice(0, 4).equals(Buffer.from('RIFF')) && buf.slice(8, 12).equals(Buffer.from('WEBP')))
+      return true;
+
+    // Add more formats if needed...
+
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+export function findBadFrames(myFile) {
+  const id3v2 = myFile.getTag(TagTypes.Id3v2, false);
+  if (!id3v2) return [];
+
+  const badFrames = [];
+
+  for (const frame of id3v2.frames) {
+    try {
+      frame.render();
+    } catch (err) {
+      badFrames.push({
+        frameId: frame.frameId,
+        ownerIdentifier: frame.ownerIdentifier,
+        description: frame.description,
+        err: err.message
+      });
+    }
+  }
+  return badFrames;
+}
+
+export function extractMetadata(myFile) {
+  const tag = myFile.tag;
+
+  return {
+    album: tag.album,
+    albumArtists: tag.albumArtists,
+    beatsPerMinute: tag.beatsPerMinute,
+    comment: tag.comment,
+    composers: tag.composers,
+    conductor: tag.conductor,
+    copyright: tag.copyright,
+    description: tag.description,
+    disc: tag.disc,
+    discCount: tag.discCount,
+    encodedBy: tag.encodedBy,
+    encoder: tag.encoder,
+    encoderSettings: tag.encoderSettings,
+    genres: tag.genres,
+    isCompilation: tag.isCompilation,
+    isrc: tag.isrc,
+    lyrics: tag.lyrics,
+    performers: tag.performers,
+    performersRole: tag.performersRole,
+    pictures: tag.pictures, // you may clone later if needed
+    publisher: tag.publisher,
+    remixedBy: tag.remixedBy,
+    replayGainAlbumGain: tag.replayGainAlbumGain,
+    replayGainAlbumPeak: tag.replayGainAlbumPeak,
+    replayGainTrackGain: tag.replayGainTrackGain,
+    replayGainTrackPeak: tag.replayGainTrackPeak,
+    title: tag.title,
+    track: tag.track,
+    trackCount: tag.trackCount,
+    year: tag.year
+
+    // Picture extraction (clone to avoid TagLib pointer issues)
+  };
+}
+
+export function repairTag(myFile, path, updates = {}) {
+  let updatedFile;
+  console.log('updates: ', updates);
+  try {
+    // 1. Detect bad frames
+    const bad = findBadFrames(myFile);
+    /*  console.log('BAD ----> ', bad); */
+    if (bad.length === 0) {
+      console.log('🔵 No corrupt frames. No repair needed.');
+      return { repaired: false, bad };
+    }
+
+    console.warn('🟠 Corrupt ID3v2 frames detected:', bad);
+
+    // 2. Extract metadata BEFORE wiping
+    const meta = extractMetadata(myFile);
+
+    console.log('📦 Extracted metadata:', meta);
+
+    // 3. Remove the *entire* ID3v2 tag
+    console.log('🧨 Removing corrupt ID3v2 tag...');
+    myFile.removeTags(4294967295);
+    myFile.save(); // MUST save to finalize strip
+
+    // 4. Create a new clean ID3v2 tag
+    console.log('🆕 Rebuilding clean ID3v2 tag...');
+    const tag = myFile.getTag(TagTypes.Id3v2, true);
+
+    // 5. Reapply metadata
+    tag.albumArtists = updates.albumArtists ?? meta.albumArtists;
+    tag.album = updates.album ?? meta.album;
+    tag.beatsPerMinute = updates.beatsPerMinute ?? meta.beatsPerMinute;
+    tag.composers = updates.composers ?? meta.composers;
+    tag.conductor = updates.conductor ?? meta.conductor;
+    tag.copyright = updates.copyright ?? meta.copyright;
+    tag.comment = updates.comment ?? meta.comment;
+    tag.disc = updates.disc ?? meta.disc;
+    tag.discCount = updates.discCount ?? meta.discCount;
+    tag.description = updates.description ?? meta.description;
+    tag.encoder = updates.encoder ?? meta.encoder;
+    tag.encodedBy = updates.encodedBy ?? meta.encodedBy;
+    tag.encoderSettings = updates.encoderSettings ?? meta.encoderSettings;
+    tag.genres = updates.genres ?? meta.genres;
+    tag.isCompilation = updates.isCompilation ?? meta.isCompilation;
+    tag.isrc = updates.isrc ?? meta.isrc;
+    tag.lyrics = updates.lyrics ?? meta.lyrics;
+    tag.performers = updates.performers ?? meta.performers;
+    tag.performersRole = updates.performersRole ?? meta.performersRole;
+    tag.pictures = updates.pictures ?? meta.pictures;
+    tag.publisher = updates.publisher ?? meta.publisher;
+    tag.remixedBy = updates.remixedBy ?? meta.remixedBy;
+    tag.replayGainAlbumGain = updates.replayGainAlbumGain ?? meta.replayGainAlbumGain;
+    tag.replayGainAlbumPeak = updates.replayGainAlbumPeak ?? meta.replayGainAlbumPeak;
+    tag.replayGainTrackGain = updates.replayGainTrackGain ?? meta.replayGainTrackGain;
+    tag.replayGainTrackPeak = updates.replayGainTrackPeak ?? meta.replayGainTrackPeak;
+    tag.title = updates.title ?? meta.title;
+    tag.track = updates.track ?? meta.track;
+    tag.trackCount = updates.trackCount ?? meta.trackCount;
+    tag.year = updates.year ?? meta.year;
+
+    // 6. Reapply picture
+    /*   if (updates.pictureLocation) {
+      const pic = Picture.fromPath(updates.pictureLocation);
+      tag.pictures = [pic];
+    } else  */ /* if (meta.pictures) {
+      const pic = new Picture(
+        meta.picture.mimeType,
+        meta.picture.type,
+        meta.picture.description,
+        meta.picture.data
+      );
+      tag.pictures = [pic];
+    } */
+
+    // 7. Save clean tag
+    console.log('💾 Saving repaired tag...');
+    myFile.save();
+    myFile.dispose();
+
+    console.log('✅ Tag successfully repaired!');
+
+    return { repaired: true, bad };
+  } catch (e) {
+    console.error('❌ repairTag failed:', e);
+    return { repaired: false, error: e };
+  }
+}
+
+export function normalizeMetaValue(v) {
+  if (v == null) return null;
+
+  // Strings → OK
+  if (typeof v === 'string') return v;
+
+  // Arrays → join them
+  if (Array.isArray(v)) return v.join(', ');
+
+  // Numbers → convert to string for trim
+  if (typeof v === 'number') return String(v);
+
+  // Booleans → 1 or 0
+  if (typeof v === 'boolean') return v ? '1' : '0';
+
+  // Taglib-sharp Picture[] → we ignore here (your picture-location handles it)
+  if (v.data && v.type) return v;
+
+  // Last resort
+  return String(v);
 }

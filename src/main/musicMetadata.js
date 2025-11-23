@@ -5,6 +5,7 @@ export async function getTagInfo(file) {
   const meta = await mm.parseFile(file);
 
   if (meta.quality.warnings.length > 0) {
+    /* console.log('warnings- ', meta.quality.warnings); */
     return { warnings: true, tags: meta.native };
   }
   return { warnings: false, tags: meta.native };
