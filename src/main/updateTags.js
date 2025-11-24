@@ -12,6 +12,7 @@ import checkAndRemoveReadOnly from './utility/checkAndRemoveReadOnly';
 import { isValidImageFile, findBadFrames, extractMetadata } from './utility/utils.js';
 
 function cleanObject(obj) {
+  /* console.log('clearObject: ', obj); */
   return Object.fromEntries(
     Object.entries(obj).filter(([_, v]) => {
       if (v == null) return false; // null or undefined
@@ -69,7 +70,7 @@ const tagKeys = {
 };
 
 const updateTags = async (arr) => {
-  console.log('update tags, # of tags: ', arr);
+  /* console.log('update tags, # of tags: ', arr); */
   MpegAudioFileSettings.defaultTagTypes = TagTypes.Id3v2;
   FlacFileSettings.defaultTagTypes = TagTypes.Xiph;
   const errors = [];
@@ -85,7 +86,7 @@ const updateTags = async (arr) => {
       try {
         const badFrames = findBadFrames(myFile);
         if (badFrames.length > 0) {
-          console.log('bad frames - ', badFrames.length);
+          console.log('track: ', a.id, 'bad frames: ', badFrames.length);
           const meta = cleanObject(extractMetadata(myFile));
 
           ['composers', 'genres', 'performers', 'performersRole', 'albumArtists'].forEach((k) => {
@@ -93,20 +94,21 @@ const updateTags = async (arr) => {
               meta[k] = meta[k].filter(Boolean).join(', ');
             }
           });
+          if (Array.isArray(meta.pictures) && meta.pictures[0]) {
+            const p = meta.pictures[0];
+            meta.pictures = {
+              data: p.data.toByteArray(),
+              type: p.type,
+              format: p.mimeType,
+              description: p.description ?? ''
+            };
+          } else {
+            delete meta.pictures; // no assignment, just delete
+          }
           /* console.log('meta: ', meta); */
-
-          meta.pictures = meta.pictures?.[0]
-            ? {
-                data: meta.pictures[0].data.toByteArray(),
-                type: meta.pictures[0].type,
-                format: meta.pictures[0].mimeType,
-                description: meta.pictures[0].description ?? ''
-              }
-            : delete meta.pictures;
-
           allUpdates = { ...meta, ...a.updates };
 
-          console.log('all updates: ', allUpdates);
+          /* console.log('all updates: ', allUpdates); */
           myFile.removeTags(4294967295);
           myFile.save();
           myFile.dispose();
@@ -117,10 +119,9 @@ const updateTags = async (arr) => {
         console.error('badFrames Error: ', err);
       }
 
-      console.log('allUpdates: ', allUpdates);
-      console.log('Has v1:', !!(myFile.tagTypesOnDisk & TagTypes.Id3v1));
+      /* console.log('Has v1:', !!(myFile.tagTypesOnDisk & TagTypes.Id3v1));
       console.log('Has v2:', !!(myFile.tagTypesOnDisk & TagTypes.Id3v2));
-
+ */
       const ttod = myFile.tagTypesOnDisk;
 
       if (ttod === 2) {
@@ -148,7 +149,19 @@ const updateTags = async (arr) => {
             console.warn(`⚠️ Invalid image:`, value);
             errors.push({ track_id: a.track_id, id: a.id, error: 'Invalid image' });
           }
-        } else if (key !== 'picture-location') {
+        } else if (key === 'pictures') {
+          if (value && value.data) {
+            const pic = Picture.fromFullData(
+              ByteVector.fromByteArray(value.data),
+              value.type ?? PictureType.FrontCover,
+              value.format,
+              value.description ?? ''
+            );
+            myFile.tag.pictures = [pic]; // <-- CORRECT
+          } else {
+            myFile.tag.pictures = []; // optional clear
+          }
+        } else {
           try {
             const t = tagKeys[key](value);
             myFile.tag[key] = t;
