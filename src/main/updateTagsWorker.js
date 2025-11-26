@@ -18,6 +18,7 @@ const dbPath =
     : workerData.workerPath;
 
 const db = new Database(dbPath);
+
 const createRootsTable = `CREATE TABLE IF NOT EXISTS roots ( id INTEGER PRIMARY KEY AUTOINCREMENT, root TEXT UNIQUE)`;
 db.exec(createRootsTable);
 
@@ -41,7 +42,7 @@ const findRoot = (file) => {
 
 async function func1(data) {
   try {
-    const updateTagsResult = await updateTags(data);
+    const updateTagsResult = await updateTags(data, workerData.logDir);
 
     const failedTrackIds = new Set(updateTagsResult.errors.map((e) => e.track_id));
 

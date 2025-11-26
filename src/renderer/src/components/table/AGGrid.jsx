@@ -498,7 +498,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
           rowId: node.id,
           field: event.colDef.field,
           audiotrack: event.data.audiotrack,
-          newValue: event.newValue === '-' ? null : event.newValue,
+          newValue: event.newValue === '-' ? '-' : event.newValue,
           oldValue: event.oldValue
         };
 

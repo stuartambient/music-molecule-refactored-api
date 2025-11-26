@@ -108,6 +108,31 @@ function ensurePreferencesFile() {
   }
 }
 
+const mode = import.meta.env.MODE;
+
+const logDir =
+  mode === 'production'
+    ? path.join(app.getPath('userData'), 'logs')
+    : path.join(app.getPath('documents'), 'Music-Molecule', 'logs');
+
+/* console.log('log Directory: ', logDir);
+
+function testWrite() {
+  try {
+    fs.mkdirSync(logDir, { recursive: true });
+    const logFile = path.join(logDir, 'test-write.log');
+    const timestamp = new Date().toISOString();
+
+    const line = `${timestamp} | 'test-the-write'\n`;
+    fs.appendFileSync(logFile, line);
+    console.log('test line written: ', line);
+  } catch (err) {
+    console.error('Failed to write bad-frame log: ', err);
+  }
+}
+
+testWrite(); */
+
 const playlistsFolder = paths.playlists;
 if (!fs.existsSync(playlistsFolder)) {
   fs.mkdirSync(playlistsFolder, { recursive: true });
@@ -1236,7 +1261,7 @@ ipcMain.handle('update-tags', async (event, arr) => {
   targetWindow.webContents.send('updated-tags', { status: 'starting' });
   try {
     const workerPath = paths.db;
-    await createUpdateTagsWorker({ workerData: { workerPath: workerPath, data: arr } })
+    await createUpdateTagsWorker({ workerData: { workerPath: workerPath, data: arr, logDir } })
       .on('message', (message) => {
         /*  console.log('update tags: ', message); */
         targetWindow.webContents.send('updated-tags', message);
