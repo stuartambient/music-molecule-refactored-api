@@ -26,6 +26,7 @@ export async function inspectTags(input) {
   const f = typeof input === 'string' ? await File.createFromPath(input) : input; // can accept File instance directly
 
   const path = typeof input === 'string' ? input : f.name;
+  console.log('f name from inspect tags: ', f.name);
   const kind = fileType(path);
   const mask = f.tagTypesOnDisk;
 

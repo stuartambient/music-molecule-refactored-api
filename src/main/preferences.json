@@ -1,27 +1,13 @@
 {
   "hiddenColumns": [
-    "status",
     "failedSort",
-    "conductor",
-    "comment",
-    "description",
-    "trackCount",
-    "isCompilation",
-    "publisher",
-    "copyright",
-    "duration",
-    "beatsPerMinute",
-    "lyrics",
-    "remixedBy",
-    "like",
-    "codecs",
     "replayGainAlbumGain",
     "replayGainAlbumPeak",
     "replayGainTrackGain",
     "replayGainTrackPeak"
   ],
   "theme": "dark",
-  "mainTheme": "theme-3",
+  "mainTheme": "theme-5",
   "schedule": {
     "Monday": "",
     "Tuesday": "",

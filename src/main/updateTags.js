@@ -4,17 +4,19 @@ const path = require('path');
 import {
   Picture,
   File,
-  MpegAudioFileSettings,
-  FlacFileSettings,
   TagTypes,
   PictureType,
-  ByteVector
+  ByteVector,
+  MpegAudioFileSettings,
+  FlacFileSettings
 } from 'node-taglib-sharp';
 import { inspectTags, extraneousTags } from './tag-inspector.js';
 import checkAndRemoveReadOnly from './utility/checkAndRemoveReadOnly';
-import { isValidImageFile, findBadFrames, extractMetadata } from './utility/utils.js';
+import { isValidImageFile } from './utility/utils.js';
 
-function logBadFrame(logDir, filePath, count) {
+import { sanitizeFlacPicture, sanitizeMp3Picture } from './utility/repairPictures.js';
+
+/* function logBadFrame(logDir, filePath, count) {
   try {
     // ensure dir exists
     fs.mkdirSync(logDir, { recursive: true });
@@ -28,16 +30,15 @@ function logBadFrame(logDir, filePath, count) {
   } catch (err) {
     console.error('Failed to write bad-frame log:', err);
   }
-}
+} */
 
-function cleanObject(obj) {
+/* function cleanObject(obj) {
   console.log('clearObject: ', obj);
   return Object.fromEntries(
     Object.entries(obj).filter(([_, v]) => {
       if (v == null || v === 0 || v === '') return false; // null or undefined
       if (typeof v === 'number' && Number.isNaN(v)) return false;
       if (typeof v === 'string' && v.trim() === '') return false;
-      /* if (Array.isArray(v) && v.length === 0) return false; */
       if (Array.isArray(v) && (v.length === 0 || v.every((item) => item === undefined)))
         return false;
       if (typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 0) return false;
@@ -45,7 +46,7 @@ function cleanObject(obj) {
       return true; // keep
     })
   );
-}
+} */
 
 const deleteKeys = {
   albumArtists: () => [],
@@ -120,7 +121,7 @@ const tagKeys = {
   year: (param) => (param?.toString().trim() ? Number(param) : null)
 };
 
-const updateTags = async (arr, logDir) => {
+const updateTags = async (arr) => {
   console.log('update tags, # of tags: ', arr);
   MpegAudioFileSettings.defaultTagTypes = TagTypes.Id3v2;
   FlacFileSettings.defaultTagTypes = TagTypes.Xiph;
@@ -131,63 +132,47 @@ const updateTags = async (arr, logDir) => {
       const ok = await checkAndRemoveReadOnly(a.id);
       if (!ok) throw new Error('File is not writable');
 
+      let id3v2 = null;
+
       let myFile = File.createFromPath(a.id);
-      let allUpdates = a.updates;
-
-      try {
-        const badFrames = findBadFrames(myFile);
-        if (badFrames.length > 0) {
-          logBadFrame(logDir, a.id, badFrames.length);
-          console.log('track: ', a.id, 'bad frames: ', badFrames.length);
-          const meta = cleanObject(extractMetadata(myFile));
-
-          ['composers', 'genres', 'performers', 'performersRole', 'albumArtists'].forEach((k) => {
-            if (Array.isArray(meta[k])) {
-              meta[k] = meta[k].filter(Boolean).join(', ');
-            }
-          });
-          if (Array.isArray(meta.pictures) && meta.pictures[0]) {
-            const p = meta.pictures[0];
-            meta.pictures = {
-              data: p.data.toByteArray(),
-              type: p.type,
-              format: p.mimeType,
-              description: p.description ?? ''
-            };
-          } else {
-            delete meta.pictures; // no assignment, just delete
-          }
-          /* console.log('meta: ', meta); */
-          allUpdates = { ...meta, ...a.updates };
-          console.log('allUpdates: ', allUpdates);
-
-          /* console.log('all updates: ', allUpdates); */
-          myFile.removeTags(4294967295);
-          myFile.save();
-          myFile.dispose();
-
-          myFile = File.createFromPath(a.id);
-        }
-      } catch (err) {
-        console.error('badFrames Error: ', err);
+      if (path.extname(a.id).toLowerCase() === '.mp3') {
+        id3v2 = myFile.getTag(TagTypes.Id3v2, true);
+        id3v2.version = 3;
       }
 
-      /* console.log('Has v1:', !!(myFile.tagTypesOnDisk & TagTypes.Id3v1));
-      console.log('Has v2:', !!(myFile.tagTypesOnDisk & TagTypes.Id3v2));
- */
-      const ttod = myFile.tagTypesOnDisk;
+      if (path.extname(a.id).toLowerCase() === '.mp3') {
+        sanitizeMp3Picture(myFile);
+        myFile.save();
+      } else if (path.extname(a.id).toLowerCase() === '.flac') {
+        sanitizeFlacPicture(myFile);
+        myFile.save();
+      }
+      let allUpdates = a.updates;
+
+      /*       const ttod = myFile.tagTypesOnDisk;
 
       if (ttod === 2) {
         const id3v1 = myFile.getTag(TagTypes.Id3v1, false);
-        const id3v2 = myFile.getTag(TagTypes.Id3v2, true);
-        id3v1.copyTo(id3v2, true);
+        id3v1.copyTo(id3v2, false);
         myFile.save();
-      }
+      } */
 
       let info = await inspectTags(myFile);
+      console.log(
+        'sending to extraneousTags from inpsectTags: ',
+        info.fileType,
+        '--',
+        info.typesList
+      );
       const removeMask = await extraneousTags(info.fileType, info.typesList);
 
       if (removeMask) {
+        console.log('remove mask: ', removeMask);
+        if (removeMask === 2 && path.extname(a.id).toLowerCase() === '.mp3' && id3v2) {
+          const id3v1 = myFile.getTag(TagTypes.Id3v1, false);
+          /* const id3v2 = myFile.getTag(TagTypes.Id3v2, true); */
+          id3v1.copyTo(id3v2, false);
+        }
         myFile.removeTags(removeMask);
         myFile.save();
       }
@@ -217,14 +202,19 @@ const updateTags = async (arr, logDir) => {
         } else {
           try {
             if (value === '-' && key === 'performersRole') {
-              const performers = myFile.tag.performers.join(',');
+              const perfs = myFile.tag.performers;
+
               /* myFile.tag[key] = deleteKeys[key](); */
               myFile.tag.performers = [];
               myFile.tag.performersRole = [];
               myFile.save();
               myFile.dispose();
               myFile = File.createFromPath(a.id);
-              myFile.tag.performers = performers;
+              const t = tagKeys['performers'](perfs.join(','));
+              myFile.tag.performers = t;
+              myFile.save();
+            } else if (value === '-' && key !== 'performersRole') {
+              myFile.tag[key] = deleteKeys[key]();
               myFile.save();
             } else {
               const t = tagKeys[key](value);
