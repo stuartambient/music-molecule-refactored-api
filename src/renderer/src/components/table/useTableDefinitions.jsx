@@ -56,7 +56,7 @@ const useColumnDefinitions = (failedIds, failedErrorMap) => {
         suppressMovable: true,
         filter: true,
         editable: true,
-        width: 140,
+        width: 1000,
         minWidth: 140,
         rowDrag: true
       },

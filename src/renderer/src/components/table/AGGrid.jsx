@@ -225,6 +225,19 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     return { artist, title, path: paths };
   }, []);
 
+  const onColumnChanged = useCallback(() => {
+    if (!gridRef.current?.api) return;
+
+    const columnState = gridRef.current.api.getColumnState();
+
+    console.log('column state: ', columnState);
+
+    /* window.preferencesApi.saveGridColumns({
+      grid: 'tracks', // or albums, artists, etc.
+      state: columnState
+    }); */
+  }, []);
+
   /*  const embedPictureHandlerRef = useRef();
 
   useEffect(() => {
@@ -664,6 +677,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
 
   const onColumnVisible = useCallback(() => {
     if (gridRef.current?.api) {
+      console.log('gridRef.current.api: ', gridRef.current.api);
       updateHiddenColumns(gridRef.current.api);
     }
   }, [updateHiddenColumns]);
@@ -758,6 +772,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
           rowSelection={rowSelectionConfig}
           autoSizeStrategy="fitCellContents"
           onCellValueChanged={handleCellValueChanged}
+          onColumnMoved={onColumnChanged}
           onColumnVisible={onColumnVisible}
           undoRedoCellEditing={false}
           rowDragManaged={true}
