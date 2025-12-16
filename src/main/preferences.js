@@ -38,7 +38,7 @@ export const getPreferencesSync = () => {
 };
 
 export const savePreferences = async (newPreferences) => {
-  /*  console.log('new preferences, ', newPreferences); */
+  console.log('new preferences, ', newPreferences);
   try {
     let currentPreferences = {};
     if (await fs.stat(preferencesPath)) {

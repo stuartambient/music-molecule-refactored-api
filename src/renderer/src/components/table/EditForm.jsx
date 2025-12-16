@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { editableColumns } from './EditableColumns';
 import { openChildWindow } from '../ChildWindows/openChildWindow';
 import { useTheme } from '../../ThemeContext';
@@ -25,6 +25,11 @@ function EditForm({
   const [imageFolder, setImageFolder] = useState(null);
   /*  const [savedFolder, setSavedFolder] = useState(null);
    */
+
+  const hiddenColIds = useMemo(
+    () => new Set(hiddenColumns.filter((c) => c.hide).map((c) => c.colId)),
+    [hiddenColumns]
+  );
   useEffect(() => {
     if (imageFolder) {
       const delayDownload = true;
@@ -108,16 +113,13 @@ function EditForm({
 
   useIpcEvent('form-menu-command', handleFormMenu, 'tagEditApi');
 
-  // Utility function to convert data types based on the field name
   function convertToCorrectType(key, value) {
     if (value === '-') return null;
     const numTypes = ['year', 'disc', 'discCount', 'track', 'trackCount'];
-    // Add more cases as necessary for other specific fields or types
-    /*   console.log('key: ', key, 'value: ', value); */
     if (numTypes.includes(key)) {
       return Number(value);
     }
-    return value; // Return as is if no specific conversion is needed
+    return value;
   }
 
   const handleSubmit = (e) => {
@@ -135,7 +137,6 @@ function EditForm({
             newValue,
             oldValue: node.data[key]
           };
-          /*    console.log('changeObj: ', changeObj); */
           multiRowChanges.push(changeObj);
         }
       });
@@ -152,25 +153,17 @@ function EditForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} /* style={{ gridRow: '3/4' }} */>
+    <form onSubmit={handleSubmit}>
       {editableColumns.map((col) => {
-        /*         console.log('edit form column: ', col); */
-        return !hiddenColumns.includes(col) ? (
-          <div
-            key={col} /* style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }} */
-          >
-            <label htmlFor={col} /* style={{ marginRight: '8px', whiteSpace: 'nowrap' }} */>
-              {`${col} :`}
-            </label>
+        return !hiddenColIds.has(col) ? (
+          <div key={col}>
+            <label htmlFor={col}>{`${col} :`}</label>
             {col === 'picture-location' ? (
               <input
                 name={col}
                 id={col}
-                //value={savedImage && savedImage.tempFile ? savedImage.tempFile : null}
-                /* placeholder={} */
                 value={formData[col]}
                 onChange={handleChange}
-                /* onContextMenu={hanhandleCellContextMenu({params})} */
                 onContextMenu={handleMenu}
                 style={{ flex: '1', minWidth: '0' }}
               />
@@ -179,7 +172,6 @@ function EditForm({
                 name={col}
                 id={col}
                 value={formData[col]}
-                /* placeholder={col} */
                 onChange={handleChange}
                 onContextMenu={handleMenu}
                 style={{ flex: '1', minWidth: '0' }}

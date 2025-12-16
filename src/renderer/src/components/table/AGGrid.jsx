@@ -41,20 +41,13 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
   const [prefsLoaded, setPrefsLoaded] = useState(false);
   const [themeScheme, setThemeScheme] = useState(colorSchemeDarkBlue);
 
-  /* console.log('AG Grid: ', { data, loading }); */
-
-  /* const [imageFolderPath, setImageFolderPath] = useState(null); */
   const [tempFolder, setTempFolder] = useState(null);
-  /* const [folderPath, setFolderPath] = useState(null); */
   const [tagReport, setTagReport] = useState({ result: '', passed: [], failed: [] });
-  /*   const [picNode, setPicNode] = useState(null);
-  const [picPath, setPicPath] = useState(null); */
   const [pendingPictureEdit, setPendingPictureEdit] = useState({});
 
   const gridRef = useRef(null);
   const [undos, setUndos] = useState([]);
   const [redos, setRedos] = useState([]);
-  /* const isLoading = rowData === null || rowData === undefined; */
 
   const { theme } = useTheme();
   const failedIds = useMemo(() => tagReport?.failed?.map((item) => item.id) || [], [tagReport]);
@@ -70,19 +63,13 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     theme === 'dark' ? setThemeScheme(colorSchemeDarkBlue) : setThemeScheme(colorSchemeLightWarm);
   }, [theme]);
 
-  /*--------------------------------------------------*/
-
   const insertData = (data) => {
     setRowData(data);
   };
 
   const handleSendToChild = (e) => {
-    console.log('handleSendToChild');
-    console.log('results: ', e.results, e.results.length, e.listType);
     setLoading(false);
     setListType(e.listType);
-    /* setRowData(e.results); */
-
     insertData(e.results);
     setReset(false);
   };
@@ -98,24 +85,16 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
   useEffect(() => {
     const loadPreferences = async () => {
       const preferences = await window.tagEditApi.invoke('get-preferences-sync');
-      setHiddenColumns(preferences.hiddenColumns || []);
-      setPrefsLoaded(true);
+      setHiddenColumns(preferences.grids.tagEdit.columns || []);
     };
     loadPreferences();
-  }, []);
-
-  useEffect(() => {
-    if (gridRef.current?.api) {
-      gridRef.current.api.forEachNode((node) => {
-        console.log('AG Grid Row ID:', node.id, '→ track_id:', node.data?.track_id);
-      });
-    }
   }, []);
 
   useEffect(() => {
     const updateColPrefs = async () => {
       await window.tagEditApi.invoke('save-preferences', { hiddenColumns });
     };
+
     if (hiddenColumns.length > 0) {
       updateColPrefs();
     }
@@ -134,10 +113,8 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
 
   useEffect(() => {
     if (reset) {
-      console.log('reset');
       setRowData([]);
       setLoading(true);
-      /* setReset(false); */
     }
   }, [reset]);
 
@@ -160,7 +137,6 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
       setUndos([]);
       setRedos([]);
       setNodesSelected([]);
-      //setOriginalData(data);
     }
   }, [rowData]);
 
@@ -168,11 +144,27 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     setNumNodes(nodesSelected.length);
   }, [nodesSelected]);
 
-  const onGridReady = useCallback((params) => {
+  const onGridReady = async (params) => {
     gridRef.current.api = params.api; // Attach the grid API to the ref
-    console.log(gridRef.current.api.getColumnState());
+    const columnState = gridRef.current.api.getColumnState();
+    const hiddenCols = columnState.filter((col) => !col.hide);
+    console.log('hiddenCols: ', hiddenCols);
     setGridReady(true);
-  }, []);
+
+    const prefs = await window.tagEditApi.invoke('get-preferences-sync');
+
+    const state = prefs?.grids?.tagEdit?.columns;
+
+    console.log('state: ', state);
+
+    if (state?.length) {
+      params.api.applyColumnState({
+        state,
+        applyOrder: true
+      });
+    }
+    syncHiddenColumns();
+  };
 
   useEffect(() => {
     if (tagReport?.failed?.length && gridRef.current?.api) {
@@ -184,14 +176,6 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
       gridRef.current.api.ensureIndexVisible(0, 'top', { animated: true });
     }
   }, [tagReport]);
-
-  /*   useEffect(() => {
-    const hasErrors = tagReport?.failed?.length > 0;
-    const columnApi = gridRef.current?.columnApi;
-    if (columnApi) {
-      columnApi.setColumnVisible('status', hasErrors);
-    }
-  }, [tagReport]); */
 
   const selectedNodesImagePicker = useCallback(() => {
     let artist, title /* , path */;
@@ -231,56 +215,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     const columnState = gridRef.current.api.getColumnState();
 
     console.log('column state: ', columnState);
-
-    /* window.preferencesApi.saveGridColumns({
-      grid: 'tracks', // or albums, artists, etc.
-      state: columnState
-    }); */
   }, []);
-
-  /*  const embedPictureHandlerRef = useRef();
-
-  useEffect(() => {
-    embedPictureHandlerRef.current = (values) => {
-      let artist,
-        title,
-        path,
-        type = values.type;
-
-      if (type === 'single-track') {
-        artist = values.params.artist;
-        title = values.params.album;
-        path = values.params.path;
-      } else if (type === 'search-folder-single') {
-        return setTempFolder(values.params.path);
-      }
-
-      return openChildWindow(
-        'cover-search-alt-tags',
-        'cover-search-alt-tags',
-        {
-          width: 700,
-          height: 600,
-          show: false,
-          resizable: true,
-          preload: 'coverSearchAlt',
-          sandbox: true,
-          webSecurity: true,
-          contextIsolation: true
-        },
-        { artist, title, path, type }
-      );
-    };
-  });
-
-  useEffect(() => {
-    const wrapped = (values) => embedPictureHandlerRef.current?.(values);
-
-    window.metadataEditingApi.onContextMenuCommand(wrapped);
-    return () => {
-      window.metadataEditingApi.off('context-menu-command', wrapped);
-    };
-  }, []); */ // subscribe once */
 
   useIpcEvent(
     'context-menu-command',
@@ -317,22 +252,18 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
   );
 
   const handleTagUpdateStatus = (val) => {
-    /* const currentFailedIds = tagReport?.failed?.map((item) => item.id) || []; */
     switch (val.status) {
       case 'success':
         return setUndos([]);
 
       case 'partial_status':
-        /* return setUndos([]); */
         break;
       case 'failed': {
         const currentFailedIds = new Set(val.failed.map((f) => f.id));
         const retainedUndos = undos.filter((u) => currentFailedIds.has(u.audiotrack));
-        console.log('retainedUndo: ', retainedUndos);
         setUndos(retainedUndos);
         break;
       }
-      /* return setUndos([]); */
       default:
         break;
     }
@@ -342,7 +273,6 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
 
   useEffect(() => {
     if (tempFolder) {
-      console.log('select image from folder');
       window.tagEditApi.invoke('select-image-from-folder', tempFolder, true);
     }
   }, [tempFolder]);
@@ -356,6 +286,28 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
       setPendingPictureEdit(null); // clear after applying
     }
   }, [pendingPictureEdit]);
+
+  const syncHiddenColumns = () => {
+    const api = gridRef.current?.api;
+    if (!api) return;
+
+    setHiddenColumns(api.getColumnState());
+  };
+
+  const persistColumnState = useCallback(() => {
+    const api = gridRef.current?.api;
+    if (!api) return;
+
+    const state = api.getColumnState();
+
+    window.tagEditApi.invoke('save-preferences', {
+      grids: {
+        tagEdit: {
+          columns: state
+        }
+      }
+    });
+  }, []);
 
   const handleForSubmit = (values) => {
     if (nodesSelected.length > 1) return;
@@ -379,107 +331,29 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     setIsPanelVisible(!isPanelVisible);
   };
 
-  /*  const CustomNoDataOverlay = () => (
-    <div className="ag-overlay-no-rows-center">No data available</div>
-  ); */
-
-  /*   const handleColumnPanel = (e) => {
-    const col = e.target.name; // Get the column ID from the event
-    if (gridRef.current.api) {
-      const gridApi = gridRef.current.api; // Access the grid API
-      const column = gridApi.getColumn(col); // Get the column object
-
-      if (column) {
-        const isVisible = column.isVisible(); // Check if the column is visible
-        gridApi.setColumnsVisible([col], !isVisible); // Pass an array of column IDs
-        updateHiddenColumns(col, !isVisible); // Update the hidden columns state
-      }
-    } else return;
-  }; */
-
-  /*   const handleColumnPanel = (payload) => {
-    const gridApi = gridRef.current?.api;
-    if (!gridApi) return;
-
-    // Accept either a real event or a plain object
-    const name = payload?.target?.name ?? payload?.name;
-    let checked = payload?.target?.checked ?? payload?.checked;
-
-    if (typeof name !== 'string') return; // bail if not a string
-
-    // If caller didn't specify, fall back to toggle (optional)
-    if (typeof checked !== 'boolean') {
-      const col = gridApi.getColumn(name);
-      checked = !(col && col.isVisible());
-    }
-
-    // ✅ Always pass an array of strings
-    gridApi.setColumnsVisible([name], checked);
-
-    // mirror local state
-    setHiddenColumns((prev) =>
-      checked ? prev.filter((c) => c !== name) : [...new Set([...prev, name])]
-    );
-  }; */
-
-  /*   const handleMultiRowUpdate = (multiRowChanges) => {
-    console.log('multiRowUChanges: ', multiRowChanges);
-    multiRowChanges.forEach((edit) => {
-      gridRef.current.api.forEachNodeAfterFilterAndSort((rowNode) => {
-        if (rowNode.rowIndex === edit.rowId) {
-          switch (edit.newValue) {
-            case 'true':
-              return rowNode.setDataValue(edit.field, 1);
-            case 'false':
-              return rowNode.setDataValue(edit.field, 0);
-            default:
-              rowNode.setDataValue(edit.field, edit.newValue);
-          }
-        }
-      });
-    });
-
-    gridRef.current.api.refreshCells({ force: true });
-  }; */
-
   const handleColumnPanel = (e) => {
     const gridApi = gridRef.current?.api;
     if (!gridApi) return;
-    const { name: colId, checked } = e.target; // name must be a string colId
+    /*    const { name: colId, checked } = e.target; // name must be a string colId
+    console.log('handleColumnPanel: ', colId, '----', checked);
     gridApi.setColumnsVisible([colId], checked); // single string in array
     setHiddenColumns((prev) =>
       checked ? prev.filter((c) => c !== colId) : [...new Set([...prev, colId])]
-    );
+    ); */
+    const { name: colId, checked } = e.target;
+    console.log('handleColumnPanel:', colId, checked);
+
+    gridApi.setColumnsVisible([colId], checked);
   };
 
-  /*  const getAllColIds = () => (gridRef.current?.api.getColumns() || []).map((c) => c.getColId()); */
-
-  /*   const setAllColumnsVisible = (checked) => {
-    const gridApi = gridRef.current?.api;
-    if (!gridApi) return;
-
-    // only change what differs to reduce work
-    const toChange = (gridApi.getColumns() || [])
-      .filter((c) => c.isVisible() !== checked)
-      .map((c) => c.getColId());
-
-    if (toChange.length) gridApi.setColumnsVisible(toChange, checked);
-    setHiddenColumns(checked ? [] : getAllColIds());
-  }; */
-
   const handleMultiRowUpdate = (multiRowChanges) => {
-    console.log('multirode changes: ', multiRowChanges);
+    /* console.log('multirode changes: ', multiRowChanges); */
     const nodeMap = new Map();
     gridRef.current.api.forEachNodeAfterFilterAndSort((node) => {
       if (node.id != null) {
         nodeMap.set(node.id, node);
       }
     });
-    console.log('nodeMap: ', nodeMap);
-    console.log(
-      'multiRowChanges:',
-      multiRowChanges.map((c) => c.rowId)
-    );
 
     multiRowChanges.forEach((edit) => {
       const node = nodeMap.get(edit.rowId);
@@ -660,7 +534,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
   const handleCellContextMenu = useCallback((params) => {
     params.event.preventDefault();
     const allowedColumns = ['pictures', 'picture-location'];
-    console.log('column: ', params.column.getColId());
+    /* console.log('column: ', params.column.getColId()); */
     if (!allowedColumns.includes(params.column.getColId())) {
       return window.tagEditApi.send('show-context-menu', {}, 'tag-context-menu');
     }
@@ -677,7 +551,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
 
   const onColumnVisible = useCallback(() => {
     if (gridRef.current?.api) {
-      console.log('gridRef.current.api: ', gridRef.current.api);
+      /* console.log('gridRef.current.api: ', gridRef.current.api); */
       updateHiddenColumns(gridRef.current.api);
     }
   }, [updateHiddenColumns]);
@@ -708,9 +582,6 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
       'row-failed': (params) => {
         return failedIds.includes(params.data.audiotrack);
       }
-      /*  'row-warnings': (params) => {
-        return params.data.tagWarnings === 1;
-      } */
     };
   }, [failedIds]);
 
@@ -772,8 +643,10 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
           rowSelection={rowSelectionConfig}
           autoSizeStrategy="fitCellContents"
           onCellValueChanged={handleCellValueChanged}
-          onColumnMoved={onColumnChanged}
-          onColumnVisible={onColumnVisible}
+          onColumnMoved={persistColumnState}
+          onColumnVisible={syncHiddenColumns}
+          onColumnResized={persistColumnState}
+          onColumnPinned={persistColumnState}
           undoRedoCellEditing={false}
           rowDragManaged={true}
           rowDragMultiRow={true}

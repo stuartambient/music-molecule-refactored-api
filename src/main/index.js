@@ -1687,7 +1687,7 @@ ipcMain.handle('get-preferences', async () => {
 });
 
 ipcMain.handle('save-preferences', async (event, preferences) => {
-  console.log('---------> save-preferences');
+  console.log('---------> save-preferences', preferences);
   try {
     const saveResults = await savePreferences(preferences);
     if (preferences.schedule) {

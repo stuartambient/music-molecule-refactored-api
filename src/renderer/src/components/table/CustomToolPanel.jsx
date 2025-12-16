@@ -20,6 +20,7 @@ const CustomToolPanel = ({
   setTagReport
   /* setAllColumnsVisible */
 }) => {
+  /* console.log('hiddenColumns: ', hiddenColumns); */
   const [updateStatus, setUpdateStatus] = useState('');
 
   /*  const [isPanelVisible, setIsPanelVisible] = useState(true); */

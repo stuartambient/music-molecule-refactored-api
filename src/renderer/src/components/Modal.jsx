@@ -58,7 +58,11 @@ const Modal = ({
                 type="checkbox"
                 name={field.name}
                 /* checked={isChecked(field.name)} */
-                checked={!hiddenColumns.includes(field.name)}
+                /* checked={!hiddenColumns.includes(field.name)} */
+                checked={
+                  !hiddenColumns.some((col) => col.colId === field.name && col.hide === true)
+                }
+                /* checked={hiddenColumns.find((col) => col.colId === field.name)} */
                 onChange={(e) =>
                   onChange({
                     target: { name: field.name, checked: e.target.checked, type: 'checkbox' }
