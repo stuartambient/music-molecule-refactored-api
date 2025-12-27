@@ -280,7 +280,7 @@ async function changeSemicolonDelimeter() {
   try {
     // eslint-disable-next-line no-unused-vars, unused-imports/no-unused-vars
     const workerPath = process.resourcesPath;
-    const worker = await createUpdateTagFramesWorker({ workerData: { batchSize: 1 } });
+    const worker = await createUpdateTagFramesWorker({ workerData: { batchSize: 100 } });
     worker
       .on('message', (msg) => {
         if (msg.progress) {
@@ -302,7 +302,7 @@ async function changeSemicolonDelimeter() {
     console.log('Handling subsequent code after worker error.');
   }
 }
-changeSemicolonDelimeter();
+setTimeout(() => changeSemicolonDelimeter(), 30000);
 
 async function updateFolders() {
   try {

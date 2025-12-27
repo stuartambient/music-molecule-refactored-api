@@ -731,7 +731,7 @@
         },
         {
           "colId": "audiotrack",
-          "width": 1000,
+          "width": 593,
           "hide": false,
           "pinned": null,
           "sort": null,
@@ -745,21 +745,7 @@
         },
         {
           "colId": "performers",
-          "width": 369,
-          "hide": false,
-          "pinned": null,
-          "sort": "asc",
-          "sortIndex": 0,
-          "aggFunc": null,
-          "rowGroup": false,
-          "rowGroupIndex": null,
-          "pivot": false,
-          "pivotIndex": null,
-          "flex": null
-        },
-        {
-          "colId": "title",
-          "width": 622,
+          "width": 285,
           "hide": false,
           "pinned": null,
           "sort": null,
@@ -772,8 +758,8 @@
           "flex": null
         },
         {
-          "colId": "albumArtists",
-          "width": 243,
+          "colId": "title",
+          "width": 379,
           "hide": false,
           "pinned": null,
           "sort": null,
@@ -787,7 +773,7 @@
         },
         {
           "colId": "album",
-          "width": 306,
+          "width": 337,
           "hide": false,
           "pinned": null,
           "sort": null,
@@ -802,6 +788,20 @@
         {
           "colId": "composers",
           "width": 200,
+          "hide": false,
+          "pinned": null,
+          "sort": null,
+          "sortIndex": null,
+          "aggFunc": null,
+          "rowGroup": false,
+          "rowGroupIndex": null,
+          "pivot": false,
+          "pivotIndex": null,
+          "flex": null
+        },
+        {
+          "colId": "albumArtists",
+          "width": 243,
           "hide": false,
           "pinned": null,
           "sort": null,

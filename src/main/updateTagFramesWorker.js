@@ -48,7 +48,7 @@ function processFiles(files, stats) {
       myFile.save();
       myFile.dispose();
       myFile = File.createFromPath(file.audiotrack);
-      const upd = updatePerformers(myFile.tag.performers.join(','), file.audiotrack);
+      const upd = updatePerformers(myFile.tag.performers.join(', '), file.audiotrack);
       if (upd.changes === 1) {
         stats.processed++;
       } else {
