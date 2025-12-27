@@ -97,7 +97,14 @@ const tagKeys = {
   like: (param) => (param === 1 ? 1 : 0),
   isrc: (param) => param?.trim() || null,
   lyrics: (param) => param?.trim() || null,
-  performers: (param) => param?.trim()?.split(', ') || [],
+  /*  performers: (param) => param?.trim()?.split(', ') || [], */
+  performers: (param) =>
+    typeof param === 'string'
+      ? param
+          .split(/[;,]/)
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [],
   performersRole: (param) => param?.trim()?.split(', ') || [],
   pictures: (param) => {
     Picture.fromFullData(

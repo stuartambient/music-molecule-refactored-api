@@ -1,7 +1,8 @@
+import { useCallback } from 'react';
 import useIpcEvent from '../../hooks/useIpcEvent';
 import StatusTagLoader from './StatusTagLoader';
 
-const TagUpdateState = ({ updateStatus, setUpdateStatus, tagReport, setTagReport }) => {
+const TagUpdateState = ({ updateStatus, setUpdateStatus, tagReport, setTagReport, setUndos }) => {
   /* const [tagReport, setTagReport] = useState({ result: '', passed: [], failed: [] }); */
   /*   useEffect(() => {
     if (updateStatus && updateStatus !== 'starting') {
@@ -27,10 +28,15 @@ const TagUpdateState = ({ updateStatus, setUpdateStatus, tagReport, setTagReport
     console.log('view', tagReport);
   };
 
+  const dismissHandler = useCallback(() => {
+    setTagReport({ result: '', passed: [], failed: [] });
+    setUndos([]);
+  }, [setTagReport, setUndos]);
+
   const handleDismiss = () => {
     console.log('dismiss');
     setUpdateStatus('');
-    setTagReport({ result: '', passed: [], failed: [] });
+    dismissHandler();
   };
 
   const tagUpdateStatuses = ['success', 'failed', 'partial_status'];

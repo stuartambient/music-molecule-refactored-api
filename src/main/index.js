@@ -27,6 +27,7 @@ import createUpdateFoldersWorker from './updateFoldersWorker?nodeWorker';
 import createUpdateCoversWorker from './updateCoversWorker?nodeWorker';
 import createUpdateMetadataWorker from './updateMetadataWorker?nodeWorker';
 import createLoadPlaylistWorker from './loadPlaylistWorker?nodeWorker';
+import createUpdateTagFramesWorker from './updateTagFramesWorker?nodeWorker';
 import { openDatabase, getDB } from './connection';
 import axios from 'axios';
 import { dbDiagnosticRepair } from './dbMaintenance.js';
@@ -274,6 +275,34 @@ const getCurrentSchedule = async () => {
   }
 } */
 /* backfillTags(); */
+
+async function changeSemicolonDelimeter() {
+  try {
+    // eslint-disable-next-line no-unused-vars, unused-imports/no-unused-vars
+    const workerPath = process.resourcesPath;
+    const worker = await createUpdateTagFramesWorker({ workerData: { batchSize: 1 } });
+    worker
+      .on('message', (msg) => {
+        if (msg.progress) {
+          console.log('message progress');
+        }
+        if (msg.type === 'completed') {
+          console.log('Worker finished', msg.stats);
+        }
+        /* if (m?.done) worker.terminate(); */
+      })
+      .on('error', (err) => console.error('update tag frames error:', err))
+      .on('exit', (code) => {
+        if (code !== 0) console.error(`Update Tag Frames Worker stopped with exit code ${code}`);
+      });
+    worker.postMessage({ cmd: 'start' });
+  } catch (error) {
+    console.error('Update Tag Frames Worker encountered an error:', error);
+
+    console.log('Handling subsequent code after worker error.');
+  }
+}
+changeSemicolonDelimeter();
 
 async function updateFolders() {
   try {

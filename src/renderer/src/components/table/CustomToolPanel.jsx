@@ -17,7 +17,8 @@ const CustomToolPanel = ({
   undos,
   hiddenColumns,
   tagReport,
-  setTagReport
+  setTagReport,
+  setUndos
   /* setAllColumnsVisible */
 }) => {
   /* console.log('hiddenColumns: ', hiddenColumns); */
@@ -32,12 +33,8 @@ const CustomToolPanel = ({
 
   const fields = [
     /* { name: 'audiotrack', label: 'audiotrack', defaultChecked: true }, */
-    { name: 'title', label: 'title', defaultChecked: true },
-    { name: 'performers', label: 'performers', defaultChecked: true },
+
     { name: 'album', label: 'album', defaultChecked: true },
-    { name: 'genres', label: 'genres', defaultChecked: true },
-    { name: 'like', label: 'like', defaultChecked: true },
-    { name: 'error', label: 'error', defaultChecked: true },
     { name: 'albumArtists', label: 'albumArtists', defaultChecked: true },
     { name: 'audioBitrate', label: 'audioBitrate', defaultChecked: true },
     { name: 'audioSampleRate', label: 'audioSamplerate', defaultChecked: true },
@@ -51,9 +48,13 @@ const CustomToolPanel = ({
     { name: 'discCount', label: 'discCount', defaultChecked: true },
     { name: 'description', label: 'description', defaultChecked: true },
     { name: 'duration', label: 'duration', defaultChecked: true },
+    { name: 'error', label: 'error', defaultChecked: true },
+    { name: 'genres', label: 'genres', defaultChecked: true },
     { name: 'isCompilation', label: 'isCompilation', defaultChecked: true },
     { name: 'isrc', label: 'isrc', defaultChecked: true },
+    { name: 'like', label: 'like', defaultChecked: true },
     { name: 'lyrics', label: 'lyrics', defaultChecked: true },
+    { name: 'performers', label: 'performers', defaultChecked: true },
     { name: 'performersRole', label: 'performersRole', defaultChecked: true },
     { name: 'pictures', label: 'pictures', defaultChecked: true },
     { name: 'picture-location', label: 'picture-location', defaultChecked: true },
@@ -63,6 +64,8 @@ const CustomToolPanel = ({
     { name: 'replayGainAlbumPeak', label: 'replayGainAlbumPeak', defaultChecked: false },
     { name: 'replayGainTrackGain', label: 'replayGainTrackGain', defaultChecked: false },
     { name: 'replayGainTrackPeak', label: 'replayGainTrackPeak', defaultChecked: false },
+    { name: 'tagTypes', label: 'tagTypes', defaultChecked: true },
+    { name: 'title', label: 'title', defaultChecked: true },
     { name: 'track', label: 'track', defaultChecked: true },
     { name: 'trackCount', label: 'trackCount', defaultChecked: true },
     { name: 'year', label: 'year', defaultChecked: true }
@@ -124,6 +127,7 @@ const CustomToolPanel = ({
             Theme
           </button>
           <TagUpdateState
+            setUndos={setUndos}
             updateStatus={updateStatus}
             tagReport={tagReport}
             setTagReport={setTagReport}

@@ -10,10 +10,9 @@ const totalTracks = () => {
 
 const topHundredArtists = () => {
   const stmt = db.prepare(
-    `SELECT performers, COUNT(*) as count FROM "audio-tracks" WHERE performers IS NOT NULL GROUP BY performers ORDER BY count DESC`
+    `SELECT performers, COUNT(*) as count FROM "audio-tracks" WHERE performers IS NOT NULL AND TRIM(performers) <> '' GROUP BY performers ORDER BY count DESC`
   );
   const result = stmt.all();
-
   return result;
 };
 

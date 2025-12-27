@@ -1,54 +1,62 @@
-const Parent = () => {
-  const [filterValue, setFilterValue] = useState('');
-  const [filteredData, setFilteredData] = useState(data);
+const [hiddenColumns, setHiddenColumns] = useState([]);
+
+const onGridReady = async (params) => {
+  gridRef.current.api = params.api; // Attach the grid API to the ref
+  const columnState = gridRef.current.api.getColumnState();
+  const hiddenCols = columnState.filter((col) => !col.hide);
+  console.log('hiddenCols: ', hiddenCols);
+  setGridReady(true);
+
+  const prefs = await window.tagEditApi.invoke('get-preferences-sync');
+
+  const state = prefs?.grids?.tagEdit?.columns;
+
+  console.log('state: ', state);
+
+  if (state?.length) {
+    params.api.applyColumnState({
+      state,
+      applyOrder: true
+    });
+  }
+  syncHiddenColumns();
 };
 
-const filterData = useCallback(() => {
-  if (!filterValue.trim()) {
-    setFilteredData(data);
-  } else {
-    const lowercasedFilter = filterValue.toLowerCase().trim();
-    console.log('lowercasedFilter: ', lowercasedFilter);
-    const filtered = data.filter((item) => {
-      const field = fields[stat];
-      if (!item[field]) return;
-      return item[field].toLowerCase().includes(lowercasedFilter);
-    });
-    setFilteredData(filtered);
-    console.log('filtered: ', filtered);
-  }
-}, [filterValue, data, fields, stat]);
+const syncHiddenColumns = () => {
+  const api = gridRef.current?.api;
+  if (!api) return;
 
-useEffect(() => {
-  if (stat !== 'stat-albums') {
-    setFilteredData(data);
-  }
-}, [stat, data]);
+  setHiddenColumns(api.getColumnState());
+};
 
-useEffect(() => {
-  if (filterValue) {
-    filterData();
-  } else if (!filterValue) {
-    setFilteredData(data);
-  }
-}, [data, filterData, filterValue]);
+const persistColumnState = useCallback(() => {
+  const api = gridRef.current?.api;
+  if (!api) return;
 
-<Virtuoso
-  style={{ height, width }}
-  className={className}
-  data={filteredData}
-  components={{
-    Header: () => (
-      <Header
-        amountLoaded={amountLoaded}
-        data-role={role}
-        dimensions={dimensions}
-        filterValue={filterValue}
-        setFilterValue={setFilterValue}
-        onClick={handleMultiSelects}
-        handleDeselect={handleDeselect}
-        stat={stat}
-      />
-    )
-  }}
-/>;
+  const state = api.getColumnState();
+
+  window.tagEditApi.invoke('save-preferences', {
+    grids: {
+      tagEdit: {
+        columns: state
+      }
+    }
+  });
+}, []);
+
+const handleColumnPanel = (e) => {
+  const gridApi = gridRef.current?.api;
+  if (!gridApi) return;
+  const { name: colId, checked } = e.target;
+  console.log('handleColumnPanel:', colId, checked);
+
+  gridApi.setColumnsVisible([colId], checked);
+};
+
+<AgGridReact
+          ref={gridRef}
+          onGridReady={onGridReady}
+          onColumnMoved={persistColumnState}
+          onColumnVisible={syncHiddenColumns}
+          onColumnResized={persistColumnState}
+          onColumnPinned={persistColumnState}

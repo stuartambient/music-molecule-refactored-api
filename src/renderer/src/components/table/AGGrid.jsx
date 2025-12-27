@@ -55,6 +55,8 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     return new Map(tagReport.failed.map(({ id, error }) => [id, error || 'Unknown error']));
   }, [tagReport]);
 
+  const FILTER_CONTEXT_MENU_COLS = ['audiotrack', 'album', 'performers'];
+
   const columnDefs = useColumnDefinitions(failedIds, failedErrorMap);
   const columnTypes = useColumnTypes();
   const components = useMemo(() => ({ PlayButtonRenderer }), []);
@@ -82,15 +84,15 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
       .withPart(themeScheme);
   }, [themeScheme]);
 
-  useEffect(() => {
+  /*   useEffect(() => {
     const loadPreferences = async () => {
       const preferences = await window.tagEditApi.invoke('get-preferences-sync');
       setHiddenColumns(preferences.grids.tagEdit.columns || []);
     };
     loadPreferences();
-  }, []);
+  }, []); */
 
-  useEffect(() => {
+  /*   useEffect(() => {
     const updateColPrefs = async () => {
       await window.tagEditApi.invoke('save-preferences', { hiddenColumns });
     };
@@ -98,18 +100,16 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     if (hiddenColumns.length > 0) {
       updateColPrefs();
     }
-  }, [hiddenColumns]);
+  }, [hiddenColumns]); */
 
-  useEffect(() => {
+  /*   useEffect(() => {
     if (prefsLoaded && gridRef.current?.api) {
       const gridApi = gridRef.current.api;
-
-      // Ensure hiddenColumns is an array
       if (Array.isArray(hiddenColumns) && hiddenColumns.length > 0) {
         gridApi.setColumnsVisible(hiddenColumns, false); // Pass the array directly
       }
     }
-  }, [prefsLoaded, hiddenColumns]);
+  }, [prefsLoaded, hiddenColumns]); */
 
   useEffect(() => {
     if (reset) {
@@ -131,6 +131,20 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
 
   const getRowId = useMemo(() => (params) => params.data.track_id, []);
 
+  function onFilterContextMenu(e) {
+    e.preventDefault();
+
+    if (!(e.target instanceof HTMLInputElement)) return;
+
+    e.preventDefault();
+
+    window.tagEditApi.send('show-context-menu', {}, 'tag-context-menu');
+  }
+
+  useEffect(() => {
+    console.log('undos: ', undos);
+  }, [undos]);
+
   useEffect(() => {
     if (rowData && rowData.length > 0) {
       resetAudio();
@@ -146,9 +160,9 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
 
   const onGridReady = async (params) => {
     gridRef.current.api = params.api; // Attach the grid API to the ref
-    const columnState = gridRef.current.api.getColumnState();
+    /*  const columnState = gridRef.current.api.getColumnState();
     const hiddenCols = columnState.filter((col) => !col.hide);
-    console.log('hiddenCols: ', hiddenCols);
+    console.log('hiddenCols: ', hiddenCols); */
     setGridReady(true);
 
     const prefs = await window.tagEditApi.invoke('get-preferences-sync');
@@ -163,7 +177,29 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
         applyOrder: true
       });
     }
-    syncHiddenColumns();
+    queueMicrotask(() => {
+      syncHiddenColumns();
+    });
+
+    params.api.addEventListener('filterOpened', (e) => {
+      /* if (e.column?.getColId() !== 'audiotrack') return;
+       */
+      const colId = e.column?.getColId();
+      if (!colId || !FILTER_CONTEXT_MENU_COLS.includes(colId)) return;
+      // Let the popup render
+      requestAnimationFrame(() => {
+        const filterGui = document.querySelector('.ag-filter');
+        if (!filterGui) return;
+
+        // Avoid double-binding
+        if (filterGui.__hasContextMenu) return;
+        filterGui.__hasContextMenu = true;
+
+        filterGui.addEventListener('contextmenu', onFilterContextMenu);
+
+        /* filterGui.addEventListener('contextmenu', onFilterContextMenu); */
+      });
+    });
   };
 
   useEffect(() => {
@@ -334,12 +370,6 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
   const handleColumnPanel = (e) => {
     const gridApi = gridRef.current?.api;
     if (!gridApi) return;
-    /*    const { name: colId, checked } = e.target; // name must be a string colId
-    console.log('handleColumnPanel: ', colId, '----', checked);
-    gridApi.setColumnsVisible([colId], checked); // single string in array
-    setHiddenColumns((prev) =>
-      checked ? prev.filter((c) => c !== colId) : [...new Set([...prev, colId])]
-    ); */
     const { name: colId, checked } = e.target;
     console.log('handleColumnPanel:', colId, checked);
 
@@ -381,6 +411,10 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
         if (node.data.error) {
           return;
         }
+
+        /*   if (event.colDef.field === 'audiotrack') {
+          return;
+        } */
         const change = {
           rowId: node.id,
           field: event.colDef.field,
@@ -519,11 +553,11 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     []
   );
 
-  const updateHiddenColumns = useCallback(() => {
+  /*   const updateHiddenColumns = useCallback(() => {
     if (!gridRef.current.api.getColumns()) return;
     const hiddenCols = gridRef.current.api.getColumns().filter((col) => !col.isVisible());
     setHiddenColumns(hiddenCols.map((col) => col.getColId()));
-  }, [gridRef]);
+  }, [gridRef]); */
 
   const onRowClicked = useCallback((event) => {
     if (event.ctrlKey || event.metaKey) {
@@ -549,12 +583,11 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     window.tagEditApi.send('show-context-menu', { artist, album, path }, 'picture');
   }, []);
 
-  const onColumnVisible = useCallback(() => {
+  /*   const onColumnVisible = useCallback(() => {
     if (gridRef.current?.api) {
-      /* console.log('gridRef.current.api: ', gridRef.current.api); */
       updateHiddenColumns(gridRef.current.api);
     }
-  }, [updateHiddenColumns]);
+  }, [updateHiddenColumns]); */
 
   useEffect(() => {
     if (!tagReport || !tagReport.failed?.length) return;
@@ -613,6 +646,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
         undos={undos.length}
         tagReport={tagReport}
         setTagReport={setTagReport}
+        setUndos={setUndos}
       />
 
       {nodesSelected.length > 1 && (
@@ -644,7 +678,10 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
           autoSizeStrategy="fitCellContents"
           onCellValueChanged={handleCellValueChanged}
           onColumnMoved={persistColumnState}
-          onColumnVisible={syncHiddenColumns}
+          onColumnVisible={() => {
+            syncHiddenColumns();
+            persistColumnState();
+          }}
           onColumnResized={persistColumnState}
           onColumnPinned={persistColumnState}
           undoRedoCellEditing={false}

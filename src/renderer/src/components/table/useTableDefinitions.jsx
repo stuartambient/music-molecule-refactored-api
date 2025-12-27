@@ -5,9 +5,11 @@ import { CiPlay1 } from 'react-icons/ci'; */
 //Column state properties in the column definition are no longer parsed to number/boolean. Provide the correct types instead of string
 // somewhere utils/tags.js
 const useColumnDefinitions = (failedIds, failedErrorMap) => {
+  console.log('failed ids: ', failedIds, 'failedErrorMap: ', failedErrorMap);
   const columnDefs = useMemo(
     () => [
       {
+        colId: '#',
         headerName: '#',
         valueGetter: (params) => params.node.rowIndex + 1,
         width: 60,
@@ -17,6 +19,7 @@ const useColumnDefinitions = (failedIds, failedErrorMap) => {
         filter: false
       },
       {
+        colId: 'status',
         field: 'status',
         headerName: 'Status',
         hide: failedIds.length > 0 ? false : true,
@@ -29,6 +32,7 @@ const useColumnDefinitions = (failedIds, failedErrorMap) => {
         } */
       },
       {
+        colId: 'failedSort',
         field: 'failedSort',
         headerName: 'Failed Sort',
         hide: true,
@@ -40,6 +44,7 @@ const useColumnDefinitions = (failedIds, failedErrorMap) => {
         }
       },
       {
+        colId: 'playing',
         field: 'playing',
         width: 20,
         editable: false,
@@ -50,6 +55,7 @@ const useColumnDefinitions = (failedIds, failedErrorMap) => {
       },
       /* { field: 'select', checkboxSelection: true, maxWidth: 20, resizable: false }, */
       {
+        colId: 'audiotrack',
         field: 'audiotrack',
         headerName: 'Audiotrack',
         //checkboxSelection: true,
@@ -58,14 +64,19 @@ const useColumnDefinitions = (failedIds, failedErrorMap) => {
         editable: true,
         width: 1000,
         minWidth: 140,
-        rowDrag: true
+        rowDrag: true,
+        valueSetter: (params) => {
+          // Reject all edits (or add conditional logic here)
+          return false;
+        }
       },
-      { field: 'title', filter: true },
-      { field: 'performers', filter: true },
-      { field: 'performersRole' },
-      { field: 'albumArtists', filter: true },
-      { field: 'album', filter: true },
+      { colId: 'title', field: 'title', filter: true },
+      { colId: 'performers', field: 'performers', filter: true },
+      { colId: 'performersRole', field: 'performersRole' },
+      { colId: 'albumArtists', field: 'albumArtists', filter: true },
+      { colId: 'album', field: 'album', filter: true },
       {
+        colId: 'year',
         field: 'year',
         filter: 'agNumberColumnFilter',
         type: 'numericColumn',
@@ -78,24 +89,30 @@ const useColumnDefinitions = (failedIds, failedErrorMap) => {
           return false; // No valid update occurred
         }
       },
-      { field: 'genres', filter: true /* editable: (params) => !params.data.error */ },
-      { field: 'composers', filter: true },
-      { field: 'conductor', filter: true },
       {
+        colId: 'genres',
+        field: 'genres',
+        filter: true /* editable: (params) => !params.data.error */
+      },
+      { colId: 'composers', field: 'composers', filter: true },
+      { colId: 'conductor', field: 'conductor', filter: true },
+      {
+        colId: 'comment',
         field: 'comment'
       },
-      { field: 'description' },
-      { field: 'disc' },
-      { field: 'discCount' },
-      { field: 'track' },
-      { field: 'trackCount' },
-      { field: 'isCompilation', type: 'bool' },
-      { field: 'publisher' },
-      { field: 'isrc' },
-      { field: 'copyright', filter: true },
-      { field: 'pictures', type: 'bool', editable: false },
-      { field: 'picture-location' /* , editable: true  */ },
+      { colId: 'description', field: 'description' },
+      { colId: 'disc', field: 'disc' },
+      { colId: 'discCount', field: 'discCount' },
+      { colId: 'track', field: 'track' },
+      { colId: 'trackCount', field: 'trackCount' },
+      { colId: 'isCompilation', field: 'isCompilation', type: 'bool' },
+      { colId: 'publisher', field: 'publisher' },
+      { colId: 'isrc', field: 'isrc' },
+      { colId: 'copyright', field: 'copyright', filter: true },
+      { colId: 'pictures', field: 'pictures', type: 'bool', editable: false },
+      { colId: 'picture-location', field: 'picture-location' /* , editable: true  */ },
       {
+        colId: 'duration',
         field: 'duration',
         headerName: 'Duration',
         editable: false,
@@ -112,11 +129,12 @@ const useColumnDefinitions = (failedIds, failedErrorMap) => {
           return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
         }
       },
-      { field: 'beatsPerMinute', filter: true },
-      { field: 'lyrics' },
-      { field: 'remixedBy' },
-      { field: 'like', editable: false, type: 'bool' },
+      { colId: 'beatsPerMinute', field: 'beatsPerMinute', filter: true },
+      { colId: 'lyrics', field: 'lyrics' },
+      { colId: 'remixedBy', field: 'remixedBy' },
+      { colId: 'like', field: 'like', editable: false, type: 'bool' },
       {
+        colId: 'error',
         field: 'error',
         filter: true,
         editable: false,
@@ -124,14 +142,20 @@ const useColumnDefinitions = (failedIds, failedErrorMap) => {
           return params.value ? { backgroundColor: 'red', color: 'white' } : null;
         }
       },
-      { field: 'audioBitrate', filter: true, editable: false },
-      { field: 'audioSampleRate', filter: true, editable: false },
-      { field: 'codecs', filter: true, editable: false },
-      { field: 'tagTypes', headerName: 'Tags', editable: false },
-      { field: 'encoder', headerName: 'Encoder', editable: true },
-      { field: 'encoderSettings', headerName: 'EncoderSettings', editable: true },
-      { field: 'encodedBy', headerName: 'EncodedBy', editable: true },
+      { colId: 'audioBitrate', field: 'audioBitrate', filter: true, editable: false },
+      { colId: 'audioSampleRate', field: 'audioSampleRate', filter: true, editable: false },
+      { colId: 'codecs', field: 'codecs', filter: true, editable: false },
+      { colId: 'tagTypes', field: 'tagTypes', headerName: 'Tags', editable: false },
+      { colId: 'encoder', field: 'encoder', headerName: 'Encoder', editable: true },
       {
+        colId: 'encoderSettings',
+        field: 'encoderSettings',
+        headerName: 'EncoderSettings',
+        editable: true
+      },
+      { colId: 'encodedBy', field: 'encodedBy', headerName: 'EncodedBy', editable: true },
+      {
+        colId: 'tagWarnings',
         field: 'tagWarnings',
         headerName: 'tagWarnings',
         type: 'bool',
@@ -139,11 +163,12 @@ const useColumnDefinitions = (failedIds, failedErrorMap) => {
         /* cellClass: (params) => (params.data.tagWarnings === 1 ? 'row-warnings' : '') */
       },
 
-      { field: 'replayGainAlbumGain', hide: true },
-      { field: 'replayGainAlbumPeak', hide: true },
-      { field: 'replayGainTrackGain', hide: true },
-      { field: 'replayGainTrackPeak', hide: true },
+      { colId: 'replayGainAlbumGain', field: 'replayGainAlbumGain', hide: true },
+      { colId: 'replayGainAlbumPeak', field: 'replayGainAlbumPeak', hide: true },
+      { colId: 'replayGainTrackGain', field: 'replayGainTrackGain', hide: true },
+      { colId: 'replayGainTrackPeak', field: 'replayGainTrackPeak', hide: true },
       {
+        colId: 'modified',
         field: 'modified',
         editable: false,
         valueFormatter: (params) => {
@@ -155,7 +180,7 @@ const useColumnDefinitions = (failedIds, failedErrorMap) => {
           return date.toLocaleString(); // or use .toISOString() if you prefer
         }
       },
-      { field: 'created_datetime', editable: false }
+      { colId: 'created_datetime', field: 'created_datetime', editable: false }
     ],
     [failedIds, failedErrorMap]
   );

@@ -147,6 +147,22 @@ export function checkDataType(entry) {
   }
 }
 
+function normalizePerformers(value) {
+  const splitOne = (s) =>
+    s
+      .split(/[;,]/)
+      .map((x) => x.trim())
+      .filter(Boolean);
+
+  if (typeof value === 'string') return splitOne(value);
+
+  if (Array.isArray(value)) {
+    return value.flatMap((v) => (typeof v === 'string' ? splitOne(v) : []));
+  }
+
+  return value;
+}
+
 /* let newestRoots;
 export function getRoots(db) {
   const roots = db.prepare('SELECT root FROM roots');
@@ -207,7 +223,8 @@ export async function parseMeta(files, op, findRoot) {
         isCompilation: checkDataType(myFile.tag.isCompilation),
         isrc: checkDataType(myFile.tag.isrc),
         lyrics: checkDataType(myFile.tag.lyrics),
-        performers: checkDataType(myFile.tag.performers),
+        /* performers: checkDataType(normalizePerformers(myFile.tag.performers)), */
+        performers: checkDataType(normalizePerformers(myFile.tag.performers)),
         performersRole: checkDataType(myFile.tag.performersRole),
         pictures: myFile.tag.pictures?.[0]?.data ? 1 : 0,
         publisher: checkDataType(myFile.tag.publisher),
