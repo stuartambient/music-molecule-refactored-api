@@ -35,10 +35,10 @@ export function extractMp3PictureBytes(apicFrame) {
 
 export function sanitizeFlacPicture(myFile) {
   const pics = myFile.tag.pictures;
-  console.log('flac pictures: ', pics);
+  /*  console.log('flac pictures: ', pics); */
 
   const validPictures = pics.filter((pic) => pic._data._bytes.length > 0);
-  console.log('validPictures: ', validPictures);
+  /* console.log('validPictures: ', validPictures); */
   myFile.tag.pictures = validPictures || [];
 
   /*   if (flac?.pictures?.length) {
@@ -68,7 +68,7 @@ export function sanitizeMp3Picture(myFile) {
 
   if (id3v2?.pictures?.length) {
     id3v2.pictures.forEach((pic, idx) => {
-      console.log('Picture', idx);
+      /* console.log('Picture', idx); */
 
       console.log('  Type:', pic.type); // e.g., FrontCover
       console.log('  Mime Type:', pic.mimeType); // e.g., "image/jpeg"

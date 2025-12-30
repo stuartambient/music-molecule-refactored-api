@@ -23,6 +23,7 @@ import { useColumnTypes } from './useColumnTypes';
 import { themeQuartz } from 'ag-grid-community';
 import useIpcEvent from '../../hooks/useIpcEvent';
 import PlayButtonRenderer from './PlayButtonRenderer';
+import RescanButtonRenderer from './RescanButtonRenderer';
 import './styles/AGGrid.css';
 import { useTheme } from '../../ThemeContext';
 
@@ -49,6 +50,8 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
   const [undos, setUndos] = useState([]);
   const [redos, setRedos] = useState([]);
 
+  const isSyncingRef = useRef(false);
+
   const { theme } = useTheme();
   const failedIds = useMemo(() => tagReport?.failed?.map((item) => item.id) || [], [tagReport]);
   const failedErrorMap = useMemo(() => {
@@ -59,7 +62,10 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
 
   const columnDefs = useColumnDefinitions(failedIds, failedErrorMap);
   const columnTypes = useColumnTypes();
-  const components = useMemo(() => ({ PlayButtonRenderer }), []);
+  const components = useMemo(
+    () => ({ playButtonRenderer: PlayButtonRenderer, rescanButtonRenderer: RescanButtonRenderer }),
+    []
+  );
 
   useEffect(() => {
     theme === 'dark' ? setThemeScheme(colorSchemeDarkBlue) : setThemeScheme(colorSchemeLightWarm);
@@ -330,11 +336,48 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     setHiddenColumns(api.getColumnState());
   };
 
+  /*   const syncRescanPosition = useCallback((params) => {
+    // --- HARD STOP: prevent recursion ---
+    if (isSyncingRef.current) return;
+
+    // only respond when user moved "error"
+    const movedColId = params.column?.getColId?.();
+    if (movedColId !== 'error') return;
+
+    const api = params.api;
+
+    const cols = api.getAllDisplayedColumns();
+    const errorIdx = cols.findIndex((c) => c.getColId() === 'error');
+    const rescanIdx = cols.findIndex((c) => c.getColId() === 'rescan');
+
+    if (errorIdx === -1 || rescanIdx === -1) return;
+
+    const desiredIdx = Math.max(0, errorIdx - 1);
+
+    // already correct
+    if (rescanIdx === desiredIdx) return;
+
+    isSyncingRef.current = true;
+    try {
+      api.moveColumnByIndex(rescanIdx, desiredIdx);
+    } finally {
+      setTimeout(() => {
+        isSyncingRef.current = false;
+      }, 0);
+    }
+  }, []); */
+
   const persistColumnState = useCallback(() => {
     const api = gridRef.current?.api;
     if (!api) return;
 
-    const state = api.getColumnState();
+    const state = api.getColumnState().filter((c) => c.colId !== 'rescan');
+
+    /*     const errorCol = params.columnApi.getColumn('error');
+    if (!errorCol) return;
+
+    const isErrorVisible = errorCol.isVisible();
+    params.columnApi.setColumnVisible('rescan', isErrorVisible); */
 
     window.tagEditApi.invoke('save-preferences', {
       grids: {
@@ -343,6 +386,17 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
         }
       }
     });
+  }, []);
+
+  const handleRescanColumn = useCallback((params) => {
+    // Use Grid API, not columnApi
+    const errorCol = params.api.getColumn('error'); // colId or field
+    if (!errorCol) return;
+
+    const isErrorVisible = errorCol.isVisible();
+
+    // Grid API method (Column API migrated)
+    params.api.setColumnsVisible(['rescan'], isErrorVisible);
   }, []);
 
   const handleForSubmit = (values) => {
@@ -677,10 +731,14 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
           rowSelection={rowSelectionConfig}
           autoSizeStrategy="fitCellContents"
           onCellValueChanged={handleCellValueChanged}
-          onColumnMoved={persistColumnState}
-          onColumnVisible={() => {
+          onColumnMoved={(params) => {
+            persistColumnState;
+            /* syncRescanPosition(params); */
+          }}
+          onColumnVisible={(params) => {
             syncHiddenColumns();
             persistColumnState();
+            handleRescanColumn(params);
           }}
           onColumnResized={persistColumnState}
           onColumnPinned={persistColumnState}

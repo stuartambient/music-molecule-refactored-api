@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
+/* import RescanButtonRenderer from './RescanButtonRenderer'; */
 /* import { useColumnTypes } from './useColumnTypes'; */
 /* import PlayButtonRenderer from './PlayButtonRenderer';
+
 import { CiPlay1 } from 'react-icons/ci'; */
 //Column state properties in the column definition are no longer parsed to number/boolean. Provide the correct types instead of string
 // somewhere utils/tags.js
@@ -51,7 +53,7 @@ const useColumnDefinitions = (failedIds, failedErrorMap) => {
         suppressMovable: true,
         resizable: false,
         headerName: 'Play',
-        cellRenderer: 'PlayButtonRenderer'
+        cellRenderer: 'playButtonRenderer'
       },
       /* { field: 'select', checkboxSelection: true, maxWidth: 20, resizable: false }, */
       {
@@ -133,6 +135,21 @@ const useColumnDefinitions = (failedIds, failedErrorMap) => {
       { colId: 'lyrics', field: 'lyrics' },
       { colId: 'remixedBy', field: 'remixedBy' },
       { colId: 'like', field: 'like', editable: false, type: 'bool' },
+      {
+        colId: 'rescan',
+        field: 'rescan',
+        width: 120,
+        hide: true,
+        minWidth: 120,
+        editable: false,
+        suppressMovable: true,
+        resizable: false,
+        sortable: false,
+        filter: false,
+        valueGetter: () => 1, // force cell creation
+        headerName: '',
+        cellRenderer: 'rescanButtonRenderer'
+      },
       {
         colId: 'error',
         field: 'error',

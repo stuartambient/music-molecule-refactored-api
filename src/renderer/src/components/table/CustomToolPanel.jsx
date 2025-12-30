@@ -64,6 +64,7 @@ const CustomToolPanel = ({
     { name: 'replayGainAlbumPeak', label: 'replayGainAlbumPeak', defaultChecked: false },
     { name: 'replayGainTrackGain', label: 'replayGainTrackGain', defaultChecked: false },
     { name: 'replayGainTrackPeak', label: 'replayGainTrackPeak', defaultChecked: false },
+    /* { name: 'rescan', label: 'rescan', defaultChecked: false }, */
     { name: 'tagTypes', label: 'tagTypes', defaultChecked: true },
     { name: 'title', label: 'title', defaultChecked: true },
     { name: 'track', label: 'track', defaultChecked: true },

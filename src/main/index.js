@@ -193,6 +193,7 @@ async function backupDatabase() {
     console.log('Backup complete:', backupPath);
     const backupDir = prod ? prodBackups : devBackups;
     pruneBackups(backupDir, 3); // keep last 10
+    changeSemicolonDelimeter();
   } catch (err) {
     console.error('Backup failed:', err);
   }
@@ -280,7 +281,7 @@ async function changeSemicolonDelimeter() {
   try {
     // eslint-disable-next-line no-unused-vars, unused-imports/no-unused-vars
     const workerPath = process.resourcesPath;
-    const worker = await createUpdateTagFramesWorker({ workerData: { batchSize: 100 } });
+    const worker = await createUpdateTagFramesWorker({ workerData: { batchSize: 10 } });
     worker
       .on('message', (msg) => {
         if (msg.progress) {
@@ -302,7 +303,7 @@ async function changeSemicolonDelimeter() {
     console.log('Handling subsequent code after worker error.');
   }
 }
-setTimeout(() => changeSemicolonDelimeter(), 30000);
+/* setTimeout(() => changeSemicolonDelimeter(), 30000); */
 
 async function updateFolders() {
   try {

@@ -23,3 +23,9 @@
 /* .ag-text-filter-input {
   user-select: text;
 } */
+
+.error-cell::before {
+  content: '⚠';
+  margin-right: 6px;
+  font-weight: bold;
+}

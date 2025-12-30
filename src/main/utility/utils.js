@@ -8,6 +8,7 @@ import { flattenTagValue, getEncoderFieldsFromNative } from '../tags/utils.js';
 /* import { findRoot } from '../updateFilesWorker.js'; */
 
 export function insertFiles(db, files) {
+  console.log('insertFiles files; ', files);
   const stmtCache = new Map();
 
   const getInsertStmt = (obj) => {
