@@ -1,0 +1,49 @@
+.rescan-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Icon-only button, grid-safe */
+.rescan-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  border: none;
+  padding: 0;
+
+  color: var(--ag-error-color, #d32f2f);
+  font-size: 18px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+/* Subtle affordance, not carnival colors */
+.rescan-btn:hover {
+  color: var(--ag-error-hover-color, #b71c1c);
+  transform: scale(1.4) rotate(320deg);
+}
+
+.rescan-btn:focus-visible {
+  outline: 2px solid rgba(211, 47, 47, 0.4);
+  outline-offset: 2px;
+}
+
+.rescan-btn:hover {
+  transition: 1s;
+}
+
+/* Error text */
+.rescan-msg {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  font-size: 14px;
+  color: var(--ag-error-text-color, #c62828);
+}

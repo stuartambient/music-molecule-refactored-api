@@ -90,33 +90,6 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
       .withPart(themeScheme);
   }, [themeScheme]);
 
-  /*   useEffect(() => {
-    const loadPreferences = async () => {
-      const preferences = await window.tagEditApi.invoke('get-preferences-sync');
-      setHiddenColumns(preferences.grids.tagEdit.columns || []);
-    };
-    loadPreferences();
-  }, []); */
-
-  /*   useEffect(() => {
-    const updateColPrefs = async () => {
-      await window.tagEditApi.invoke('save-preferences', { hiddenColumns });
-    };
-
-    if (hiddenColumns.length > 0) {
-      updateColPrefs();
-    }
-  }, [hiddenColumns]); */
-
-  /*   useEffect(() => {
-    if (prefsLoaded && gridRef.current?.api) {
-      const gridApi = gridRef.current.api;
-      if (Array.isArray(hiddenColumns) && hiddenColumns.length > 0) {
-        gridApi.setColumnsVisible(hiddenColumns, false); // Pass the array directly
-      }
-    }
-  }, [prefsLoaded, hiddenColumns]); */
-
   useEffect(() => {
     if (reset) {
       setRowData([]);

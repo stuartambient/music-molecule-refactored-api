@@ -136,21 +136,15 @@ const useColumnDefinitions = (failedIds, failedErrorMap) => {
       { colId: 'remixedBy', field: 'remixedBy' },
       { colId: 'like', field: 'like', editable: false, type: 'bool' },
       {
-        colId: 'rescan',
-        field: 'rescan',
-        width: 120,
-        hide: true,
-        minWidth: 120,
+        colId: 'error',
+        field: 'error',
         editable: false,
-        suppressMovable: true,
-        resizable: false,
-        sortable: false,
         filter: false,
-        valueGetter: () => 1, // force cell creation
-        headerName: '',
+        /* valueGetter: () => 1, // force cell creation */
+        headerName: 'Track Error',
         cellRenderer: 'rescanButtonRenderer'
       },
-      {
+      /*       {
         colId: 'error',
         field: 'error',
         filter: true,
@@ -158,7 +152,7 @@ const useColumnDefinitions = (failedIds, failedErrorMap) => {
         cellStyle: (params) => {
           return params.value ? { backgroundColor: 'red', color: 'white' } : null;
         }
-      },
+      }, */
       { colId: 'audioBitrate', field: 'audioBitrate', filter: true, editable: false },
       { colId: 'audioSampleRate', field: 'audioSampleRate', filter: true, editable: false },
       { colId: 'codecs', field: 'codecs', filter: true, editable: false },

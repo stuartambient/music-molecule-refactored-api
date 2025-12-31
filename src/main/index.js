@@ -28,6 +28,7 @@ import createUpdateCoversWorker from './updateCoversWorker?nodeWorker';
 import createUpdateMetadataWorker from './updateMetadataWorker?nodeWorker';
 import createLoadPlaylistWorker from './loadPlaylistWorker?nodeWorker';
 import createUpdateTagFramesWorker from './updateTagFramesWorker?nodeWorker';
+import createRescanTrackErrorWorker from './rescanTrackErrorWorker?nodeWorker';
 import { openDatabase, getDB } from './connection';
 import axios from 'axios';
 import { dbDiagnosticRepair } from './dbMaintenance.js';
@@ -1310,6 +1311,30 @@ ipcMain.handle('update-tags', async (event, arr) => {
       .postMessage('');
   } catch (error) {
     console.error('Error on tag update: ', error.message);
+  }
+});
+
+ipcMain.handle('rescan-track-error', async (event, track, id) => {
+  console.log('handler: ', track, id);
+  try {
+    const workerPath = process.resourcesPath;
+    const worker = await createRescanTrackErrorWorker({ workerData: { track, id, workerPath } });
+    worker
+      .on('message', (msg) => {
+        if (msg.type === 'completed') {
+          console.log('Worker finished', msg.result);
+        }
+        /* if (m?.done) worker.terminate(); */
+      })
+      .on('error', (err) => console.error('update tag frames error:', err))
+      .on('exit', (code) => {
+        if (code !== 0) console.error(`Update Tag Frames Worker stopped with exit code ${code}`);
+      });
+    worker.postMessage({ cmd: 'start' });
+  } catch (error) {
+    console.error('Update Tag Frames Worker encountered an error:', error);
+
+    console.log('Handling subsequent code after worker error.');
   }
 });
 

@@ -65,6 +65,7 @@ async function func1(data) {
 
 async function func2(input) {
   /* console.log('parseMeta: '); */
+  console.log('func2: ', input);
   return new Promise((resolve, reject) => {
     try {
       const updatedMeta = parseMeta(input, 'mod', findRoot);
