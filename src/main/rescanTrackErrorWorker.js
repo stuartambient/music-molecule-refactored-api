@@ -2,7 +2,7 @@ import { parentPort, workerData } from 'worker_threads';
 import path from 'node:path';
 import Database from 'better-sqlite3';
 import { File } from 'node-taglib-sharp';
-import { parseMeta } from './utility/utils.js';
+import { updateFiles, parseMeta } from './utility/utils.js';
 import { sanitizeFlacPicture, sanitizeMp3Picture } from './utility/repairPictures.js';
 
 const mode = import.meta.env.MODE;
@@ -21,6 +21,11 @@ const getRoots = () => {
 };
 
 getRoots();
+
+function getRescannedTrack(id) {
+  const track = db.prepare(`SELECT * FROM "audio-tracks" WHERE track_id = ?`);
+  return track.get(id);
+}
 
 export function findRoot(file) {
   for (const root of newestRoots) {
@@ -43,7 +48,11 @@ const processTrack = async (track, id, result) => {
     myFile.dispose();
   }
   const parseMetadata = await parseMeta([{ id: track, track_id: id }], 'mod', findRoot);
-  console.log('return parseMeta: ', parseMetadata);
+  const updateDb = updateFiles(db, parseMetadata);
+  if (updateDb.success === true) {
+    const rescanned = getRescannedTrack(id);
+    result.rescanned = rescanned;
+  }
 };
 
 if (!parentPort) {
@@ -53,7 +62,7 @@ if (!parentPort) {
 
 parentPort.on('message', async (msg) => {
   if (msg.cmd === 'start') {
-    const result = { processed: workerData.track, sucess: true };
+    const result = { processed: workerData.track, sucess: true, rescanned: {} };
 
     try {
       await processTrack(workerData.track, workerData.id, result);

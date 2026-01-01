@@ -138,7 +138,7 @@ const useColumnDefinitions = (failedIds, failedErrorMap) => {
       {
         colId: 'error',
         field: 'error',
-        editable: false,
+        editable: true,
         filter: false,
         /* valueGetter: () => 1, // force cell creation */
         headerName: 'Track Error',

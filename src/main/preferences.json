@@ -732,7 +732,7 @@
         {
           "colId": "isCompilation",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -746,7 +746,7 @@
         {
           "colId": "description",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -760,7 +760,7 @@
         {
           "colId": "comment",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -774,7 +774,7 @@
         {
           "colId": "trackCount",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -914,7 +914,7 @@
         {
           "colId": "performersRole",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -956,7 +956,7 @@
         {
           "colId": "year",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -970,7 +970,7 @@
         {
           "colId": "genres",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -984,7 +984,7 @@
         {
           "colId": "publisher",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -998,7 +998,7 @@
         {
           "colId": "isrc",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -1012,7 +1012,7 @@
         {
           "colId": "copyright",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -1040,7 +1040,7 @@
         {
           "colId": "picture-location",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -1054,7 +1054,7 @@
         {
           "colId": "duration",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -1068,7 +1068,7 @@
         {
           "colId": "beatsPerMinute",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -1082,7 +1082,7 @@
         {
           "colId": "lyrics",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -1096,7 +1096,7 @@
         {
           "colId": "remixedBy",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -1110,7 +1110,7 @@
         {
           "colId": "like",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -1124,7 +1124,7 @@
         {
           "colId": "audioBitrate",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -1138,7 +1138,7 @@
         {
           "colId": "audioSampleRate",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -1152,7 +1152,7 @@
         {
           "colId": "codecs",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -1221,7 +1221,7 @@
         },
         {
           "colId": "error",
-          "width": 630,
+          "width": 337,
           "hide": false,
           "pinned": null,
           "sort": "desc",
@@ -1250,7 +1250,7 @@
         {
           "colId": "replayGainAlbumGain",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -1264,7 +1264,7 @@
         {
           "colId": "replayGainAlbumPeak",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -1278,7 +1278,7 @@
         {
           "colId": "replayGainTrackGain",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -1292,7 +1292,7 @@
         {
           "colId": "replayGainTrackPeak",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,

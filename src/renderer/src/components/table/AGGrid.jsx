@@ -284,7 +284,12 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     }
   };
 
+  const handleUpdatedRow = (result) => {
+    console.log('updated-row-result: ', result);
+  };
+
   useIpcEvent('updated-tags', handleTagUpdateStatus, 'tagEditApi');
+  useIpcEvent('rescanned-track', handleUpdatedRow, 'tagEditApi');
 
   useEffect(() => {
     if (tempFolder) {
