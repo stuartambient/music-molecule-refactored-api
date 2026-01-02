@@ -194,7 +194,6 @@ async function backupDatabase() {
     console.log('Backup complete:', backupPath);
     const backupDir = prod ? prodBackups : devBackups;
     pruneBackups(backupDir, 3); // keep last 10
-    changeSemicolonDelimeter();
   } catch (err) {
     console.error('Backup failed:', err);
   }
@@ -279,8 +278,10 @@ const getCurrentSchedule = async () => {
 /* backfillTags(); */
 
 async function changeSemicolonDelimeter() {
+  console.log('changeSemiColon');
   try {
     // eslint-disable-next-line no-unused-vars, unused-imports/no-unused-vars
+
     const workerPath = process.resourcesPath;
     const worker = await createUpdateTagFramesWorker({ workerData: { batchSize: 10 } });
     worker
@@ -289,22 +290,22 @@ async function changeSemicolonDelimeter() {
           console.log('message progress');
         }
         if (msg.type === 'completed') {
-          console.log('Worker finished', msg.stats);
+          return console.log('Worker finished', msg.stats);
         }
         /* if (m?.done) worker.terminate(); */
       })
       .on('error', (err) => console.error('update tag frames error:', err))
       .on('exit', (code) => {
         if (code !== 0) console.error(`Update Tag Frames Worker stopped with exit code ${code}`);
-      });
-    worker.postMessage({ cmd: 'start' });
+      })
+      .postMessage({ cmd: 'start' });
   } catch (error) {
     console.error('Update Tag Frames Worker encountered an error:', error);
 
     console.log('Handling subsequent code after worker error.');
   }
 }
-/* setTimeout(() => changeSemicolonDelimeter(), 30000); */
+setTimeout(() => changeSemicolonDelimeter(), 3000);
 
 async function updateFolders() {
   try {

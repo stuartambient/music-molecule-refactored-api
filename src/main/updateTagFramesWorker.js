@@ -124,16 +124,17 @@ if (!parentPort) {
 }
 
 parentPort.on('message', async (msg) => {
-  if (msg.cmd === 'start') {
-    const stats = { processed: 0, failed: 0 };
+  console.log('msg.cmd: ', msg.cmd);
+  if (msg.cmd !== 'start') return;
 
-    try {
-      await getFiles(workerData.batchSize, stats);
-    } catch (err) {
-      parentPort.postMessage({ type: 'fatal', error: err.message });
-      return;
-    }
-    parentPort.postMessage({ type: 'completed', stats });
-    // no exit() — let it drain naturally
+  const stats = { processed: 0, failed: 0 };
+
+  try {
+    await getFiles(workerData.batchSize, stats);
+  } catch (err) {
+    parentPort.postMessage({ type: 'fatal', error: err.message });
+    return;
   }
+  parentPort.postMessage({ type: 'completed', stats });
+  // no exit() — let it drain naturally
 });

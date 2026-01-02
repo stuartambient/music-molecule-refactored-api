@@ -70,11 +70,11 @@ export function sanitizeMp3Picture(myFile) {
     id3v2.pictures.forEach((pic, idx) => {
       /* console.log('Picture', idx); */
 
-      console.log('  Type:', pic.type); // e.g., FrontCover
+      /*       console.log('  Type:', pic.type); // e.g., FrontCover
       console.log('  Mime Type:', pic.mimeType); // e.g., "image/jpeg"
       console.log('  Description:', pic.description);
       console.log('  Filename:', pic.filename);
-      console.log('  Data bytes:', pic.data.length);
+      console.log('  Data bytes:', pic.data.length); */
 
       // If needed:
       const buffer = Buffer.from(pic.data);
