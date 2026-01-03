@@ -4,7 +4,7 @@ import './styles/RescanButtonRenderer.css';
 const RescanButtonRenderer = (props) => {
   const { data, context } = props;
   /* console.log('rescanButtonRenderer: ', data.audiotrack); */
-  console.log('data: ', data);
+
   if (!data?.error) return null;
   /* console.log('data error: ', data.error); */
 

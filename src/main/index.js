@@ -280,10 +280,8 @@ const getCurrentSchedule = async () => {
 async function changeSemicolonDelimeter() {
   console.log('changeSemiColon');
   try {
-    // eslint-disable-next-line no-unused-vars, unused-imports/no-unused-vars
-
     const workerPath = process.resourcesPath;
-    const worker = await createUpdateTagFramesWorker({ workerData: { batchSize: 10 } });
+    const worker = await createUpdateTagFramesWorker({ workerData: { batchSize: 2000 } });
     worker
       .on('message', (msg) => {
         if (msg.progress) {
@@ -1323,6 +1321,7 @@ ipcMain.handle('rescan-track-error', async (event, track, id) => {
     const targetWindow = BrowserWindow.fromId(senderWindow.id);
     const workerPath = process.resourcesPath;
     const worker = await createRescanTrackErrorWorker({ workerData: { track, id, workerPath } });
+    console.log('Worker resolved to:', worker.threadId);
     worker
       .on('message', (msg) => {
         if (msg.type === 'completed') {
@@ -1334,8 +1333,8 @@ ipcMain.handle('rescan-track-error', async (event, track, id) => {
       .on('error', (err) => console.error('update tag frames error:', err))
       .on('exit', (code) => {
         if (code !== 0) console.error(`Update Tag Frames Worker stopped with exit code ${code}`);
-      });
-    worker.postMessage({ cmd: 'start' });
+      })
+      .postMessage({ cmd: 'start' });
   } catch (error) {
     console.error('Update Tag Frames Worker encountered an error:', error);
 

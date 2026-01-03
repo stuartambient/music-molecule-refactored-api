@@ -1,3 +1,4 @@
+console.log('WORKER FILE:', import.meta.url);
 import { parentPort, workerData } from 'worker_threads';
 import path from 'node:path';
 import Database from 'better-sqlite3';
@@ -37,18 +38,28 @@ export function findRoot(file) {
 }
 
 const processTrack = async (track, id, result) => {
-  let myFile = File.createFromPath(track);
+  console.log('track: ', track, id);
+  let myFile;
+  try {
+    myFile = File.createFromPath(track);
+  } catch (err) {
+    result.success = false;
+    result.error = 'rescan still found errors';
+    return result;
+  }
   if (path.extname(track).toLowerCase() === '.mp3') {
     sanitizeMp3Picture(myFile);
     myFile.save();
-    myFile.dispose();
+    /* myFile.dispose(); */
   } else if (path.extname(track).toLowerCase() === '.flac') {
     sanitizeFlacPicture(myFile);
     myFile.save();
-    myFile.dispose();
+    /* myFile.dispose(); */
   }
   const parseMetadata = await parseMeta([{ id: track, track_id: id }], 'mod', findRoot);
+  console.log('parseMetadata: ', parseMetadata);
   const updateDb = updateFiles(db, parseMetadata);
+  console.log('updateDb: ', updateDb);
   if (updateDb.success === true) {
     const rescanned = getRescannedTrack(id);
     result.rescanned = rescanned;
@@ -61,8 +72,9 @@ if (!parentPort) {
 }
 
 parentPort.on('message', async (msg) => {
+  console.log('msg: ', msg);
   if (msg.cmd === 'start') {
-    const result = { processed: workerData.track, sucess: true, rescanned: {} };
+    const result = { processed: workerData.track, success: true, rescanned: {} };
 
     try {
       await processTrack(workerData.track, workerData.id, result);

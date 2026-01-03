@@ -143,14 +143,13 @@ const updateTags = async (arr) => {
 
       let myFile = File.createFromPath(a.id);
       if (path.extname(a.id).toLowerCase() === '.mp3') {
+        sanitizeMp3Picture(myFile);
+        myFile.save();
         id3v2 = myFile.getTag(TagTypes.Id3v2, true);
         id3v2.version = 3;
       }
 
-      if (path.extname(a.id).toLowerCase() === '.mp3') {
-        sanitizeMp3Picture(myFile);
-        myFile.save();
-      } else if (path.extname(a.id).toLowerCase() === '.flac') {
+      if (path.extname(a.id).toLowerCase() === '.flac') {
         sanitizeFlacPicture(myFile);
         myFile.save();
       }
