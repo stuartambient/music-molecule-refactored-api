@@ -11,7 +11,10 @@ import {
   FlacFileSettings
 } from 'node-taglib-sharp';
 import { inspectTags, extraneousTags } from './tag-inspector.js';
-import checkAndRemoveReadOnly from './utility/checkAndRemoveReadOnly';
+import {
+  ensureWritableWithStatus,
+  restoreReadOnlyWindows
+} from './utility/ensureWritableWithStatus';
 import { isValidImageFile } from './utility/utils.js';
 
 import { sanitizeFlacPicture, sanitizeMp3Picture } from './utility/repairPictures.js';
@@ -47,6 +50,8 @@ import { sanitizeFlacPicture, sanitizeMp3Picture } from './utility/repairPicture
     })
   );
 } */
+
+restoreReadOnlyWindows;
 
 const deleteKeys = {
   albumArtists: () => [],
@@ -135,9 +140,13 @@ const updateTags = async (arr) => {
   const errors = [];
 
   for (const a of arr) {
+    let writeState;
     try {
-      const ok = await checkAndRemoveReadOnly(a.id);
-      if (!ok) throw new Error('File is not writable');
+      writeState = await ensureWritableWithStatus(a.id);
+      if (writeState !== 'writable' && writeState !== 'changed-to-writable') {
+        console.log('write-state first called: ', writeState);
+        throw new Error('File is not writable');
+      }
 
       let id3v2 = null;
 
@@ -261,6 +270,11 @@ const updateTags = async (arr) => {
 
       //console.error(`Error processing file ${a.id}: ${errMessage}`);
       errors.push({ track_id: a.track_id, id: a.id, error: errMessage });
+    } finally {
+      if (writeState === 'changed-to-writable') {
+        console.log('write-state finally called: ', writeState);
+        await restoreReadOnlyWindows(a.id);
+      }
     }
   }
 

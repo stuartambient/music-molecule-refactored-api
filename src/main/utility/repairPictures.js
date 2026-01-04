@@ -34,14 +34,16 @@ export function extractMp3PictureBytes(apicFrame) {
 } */
 
 export function sanitizeFlacPicture(myFile) {
-  const pics = myFile.tag.pictures;
-  /*  console.log('flac pictures: ', pics); */
+  /* console.log('flac: ', myFile); */
+  try {
+    const pics = myFile.tag.pictures;
+    /*  console.log('flac pictures: ', pics); */
 
-  const validPictures = pics.filter((pic) => pic._data._bytes.length > 0);
-  /* console.log('validPictures: ', validPictures); */
-  myFile.tag.pictures = validPictures || [];
+    const validPictures = pics.filter((pic) => pic._data._bytes.length > 0);
+    /* console.log('validPictures: ', validPictures); */
+    myFile.tag.pictures = validPictures || [];
 
-  /*   if (flac?.pictures?.length) {
+    /*   if (flac?.pictures?.length) {
     flac.pictures.forEach((pic, idx) => {
       console.log('Picture', idx);
 
@@ -58,12 +60,16 @@ export function sanitizeFlacPicture(myFile) {
     });
   }
 
-  const validPictures = flac.pictures.filter((pic) => pic.data && pic.data.length > 0);
-  console.log('valid flac pictures: ', validPictures); */
+  const validPictures = flac.pictures.filter((pic) => pic.data && pic.data.length > 0);*/
+    /* console.log('valid flac pictures: ', validPictures, myFile.tag.pictures); */
+  } catch (err) {
+    console.log('flac error: ', err);
+  }
 }
 
 // -- FINAL sanitizeTag() --
 export function sanitizeMp3Picture(myFile) {
+  console.log('mp3: ', myFile);
   const id3v2 = myFile.getTag(TagTypes.Id3v2, false);
 
   if (id3v2?.pictures?.length) {

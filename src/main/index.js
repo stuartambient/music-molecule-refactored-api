@@ -1315,17 +1315,19 @@ ipcMain.handle('update-tags', async (event, arr) => {
 
 ipcMain.handle('rescan-track-error', async (event, track, id) => {
   console.log('handler: ', track, id);
+
   try {
     const senderWebContents = event.sender;
     const senderWindow = BrowserWindow.fromWebContents(senderWebContents);
     const targetWindow = BrowserWindow.fromId(senderWindow.id);
+    targetWindow.webContents.send('updated-tags', { status: 'starting' });
     const workerPath = process.resourcesPath;
     const worker = await createRescanTrackErrorWorker({ workerData: { track, id, workerPath } });
     console.log('Worker resolved to:', worker.threadId);
     worker
       .on('message', (msg) => {
         if (msg.type === 'completed') {
-          console.log('Worker finished', msg.result);
+          /* console.log('Worker finished', msg.result); */
           targetWindow.webContents.send('rescanned-track', msg.result);
         }
         /* if (m?.done) worker.terminate(); */

@@ -349,7 +349,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     const api = gridRef.current?.api;
     if (!api) return;
 
-    const state = api.getColumnState().filter((c) => c.colId !== 'rescan');
+    const state = api.getColumnState().filter((c) => c.colId !== 'status');
 
     /*     const errorCol = params.columnApi.getColumn('error');
     if (!errorCol) return;

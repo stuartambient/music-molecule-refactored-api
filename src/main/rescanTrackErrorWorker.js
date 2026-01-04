@@ -4,6 +4,10 @@ import path from 'node:path';
 import Database from 'better-sqlite3';
 import { File } from 'node-taglib-sharp';
 import { updateFiles, parseMeta } from './utility/utils.js';
+import {
+  ensureWritableWithStatus,
+  restoreReadOnlyWindows
+} from './utility/ensureWritableWithStatus';
 import { sanitizeFlacPicture, sanitizeMp3Picture } from './utility/repairPictures.js';
 
 const mode = import.meta.env.MODE;
@@ -38,11 +42,24 @@ export function findRoot(file) {
 }
 
 const processTrack = async (track, id, result) => {
-  console.log('track: ', track, id);
+  /* console.log('track: ', track, id); */
+  let writeState;
+  try {
+    writeState = await ensureWritableWithStatus(track);
+    console.log('writeState: ', writeState);
+    if (writeState !== 'writable' && writeState !== 'changed-to-writable')
+      throw new Error('File is not writable');
+  } catch (err) {
+    console.error('write permissions failed', err);
+  }
   let myFile;
   try {
     myFile = File.createFromPath(track);
   } catch (err) {
+    console.log('err: ', err);
+    if (writeState === 'changed-to-writable') {
+      restoreReadOnlyWindows(track);
+    }
     result.success = false;
     result.error = 'rescan still found errors';
     return result;
@@ -50,14 +67,20 @@ const processTrack = async (track, id, result) => {
   if (path.extname(track).toLowerCase() === '.mp3') {
     sanitizeMp3Picture(myFile);
     myFile.save();
-    /* myFile.dispose(); */
+    myFile.dispose();
+    if (writeState === 'changed-to-writable') {
+      restoreReadOnlyWindows(track);
+    }
   } else if (path.extname(track).toLowerCase() === '.flac') {
     sanitizeFlacPicture(myFile);
     myFile.save();
-    /* myFile.dispose(); */
+    myFile.dispose();
+    if (writeState === 'changed-to-writable') {
+      restoreReadOnlyWindows(track);
+    }
   }
   const parseMetadata = await parseMeta([{ id: track, track_id: id }], 'mod', findRoot);
-  console.log('parseMetadata: ', parseMetadata);
+  /* console.log('parseMetadata: ', parseMetadata); */
   const updateDb = updateFiles(db, parseMetadata);
   console.log('updateDb: ', updateDb);
   if (updateDb.success === true) {
