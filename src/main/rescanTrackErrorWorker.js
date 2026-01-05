@@ -47,17 +47,20 @@ const processTrack = async (track, id, result) => {
   try {
     writeState = await ensureWritableWithStatus(track);
     console.log('writeState: ', writeState);
-    if (writeState !== 'writable' && writeState !== 'changed-to-writable')
+    if (writeState.status === 'unwritable') {
       throw new Error('File is not writable');
+    }
   } catch (err) {
-    console.error('write permissions failed', err);
+    result.success = false;
+    result.error = 'Write permissions failed';
+    return result;
   }
   let myFile;
   try {
     myFile = File.createFromPath(track);
   } catch (err) {
     console.log('err: ', err);
-    if (writeState === 'changed-to-writable') {
+    if (writeState.status === 'changed-to-writable') {
       restoreReadOnlyWindows(track);
     }
     result.success = false;
@@ -68,14 +71,14 @@ const processTrack = async (track, id, result) => {
     sanitizeMp3Picture(myFile);
     myFile.save();
     myFile.dispose();
-    if (writeState === 'changed-to-writable') {
+    if (writeState.status === 'changed-to-writable') {
       restoreReadOnlyWindows(track);
     }
   } else if (path.extname(track).toLowerCase() === '.flac') {
     sanitizeFlacPicture(myFile);
     myFile.save();
     myFile.dispose();
-    if (writeState === 'changed-to-writable') {
+    if (writeState.status === 'changed-to-writable') {
       restoreReadOnlyWindows(track);
     }
   }

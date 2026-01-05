@@ -2,7 +2,15 @@ import { useCallback } from 'react';
 import useIpcEvent from '../../hooks/useIpcEvent';
 import StatusTagLoader from './StatusTagLoader';
 
-const TagUpdateState = ({ updateStatus, setUpdateStatus, tagReport, setTagReport, setUndos }) => {
+const TagUpdateState = ({
+  updateStatus,
+  setUpdateStatus,
+  rescanStatus,
+  setRescanStatus,
+  tagReport,
+  setTagReport,
+  setUndos
+}) => {
   /* const [tagReport, setTagReport] = useState({ result: '', passed: [], failed: [] }); */
   /*   useEffect(() => {
     if (updateStatus && updateStatus !== 'starting') {

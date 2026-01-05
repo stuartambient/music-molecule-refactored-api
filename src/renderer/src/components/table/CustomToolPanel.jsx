@@ -23,6 +23,7 @@ const CustomToolPanel = ({
 }) => {
   /* console.log('hiddenColumns: ', hiddenColumns); */
   const [updateStatus, setUpdateStatus] = useState('');
+  /*  const [rescanStatus, setRescanStatus] = useState(''); */
 
   /*  const [isPanelVisible, setIsPanelVisible] = useState(true); */
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -136,6 +137,8 @@ const CustomToolPanel = ({
             tagReport={tagReport}
             setTagReport={setTagReport}
             setUpdateStatus={setUpdateStatus}
+            /* rescanStatus={rescanStatus}
+            setRescanStatus={setRescanStatus} */
           />
         </fieldset>
       </div>

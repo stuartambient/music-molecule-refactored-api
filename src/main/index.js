@@ -1320,7 +1320,7 @@ ipcMain.handle('rescan-track-error', async (event, track, id) => {
     const senderWebContents = event.sender;
     const senderWindow = BrowserWindow.fromWebContents(senderWebContents);
     const targetWindow = BrowserWindow.fromId(senderWindow.id);
-    targetWindow.webContents.send('updated-tags', { status: 'starting' });
+    /* targetWindow.webContents.send('rescanned-track', { status: 'starting' }); */
     const workerPath = process.resourcesPath;
     const worker = await createRescanTrackErrorWorker({ workerData: { track, id, workerPath } });
     console.log('Worker resolved to:', worker.threadId);

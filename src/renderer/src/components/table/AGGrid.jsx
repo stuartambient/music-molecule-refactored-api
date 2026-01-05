@@ -24,6 +24,7 @@ import { themeQuartz } from 'ag-grid-community';
 import useIpcEvent from '../../hooks/useIpcEvent';
 import PlayButtonRenderer from './PlayButtonRenderer';
 import RescanButtonRenderer from './RescanButtonRenderer';
+import { debounce } from './helper';
 import './styles/AGGrid.css';
 import { useTheme } from '../../ThemeContext';
 
@@ -49,6 +50,37 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
   const gridRef = useRef(null);
   const [undos, setUndos] = useState([]);
   const [redos, setRedos] = useState([]);
+
+  const persistColumnStateDebouncedRef = useRef(null);
+
+  const persistColumnState = useCallback(() => {
+    const api = gridRef.current?.api;
+    if (!api) return;
+
+    const state = api.getColumnState().filter((c) => c.colId !== 'status');
+
+    /*     const errorCol = params.columnApi.getColumn('error');
+    if (!errorCol) return;
+
+    const isErrorVisible = errorCol.isVisible();
+    params.columnApi.setColumnVisible('rescan', isErrorVisible); */
+
+    window.tagEditApi.invoke('save-preferences', {
+      grids: {
+        tagEdit: {
+          columns: state
+        }
+      }
+    });
+  }, []);
+
+  if (!persistColumnStateDebouncedRef.current) {
+    persistColumnStateDebouncedRef.current = debounce(persistColumnState, 300);
+  }
+
+  const persistColumnStateDebounced = useCallback(() => {
+    persistColumnStateDebouncedRef.current();
+  }, []);
 
   const isSyncingRef = useRef(false);
 
@@ -285,7 +317,11 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
   };
 
   const handleUpdatedRow = (result) => {
-    console.log('updated-row-result: ', result);
+    console.log('rescanned-track: ', result);
+    const gridApi = gridRef.current?.api;
+    gridApi.applyTransaction({
+      update: [result.rescanned]
+    });
   };
 
   useIpcEvent('updated-tags', handleTagUpdateStatus, 'tagEditApi');
@@ -344,27 +380,6 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
       }, 0);
     }
   }, []); */
-
-  const persistColumnState = useCallback(() => {
-    const api = gridRef.current?.api;
-    if (!api) return;
-
-    const state = api.getColumnState().filter((c) => c.colId !== 'status');
-
-    /*     const errorCol = params.columnApi.getColumn('error');
-    if (!errorCol) return;
-
-    const isErrorVisible = errorCol.isVisible();
-    params.columnApi.setColumnVisible('rescan', isErrorVisible); */
-
-    window.tagEditApi.invoke('save-preferences', {
-      grids: {
-        tagEdit: {
-          columns: state
-        }
-      }
-    });
-  }, []);
 
   const handleRescanColumn = useCallback((params) => {
     // Use Grid API, not columnApi
@@ -710,15 +725,15 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
           autoSizeStrategy="fitCellContents"
           onCellValueChanged={handleCellValueChanged}
           onColumnMoved={(params) => {
-            persistColumnState;
+            persistColumnStateDebounced;
             /* syncRescanPosition(params); */
           }}
           onColumnVisible={(params) => {
             syncHiddenColumns();
-            persistColumnState();
+            persistColumnStateDebounced();
             handleRescanColumn(params);
           }}
-          onColumnResized={persistColumnState}
+          onColumnResized={persistColumnStateDebounced}
           onColumnPinned={persistColumnState}
           undoRedoCellEditing={false}
           rowDragManaged={true}

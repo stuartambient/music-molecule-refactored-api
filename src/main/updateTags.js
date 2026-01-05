@@ -143,8 +143,8 @@ const updateTags = async (arr) => {
     let writeState;
     try {
       writeState = await ensureWritableWithStatus(a.id);
-      if (writeState !== 'writable' && writeState !== 'changed-to-writable') {
-        console.log('write-state first called: ', writeState);
+      if (writeState.status === 'unwritable') {
+        console.log('write-state first called: ', writeState.status);
         throw new Error('File is not writable');
       }
 
@@ -271,8 +271,8 @@ const updateTags = async (arr) => {
       //console.error(`Error processing file ${a.id}: ${errMessage}`);
       errors.push({ track_id: a.track_id, id: a.id, error: errMessage });
     } finally {
-      if (writeState === 'changed-to-writable') {
-        console.log('write-state finally called: ', writeState);
+      if (writeState.status === 'changed-to-writable') {
+        console.log('write-state finally called: ', writeState.status);
         await restoreReadOnlyWindows(a.id);
       }
     }
