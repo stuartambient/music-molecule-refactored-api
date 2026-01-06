@@ -55,7 +55,7 @@ export const TotalMedia = () => {
 /**
  * Loads track data based on type (genre/artist/album)
  *
- * @param {'genre' | 'artist' | 'album'} type - The kind of track category
+ * @param {'genre' | 'artist' | 'album' | 'root'} type - The kind of track category
  * @param {string|null} value - The selected genre/artist/album value
  * @param {(value: null) => void} reset - Setter to clear the selection
  */

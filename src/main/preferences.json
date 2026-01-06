@@ -731,11 +731,11 @@
         },
         {
           "colId": "audiotrack",
-          "width": 573,
+          "width": 1000,
           "hide": false,
           "pinned": null,
           "sort": null,
-          "sortIndex": null,
+          "sortIndex": 0,
           "aggFunc": null,
           "rowGroup": false,
           "rowGroupIndex": null,
@@ -801,7 +801,7 @@
         },
         {
           "colId": "performers",
-          "width": 231,
+          "width": 304,
           "hide": false,
           "pinned": null,
           "sort": null,
@@ -814,8 +814,8 @@
           "flex": null
         },
         {
-          "colId": "error",
-          "width": 219,
+          "colId": "album",
+          "width": 335,
           "hide": false,
           "pinned": null,
           "sort": null,
@@ -829,7 +829,7 @@
         },
         {
           "colId": "title",
-          "width": 681,
+          "width": 442,
           "hide": false,
           "pinned": null,
           "sort": null,
@@ -856,12 +856,12 @@
           "flex": null
         },
         {
-          "colId": "album",
-          "width": 335,
+          "colId": "error",
+          "width": 606,
           "hide": false,
           "pinned": null,
           "sort": null,
-          "sortIndex": 0,
+          "sortIndex": null,
           "aggFunc": null,
           "rowGroup": false,
           "rowGroupIndex": null,
@@ -927,7 +927,7 @@
         },
         {
           "colId": "conductor",
-          "width": 200,
+          "width": 125,
           "hide": false,
           "pinned": null,
           "sort": null,
@@ -1305,7 +1305,7 @@
         },
         {
           "colId": "created_datetime",
-          "width": 200,
+          "width": 64,
           "hide": false,
           "pinned": null,
           "sort": null,
