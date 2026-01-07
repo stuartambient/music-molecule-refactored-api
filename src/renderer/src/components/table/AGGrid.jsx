@@ -299,11 +299,19 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
   );
 
   const handleTagUpdateStatus = (val) => {
+    console.log('val: ', val);
+    const gridApi = gridRef.current?.api;
     switch (val.status) {
       case 'success':
+        gridApi.applyTransaction({
+          update: val.res.files
+        });
         return setUndos([]);
 
       case 'partial_status':
+        gridApi.applyTransaction({
+          update: val.res.files
+        });
         break;
       case 'failed': {
         const currentFailedIds = new Set(val.failed.map((f) => f.id));

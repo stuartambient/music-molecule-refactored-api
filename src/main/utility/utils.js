@@ -47,6 +47,7 @@ export function insertFiles(db, files) {
 }
 
 export function updateFiles(db, files) {
+  console.log('files: ', files);
   /* console.log('updateFiles: ', files); */
   // Log the files being passed in for debugging
   /* console.log('updateFiles: ', files); */
@@ -123,7 +124,7 @@ WHERE track_id = @track_id
     // Run the transaction
     updateMany(files);
 
-    return { success: true, message: 'Files updated successfully' };
+    return { success: true, message: 'Files updated successfully', files };
   } catch (error) {
     // Handle and log any errors during the update process
     console.error('Error updating files:', error);

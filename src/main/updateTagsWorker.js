@@ -46,7 +46,8 @@ async function func1(data) {
 
     const failedTrackIds = new Set(updateTagsResult.errors.map((e) => e.track_id));
 
-    const updatedArray = data.filter((obj) => !failedTrackIds.has(obj.track_id));
+    /* const updatedArray = data.filter((obj) => !failedTrackIds.has(obj.track_id)); */
+    const updatedArray = data.filter((obj) => obj);
     const failedArray = updateTagsResult.errors; // <- no `updates` included
 
     /* console.log('failedArray: ', failedArray); */
@@ -103,12 +104,13 @@ async function runSequentially(originalData) {
 
   const result2 = await func2(result1.updatedArray);
   const result3 = await func3(result2);
+  console.log('result 3: ', result3);
 
   const passed = result1.updatedArray.map((file) => file.id);
   const failed = result1.failedArray; /* ?.map((file) => file.id) || []; */
 
   if (result1.status === 'success') {
-    return { status: 'success', passed, res: result3 };
+    return { status: 'success', passed, res: result3 /* updatedRows: result3.files */ };
   } else {
     return { status: 'partial_status', passed, failed, res: result3 };
   }

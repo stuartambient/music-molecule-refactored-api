@@ -149,8 +149,12 @@ const updateTags = async (arr) => {
       }
 
       let id3v2 = null;
-
-      let myFile = File.createFromPath(a.id);
+      let myFile;
+      try {
+        myFile = File.createFromPath(a.id);
+      } catch (err) {
+        console.error(`File ${a.id} failed`);
+      }
       if (path.extname(a.id).toLowerCase() === '.mp3') {
         sanitizeMp3Picture(myFile);
         myFile.save();
