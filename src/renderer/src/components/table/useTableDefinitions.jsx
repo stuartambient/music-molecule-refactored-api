@@ -6,8 +6,8 @@ import { useMemo } from 'react';
 import { CiPlay1 } from 'react-icons/ci'; */
 //Column state properties in the column definition are no longer parsed to number/boolean. Provide the correct types instead of string
 // somewhere utils/tags.js
-const useColumnDefinitions = (failedIds, failedErrorMap) => {
-  console.log('failed ids: ', failedIds, 'failedErrorMap: ', failedErrorMap);
+const useColumnDefinitions = (/* failedIds, failedErrorMap */) => {
+  /*  console.log('failed ids: ', failedIds, 'failedErrorMap: ', failedErrorMap); */
   const columnDefs = useMemo(
     () => [
       {
@@ -20,7 +20,7 @@ const useColumnDefinitions = (failedIds, failedErrorMap) => {
         sortable: false,
         filter: false
       },
-      {
+      /*     {
         colId: 'status',
         field: 'status',
         headerName: 'Status',
@@ -29,11 +29,9 @@ const useColumnDefinitions = (failedIds, failedErrorMap) => {
           return failedErrorMap.get(params.data.audiotrack) || '';
         },
         cellClass: (params) => (failedIds.includes(params.data.audiotrack) ? 'row-failed' : '')
-        /* cellClass: (params) => {
-          return passedIds.includes(params.data.audiotrack) ? 'cell-passed' : '';
-        } */
-      },
-      {
+
+      }, */
+      /*    {
         colId: 'failedSort',
         field: 'failedSort',
         headerName: 'Failed Sort',
@@ -44,7 +42,7 @@ const useColumnDefinitions = (failedIds, failedErrorMap) => {
           const bFailed = failedIds.includes(nodeB.data.audiotrack);
           return aFailed === bFailed ? 0 : aFailed ? -1 : 1;
         }
-      },
+      }, */
       {
         colId: 'playing',
         field: 'playing',
@@ -193,7 +191,7 @@ const useColumnDefinitions = (failedIds, failedErrorMap) => {
       },
       { colId: 'created_datetime', field: 'created_datetime', editable: false }
     ],
-    [failedIds, failedErrorMap]
+    []
   );
   return columnDefs;
 };

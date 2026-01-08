@@ -92,7 +92,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
 
   const FILTER_CONTEXT_MENU_COLS = ['audiotrack', 'album', 'performers'];
 
-  const columnDefs = useColumnDefinitions(failedIds, failedErrorMap);
+  const columnDefs = useColumnDefinitions(/* failedIds, failedErrorMap */);
   const columnTypes = useColumnTypes();
   const components = useMemo(
     () => ({ playButtonRenderer: PlayButtonRenderer, rescanButtonRenderer: RescanButtonRenderer }),
@@ -665,13 +665,13 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     return () => clearInterval(interval);
   }, [tagReport]);
 
-  const rowClassRules = useMemo(() => {
+  /*   const rowClassRules = useMemo(() => {
     return {
       'row-failed': (params) => {
         return failedIds.includes(params.data.audiotrack);
       }
     };
-  }, [failedIds]);
+  }, [failedIds]); */
 
   const deselectAll = useCallback(() => {
     gridRef.current.api.deselectAll();
@@ -756,7 +756,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
           multiSortKey="ctrl"
           suppressMaintainUnsortedOrder={true}
           onCellContextMenu={handleCellContextMenu}
-          rowClassRules={rowClassRules}
+          /* rowClassRules={rowClassRules} */
         />
       </div>
     </>

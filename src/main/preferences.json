@@ -702,20 +702,6 @@
           "flex": null
         },
         {
-          "colId": "failedSort",
-          "width": 200,
-          "hide": true,
-          "pinned": null,
-          "sort": "asc",
-          "sortIndex": null,
-          "aggFunc": null,
-          "rowGroup": false,
-          "rowGroupIndex": null,
-          "pivot": false,
-          "pivotIndex": null,
-          "flex": null
-        },
-        {
           "colId": "playing",
           "width": 36,
           "hide": false,
