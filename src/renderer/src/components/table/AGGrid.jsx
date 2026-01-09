@@ -41,6 +41,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
   const [isRedoAction, setIsRedoAction] = useState(false);
   const [hiddenColumns, setHiddenColumns] = useState([]);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
+  const [viewUpdate, setViewUpdate] = useState(false);
   const [themeScheme, setThemeScheme] = useState(colorSchemeDarkBlue);
 
   const [tempFolder, setTempFolder] = useState(null);
@@ -82,13 +83,13 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     persistColumnStateDebouncedRef.current();
   }, []);
 
-  const isSyncingRef = useRef(false);
+  /* const isSyncingRef = useRef(false); */
 
   const { theme } = useTheme();
-  const failedIds = useMemo(() => tagReport?.failed?.map((item) => item.id) || [], [tagReport]);
+  /*   const failedIds = useMemo(() => tagReport?.failed?.map((item) => item.id) || [], [tagReport]);
   const failedErrorMap = useMemo(() => {
     return new Map(tagReport.failed.map(({ id, error }) => [id, error || 'Unknown error']));
-  }, [tagReport]);
+  }, [tagReport]); */
 
   const FILTER_CONTEXT_MENU_COLS = ['audiotrack', 'album', 'performers'];
 
@@ -115,6 +116,30 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
   };
 
   useIpcEvent('send-to-child', handleSendToChild, 'tagEditApi');
+
+  useEffect(() => {
+    const handleView = () => {
+      if (!gridRef.current || !tagReport?.trackIds?.length) return;
+
+      const updates = tagReport.trackIds.map((track_id, index) => ({
+        track_id,
+        viewOrder: index
+      }));
+
+      gridRef.current.api.applyTransaction({ update: updates });
+
+      gridRef.current.api.applyColumnState({
+        state: [{ colId: 'viewOrder', sort: 'asc' }],
+        defaultState: { sort: null }
+      });
+
+      gridRef.current.api.ensureIndexVisible(0, 'top');
+    };
+    if (viewUpdate && tagReport) {
+      console.log('tag report: ', tagReport);
+      handleView();
+    }
+  }, [tagReport, viewUpdate]);
 
   const myTheme = useMemo(() => {
     return themeQuartz
@@ -213,7 +238,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     });
   };
 
-  useEffect(() => {
+  /*   useEffect(() => {
     if (tagReport?.failed?.length && gridRef.current?.api) {
       gridRef.current.api.setFilterModel(null);
       gridRef.current.api.applyColumnState({
@@ -222,7 +247,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
       });
       gridRef.current.api.ensureIndexVisible(0, 'top', { animated: true });
     }
-  }, [tagReport]);
+  }, [tagReport]); */
 
   const selectedNodesImagePicker = useCallback(() => {
     let artist, title /* , path */;
@@ -314,9 +339,12 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
         });
         break;
       case 'failed': {
-        const currentFailedIds = new Set(val.failed.map((f) => f.id));
+        /* const currentFailedIds = new Set(val.failed.map((f) => f.id));
         const retainedUndos = undos.filter((u) => currentFailedIds.has(u.audiotrack));
-        setUndos(retainedUndos);
+        setUndos(retainedUndos); */
+        gridApi.applyTransaction({
+          update: val.res.files
+        });
         break;
       }
       default:
@@ -702,6 +730,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
         tagReport={tagReport}
         setTagReport={setTagReport}
         setUndos={setUndos}
+        setViewUpdate={setViewUpdate}
       />
 
       {nodesSelected.length > 1 && (

@@ -14,6 +14,7 @@ const CustomToolPanel = ({
   isPanelVisible,
   togglePanelVisibility,
   /*   nodesSelected, */
+  setViewUpdate,
   undos,
   hiddenColumns,
   tagReport,
@@ -137,6 +138,7 @@ const CustomToolPanel = ({
             tagReport={tagReport}
             setTagReport={setTagReport}
             setUpdateStatus={setUpdateStatus}
+            setViewUpdate={setViewUpdate}
             /* rescanStatus={rescanStatus}
             setRescanStatus={setRescanStatus} */
           />

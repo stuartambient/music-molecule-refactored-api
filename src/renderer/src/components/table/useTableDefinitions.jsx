@@ -20,6 +20,7 @@ const useColumnDefinitions = (/* failedIds, failedErrorMap */) => {
         sortable: false,
         filter: false
       },
+      { colId: 'viewOrder', field: 'viewOrder', hide: true, sortable: true },
       /*     {
         colId: 'status',
         field: 'status',

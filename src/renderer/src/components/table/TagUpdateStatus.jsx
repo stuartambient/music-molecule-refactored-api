@@ -7,6 +7,7 @@ const TagUpdateState = ({
   setUpdateStatus,
   rescanStatus,
   setRescanStatus,
+  setViewUpdate,
   tagReport,
   setTagReport,
   setUndos
@@ -21,8 +22,10 @@ const TagUpdateState = ({
   const handleUpdateTagsStatus = (msg) => {
     console.log('msg: ', msg);
     setUpdateStatus(msg.status);
+    [];
     const { status, passed = [], failed = [] } = msg;
-    setTagReport({ status, passed, failed });
+    const trackIds = msg.res.files.map((file) => file.track_id);
+    setTagReport({ status, passed, failed, trackIds });
     return;
   };
 
@@ -33,7 +36,7 @@ const TagUpdateState = ({
   }; */
 
   const handleView = () => {
-    console.log('view', tagReport);
+    setViewUpdate(true);
   };
 
   const dismissHandler = useCallback(() => {

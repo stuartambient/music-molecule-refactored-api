@@ -260,7 +260,7 @@ const updateTags = async (arr) => {
       myFile.save();
       myFile.dispose();
     } catch (e) {
-      console.error('🔴 Outer error caught for file:', a.id, '\n', e);
+      /* console.error('🔴 Outer error caught for file:', a.id, '\n', e); */
 
       let errMessage;
 

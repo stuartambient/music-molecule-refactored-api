@@ -106,7 +106,7 @@ async function runSequentially(originalData) {
   const result3 = await func3(result2);
   console.log('result 3: ', result3);
 
-  const passed = result1.updatedArray.map((file) => file.id);
+  const passed = result1.updatedArray.map((file) => ({ track_id: file.track_id, track: file.id }));
   const failed = result1.failedArray; /* ?.map((file) => file.id) || []; */
 
   if (result1.status === 'success') {
@@ -118,6 +118,7 @@ async function runSequentially(originalData) {
 
 // Listen for messages from the main thread
 parentPort.on('message', async () => {
+  const results = { status: '', passed: [], failed: [], files: [] };
   try {
     const finalResult = await runSequentially(workerData.data);
     parentPort.postMessage(finalResult);
