@@ -22,7 +22,7 @@ const TagUpdateState = ({
   const handleUpdateTagsStatus = (msg) => {
     console.log('msg: ', msg);
     setUpdateStatus(msg.status);
-    [];
+    if (!Array.isArray(msg?.res?.files)) return;
     const { status, passed = [], failed = [] } = msg;
     const trackIds = msg.res.files.map((file) => file.track_id);
     setTagReport({ status, passed, failed, trackIds });

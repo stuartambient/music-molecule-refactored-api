@@ -1,53 +1,136 @@
+---------> save-preferences { grids: { tagEdit: { columns: [Array] } } }
+new preferences,  { grids: { tagEdit: { columns: [Array] } } }
+window action:  minimize
+worker path:  C:\Users\sambi\AppData\Local\Music Molecule Data\music.db\music.db
+update tags, # of tags:  [
+  {
+    id: 'D:/music/David Ernst Molnar - Mozart Piano Sonatas and Variations for Piano Duet/3 - Sonata in B-Flat Major, K358_ III. Molto Presto-.flac',
+    track_id: 'cde311b8-3ae5-44ac-8c6f-e062a696fc04',
+    updates: { error: '', performers: 'David Ernst Molnar' }
+  },
+  {
+    id: 'D:/music/Aidan Baker and Tomas Jaermyr - Werl/01-aidan_baker_and_tomas_jarmyr-werl_i-489e5733.mp3',
+    track_id: 'b53fc524-8681-4c53-9081-e4181771c336',
+    updates: { error: '' }
+  },
+  {
+    id: 'D:/music/Aidan Baker and Tomas Jaermyr - Werl/02-aidan_baker_and_tomas_jarmyr-werl_ii-6f0a1d1c.mp3',
+    track_id: '4d0915fa-33df-4f87-823c-a59b8a64b227',
+    updates: { error: null }
+  }
+]
+File D:/music/David Ernst Molnar - Mozart Piano Sonatas and Variations for Piano Duet/3 - Sonata in B-Flat Major, K358_ III. Molto Presto-.flac failed
+flac error:  TypeError: Cannot read properties of undefined (reading 'tag')
+    at Object.sanitizeFlacPicture (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\repairPictures-CyhDgDqH.js:6:25)
+    at updateTags (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CYDX1SMZ.js:173:24)
+    at async func1 (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CYDX1SMZ.js:297:30)
+    at async runSequentially (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CYDX1SMZ.js:334:19)
+    at async MessagePort.<anonymous> (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CYDX1SMZ.js:360:25)
+errMessage-1:  TypeError: Cannot read properties of undefined (reading 'save')
+    at updateTags (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CYDX1SMZ.js:174:16)
+    at async func1 (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CYDX1SMZ.js:297:30)
+    at async runSequentially (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CYDX1SMZ.js:334:19)
+    at async MessagePort.<anonymous> (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CYDX1SMZ.js:360:25)
+write-state first called:  unwritable
+trackId:  b53fc524-8681-4c53-9081-e4181771c336 error:  file is not writeable
+db result:  { changes: 1, lastInsertRowid: 0 }
+write-state first called:  unwritable
+Error processing file [object Object]: Argument out of range streamLength must be a safe, positive JS integer
+trackId:  4d0915fa-33df-4f87-823c-a59b8a64b227 error:  file is not writeable
+db result:  { changes: 1, lastInsertRowid: 0 }
+result 1:  {
+  status: 'partial_success',
+  updatedArray: [
+    {
+      id: 'D:/music/David Ernst Molnar - Mozart Piano Sonatas and Variations for Piano Duet/3 - Sonata in B-Flat Major, K358_ III. Molto Presto-.flac',
+      track_id: 'cde311b8-3ae5-44ac-8c6f-e062a696fc04',
+      updates: [Object]
+    },
+    {
+      id: 'D:/music/Aidan Baker and Tomas Jaermyr - Werl/01-aidan_baker_and_tomas_jarmyr-werl_i-489e5733.mp3',
+      track_id: 'b53fc524-8681-4c53-9081-e4181771c336',
+      updates: [Object]
+    },
+    {
+      id: 'D:/music/Aidan Baker and Tomas Jaermyr - Werl/02-aidan_baker_and_tomas_jarmyr-werl_ii-6f0a1d1c.mp3',
+      track_id: '4d0915fa-33df-4f87-823c-a59b8a64b227',
+      updates: [Object]
+    }
+  ],
+  failedArray: [
+    {
+      track_id: 'cde311b8-3ae5-44ac-8c6f-e062a696fc04',
+      id: 'D:/music/David Ernst Molnar - Mozart Piano Sonatas and Variations for Piano Duet/3 - Sonata in B-Flat Major, K358_ III. Molto Presto-.flac',
+      error: "TypeError: Cannot read properties of undefined (reading 'save')\n" +
+        '    at updateTags (C:\\Users\\sambi\\Documents\\nodeProjs\\music-molecule-ffmpeg-test\\out\\main\\updateTagsWorker-CYDX1SMZ.js:174:16)\n' +
+        '    at async func1 (C:\\Users\\sambi\\Documents\\nodeProjs\\music-molecule-ffmpeg-test\\out\\main\\updateTagsWorker-CYDX1SMZ.js:297:30)\n' +
+        '    at async runSequentially (C:\\Users\\sambi\\Documents\\nodeProjs\\music-molecule-ffmpeg-test\\out\\main\\updateTagsWorker-CYDX1SMZ.js:334:19)\n' +
+        '    at async MessagePort.<anonymous> (C:\\Users\\sambi\\Documents\\nodeProjs\\music-molecule-ffmpeg-test\\out\\main\\updateTagsWorker-CYDX1SMZ.js:360:25)'
+    },
+    {
+      track_id: 'b53fc524-8681-4c53-9081-e4181771c336',
+      id: 'D:/music/Aidan Baker and Tomas Jaermyr - Werl/01-aidan_baker_and_tomas_jarmyr-werl_i-489e5733.mp3',
+      error: 'file is not writeable'
+    },
+    {
+      track_id: '4d0915fa-33df-4f87-823c-a59b8a64b227',
+      id: 'D:/music/Aidan Baker and Tomas Jaermyr - Werl/02-aidan_baker_and_tomas_jarmyr-werl_ii-6f0a1d1c.mp3',
+      error: 'file is not writeable'
+    }
+  ]
+}
+func2:  [
+  {
+    id: 'D:/music/David Ernst Molnar - Mozart Piano Sonatas and Variations for Piano Duet/3 - Sonata in B-Flat Major, K358_ III. Molto Presto-.flac',
+    track_id: 'cde311b8-3ae5-44ac-8c6f-e062a696fc04',
+    updates: { error: '', performers: 'David Ernst Molnar' }
+  },
+  {
+    id: 'D:/music/Aidan Baker and Tomas Jaermyr - Werl/01-aidan_baker_and_tomas_jarmyr-werl_i-489e5733.mp3',
+    track_id: 'b53fc524-8681-4c53-9081-e4181771c336',
+    updates: { error: '' }
+  },
+  {
+    id: 'D:/music/Aidan Baker and Tomas Jaermyr - Werl/02-aidan_baker_and_tomas_jarmyr-werl_ii-6f0a1d1c.mp3',
+    track_id: '4d0915fa-33df-4f87-823c-a59b8a64b227',
+    updates: { error: null }
+  }
+]
+files:  [
+  {
+    track_id: 'cde311b8-3ae5-44ac-8c6f-e062a696fc04',
+    id: 'D:/music/David Ernst Molnar - Mozart Piano Sonatas and Variations for Piano Duet/3 - Sonata in B-Flat Major, K358_ III. Molto Presto-.flac',
+    error: "TypeError: Cannot read properties of undefined (reading 'save')\n" +
+      '    at updateTags (C:\\Users\\sambi\\Documents\\nodeProjs\\music-molecule-ffmpeg-test\\out\\main\\updateTagsWorker-CYDX1SMZ.js:174:16)\n' +
+      '    at async func1 (C:\\Users\\sambi\\Documents\\nodeProjs\\music-molecule-ffmpeg-test\\out\\main\\updateTagsWorker-CYDX1SMZ.js:297:30)\n' +
+      '    at async runSequentially (C:\\Users\\sambi\\Documents\\nodeProjs\\music-molecule-ffmpeg-test\\out\\main\\updateTagsWorker-CYDX1SMZ.js:334:19)\n' +
+      '    at async MessagePort.<anonymous> (C:\\Users\\sambi\\Documents\\nodeProjs\\music-molecule-ffmpeg-test\\out\\main\\updateTagsWorker-CYDX1SMZ.js:360:25)'
+  },
+  {
+    track_id: 'b53fc524-8681-4c53-9081-e4181771c336',
+    id: 'D:/music/Aidan Baker and Tomas Jaermyr - Werl/01-aidan_baker_and_tomas_jarmyr-werl_i-489e5733.mp3',
+    error: 'file is not writeable'
+  },
+  {
+    track_id: '4d0915fa-33df-4f87-823c-a59b8a64b227',
+    id: 'D:/music/Aidan Baker and Tomas Jaermyr - Werl/02-aidan_baker_and_tomas_jarmyr-werl_ii-6f0a1d1c.mp3',
+    error: 'file is not writeable'
+  }
+]
 message:  {
   status: 'partial_status',
   passed: [
-    {
-      track_id: '45902079-51b0-4456-9f6f-acc586f299d5',
-      track: 'D:/music/Abul Mogard - In Immobile Air (2021)/01. In Immobile Air.flac'
-    },
-    {
-      track_id: 'dcc8eec6-e7b7-421b-9a1b-496e189e0c02',
-      track: 'D:/music/Abul Mogard - In Immobile Air (2021)/02. Clouds.flac'
-    },
-    {
-      track_id: '3c56ffd0-7bca-4a33-9524-d199838ab60e',
-      track: 'D:/music/Abul Mogard - In Immobile Air (2021)/03. Black Dust.flac'
-    },
-    {
-      track_id: '1e6e77b0-4d53-41f7-b9b8-f06f3f053ec2',
-      track: 'D:/music/Abul Mogard - In Immobile Air (2021)/04. Sand.flac'
-    },
-    {
-      track_id: '533d2c76-5214-42e4-a7cf-fd5907fc9639',
-      track: 'D:/music/Abul Mogard - In Immobile Air (2021)/05. On a Shattered Shell Beach.flac'
-    },
     {
       track_id: 'cde311b8-3ae5-44ac-8c6f-e062a696fc04',
       track: 'D:/music/David Ernst Molnar - Mozart Piano Sonatas and Variations for Piano Duet/3 - Sonata in B-Flat Major, K358_ III. Molto Presto-.flac'
     },
     {
-      track_id: 'd0f35a50-827b-4e46-a1d5-c5028898fe1a',
-      track: 'D:/music/Aglaia - Hymns (2013)(WEB)(FLAC)/01 - The Flow Of Time.flac'
+      track_id: 'b53fc524-8681-4c53-9081-e4181771c336',
+      track: 'D:/music/Aidan Baker and Tomas Jaermyr - Werl/01-aidan_baker_and_tomas_jarmyr-werl_i-489e5733.mp3'
     },
     {
-      track_id: '79be3649-e0f0-403f-8a93-4387700604c1',
-      track: 'D:/music/Aglaia - Hymns (2013)(WEB)(FLAC)/02 - Nymphs.flac'
-    },
-    {
-      track_id: 'c1e8909d-54e5-46bd-b19d-867babeb94f2',
-      track: 'D:/music/Aglaia - Hymns (2013)(WEB)(FLAC)/03 - Full Moon Lepidopter.flac'
-    },
-    {
-      track_id: '73e02407-4d4e-4d53-8c95-1df23e6f2c91',
-      track: 'D:/music/Aglaia - Hymns (2013)(WEB)(FLAC)/04 - Memorabilia.flac'
-    },
-    {
-      track_id: '6cce7182-ecde-48ef-bfb8-d6bbd589ec3e',
-      track: 'D:/music/Aglaia - Hymns (2013)(WEB)(FLAC)/05 - Morning Star.flac'
-    },
-    {
-      track_id: 'fae8a091-2bcd-4b30-9780-28ea4af58713',
-      track: 'D:/music/Aglaia - Hymns (2013)(WEB)(FLAC)/06 - Owl Light.flac'
+      track_id: '4d0915fa-33df-4f87-823c-a59b8a64b227',
+      track: 'D:/music/Aidan Baker and Tomas Jaermyr - Werl/02-aidan_baker_and_tomas_jarmyr-werl_ii-6f0a1d1c.mp3'        
     }
   ],
   failed: [
@@ -55,22 +138,232 @@ message:  {
       track_id: 'cde311b8-3ae5-44ac-8c6f-e062a696fc04',
       id: 'D:/music/David Ernst Molnar - Mozart Piano Sonatas and Variations for Piano Duet/3 - Sonata in B-Flat Major, K358_ III. Molto Presto-.flac',
       error: "TypeError: Cannot read properties of undefined (reading 'save')\n" +
-        '    at updateTags (C:\\Users\\sambi\\Documents\\nodeProjs\\music-molecule-ffmpeg-test\\out\\main\\updateTagsWorker-B--iKNmv.js:168:16)\n' +
-        '    at async func1 (C:\\Users\\sambi\\Documents\\nodeProjs\\music-molecule-ffmpeg-test\\out\\main\\updateTagsWorker-B--iKNmv.js:288:30)\n' +
-        '    at async runSequentially (C:\\Users\\sambi\\Documents\\nodeProjs\\music-molecule-ffmpeg-test\\out\\main\\updateTagsWorker-B--iKNmv.js:325:19)\n' +
-        '    at async MessagePort.<anonymous> (C:\\Users\\sambi\\Documents\\nodeProjs\\music-molecule-ffmpeg-test\\out\\main\\updateTagsWorker-B--iKNmv.js:351:25)'
+        '    at updateTags (C:\\Users\\sambi\\Documents\\nodeProjs\\music-molecule-ffmpeg-test\\out\\main\\updateTagsWorker-CYDX1SMZ.js:174:16)\n' +
+        '    at async func1 (C:\\Users\\sambi\\Documents\\nodeProjs\\music-molecule-ffmpeg-test\\out\\main\\updateTagsWorker-CYDX1SMZ.js:297:30)\n' +
+        '    at async runSequentially (C:\\Users\\sambi\\Documents\\nodeProjs\\music-molecule-ffmpeg-test\\out\\main\\updateTagsWorker-CYDX1SMZ.js:334:19)\n' +
+        '    at async MessagePort.<anonymous> (C:\\Users\\sambi\\Documents\\nodeProjs\\music-molecule-ffmpeg-test\\out\\main\\updateTagsWorker-CYDX1SMZ.js:360:25)'
+    },
+    {
+      track_id: 'b53fc524-8681-4c53-9081-e4181771c336',
+      id: 'D:/music/Aidan Baker and Tomas Jaermyr - Werl/01-aidan_baker_and_tomas_jarmyr-werl_i-489e5733.mp3',
+      error: 'file is not writeable'
+    },
+    {
+      track_id: '4d0915fa-33df-4f87-823c-a59b8a64b227',
+      id: 'D:/music/Aidan Baker and Tomas Jaermyr - Werl/02-aidan_baker_and_tomas_jarmyr-werl_ii-6f0a1d1c.mp3',
+      error: 'file is not writeable'
     }
   ],
   res: {
     success: true,
     message: 'Files updated successfully',
-    files: [
-      [Object], [Object],
-      [Object], [Object],
-      [Object], [Object],
-      [Object], [Object],
-      [Object], [Object],
-      [Object], [Object]
-    ]
+    files: [ [Object], [Object], [Object] ]
   }
+}
+rows for UI:  [
+  {
+    track_id: 'cde311b8-3ae5-44ac-8c6f-e062a696fc04',
+    root: 'D:/music',
+    audiotrack: 'D:/music/David Ernst Molnar - Mozart Piano Sonatas and Variations for Piano Duet/3 - Sonata in B-Flat Major, K358_ III. Molto Presto-.flac',
+    modified: 1766872089246.188,
+    birthtime: '2023-07-23T21:10:45.267Z',
+    error: "TypeError: Cannot read properties of undefined (reading 'save')\n" +
+      '    at updateTags (C:\\Users\\sambi\\Documents\\nodeProjs\\music-molecule-ffmpeg-test\\out\\main\\updateTagsWorker-CYDX1SMZ.js:174:16)\n' +
+      '    at async func1 (C:\\Users\\sambi\\Documents\\nodeProjs\\music-molecule-ffmpeg-test\\out\\main\\updateTagsWorker-CYDX1SMZ.js:297:30)\n' +
+      '    at async runSequentially (C:\\Users\\sambi\\Documents\\nodeProjs\\music-molecule-ffmpeg-test\\out\\main\\updateTagsWorker-CYDX1SMZ.js:334:19)\n' +
+      '    at async MessagePort.<anonymous> (C:\\Users\\sambi\\Documents\\nodeProjs\\music-molecule-ffmpeg-test\\out\\main\\updateTagsWorker-CYDX1SMZ.js:360:25)'
+  },
+  {
+    track_id: 'b53fc524-8681-4c53-9081-e4181771c336',
+    root: 'D:/music',
+    audiotrack: 'D:/music/Aidan Baker and Tomas Jaermyr - Werl/01-aidan_baker_and_tomas_jarmyr-werl_i-489e5733.mp3',     
+    modified: 1482355339325.5437,
+    birthtime: '2023-07-23T19:24:49.012Z',
+    like: 0,
+    albumArtists: '',
+    album: 'Werl',
+    audioBitrate: 320,
+    audioSampleRate: 44100,
+    beatsPerMinute: 0,
+    codecs: 'MPEG Version 1 Audio, Layer 3',
+    composers: '',
+    conductor: null,
+    copyright: null,
+    comment: null,
+    disc: 0,
+    discCount: 0,
+    description: null,
+    duration: 734798.3673469388,
+    encoder: null,
+    encodedBy: null,
+    encoderSettings: null,
+    genres: 'Instrumental',
+    isCompilation: 0,
+    isrc: null,
+    lyrics: null,
+    performers: 'Aidan Baker & Tomas Jarmyr',
+    performersRole: '',
+    pictures: 1,
+    publisher: null,
+    remixedBy: null,
+    replayGainAlbumGain: null,
+    replayGainAlbumPeak: null,
+    replayGainTrackGain: null,
+    replayGainTrackPeak: null,
+    tagTypes: 'Id3v1, Id3v2',
+    tagWarnings: 1,
+    title: 'Werl I',
+    track: 1,
+    trackCount: 8,
+    year: 2016,
+    error: 'file is not writeable'
+  },
+  {
+    track_id: '4d0915fa-33df-4f87-823c-a59b8a64b227',
+    root: 'D:/music',
+    audiotrack: 'D:/music/Aidan Baker and Tomas Jaermyr - Werl/02-aidan_baker_and_tomas_jarmyr-werl_ii-6f0a1d1c.mp3',    
+    modified: 1482355339082.381,
+    birthtime: '2023-07-23T19:24:49.374Z',
+    like: 0,
+    albumArtists: '',
+    album: 'Werl',
+    audioBitrate: 320,
+    audioSampleRate: 44100,
+    beatsPerMinute: 0,
+    codecs: 'MPEG Version 1 Audio, Layer 3',
+    composers: '',
+    conductor: null,
+    copyright: null,
+    comment: null,
+    disc: 0,
+    discCount: 0,
+    description: null,
+    duration: 527412.2448979592,
+    encoder: null,
+    encodedBy: null,
+    encoderSettings: null,
+    genres: 'Instrumental',
+    isCompilation: 0,
+    isrc: null,
+    lyrics: null,
+    performers: 'Aidan Baker & Tomas Jarmyr',
+    performersRole: '',
+    pictures: 1,
+    publisher: null,
+    remixedBy: null,
+    replayGainAlbumGain: null,
+    replayGainAlbumPeak: null,
+    replayGainTrackGain: null,
+    replayGainTrackPeak: null,
+    tagTypes: 'Id3v1, Id3v2',
+    tagWarnings: 1,
+    title: 'Werl II',
+    track: 2,
+    trackCount: 8,
+    year: 2016,
+    error: 'file is not writeable'
+  }
+]
+result 3:  {
+  success: true,
+  message: 'Files updated successfully',
+  files: [
+    {
+      track_id: 'cde311b8-3ae5-44ac-8c6f-e062a696fc04',
+      root: 'D:/music',
+      audiotrack: 'D:/music/David Ernst Molnar - Mozart Piano Sonatas and Variations for Piano Duet/3 - Sonata in B-Flat 
+Major, K358_ III. Molto Presto-.flac',
+      modified: 1766872089246.188,
+      birthtime: '2023-07-23T21:10:45.267Z',
+      error: 'Error: Argument out of range streamLength must be a safe, positive JS integer'
+    },
+    {
+      track_id: 'b53fc524-8681-4c53-9081-e4181771c336',
+      root: 'D:/music',
+      audiotrack: 'D:/music/Aidan Baker and Tomas Jaermyr - Werl/01-aidan_baker_and_tomas_jarmyr-werl_i-489e5733.mp3',   
+      modified: 1482355339325.5437,
+      birthtime: '2023-07-23T19:24:49.012Z',
+      like: 0,
+      albumArtists: '',
+      album: 'Werl',
+      audioBitrate: 320,
+      audioSampleRate: 44100,
+      beatsPerMinute: 0,
+      codecs: 'MPEG Version 1 Audio, Layer 3',
+      composers: '',
+      conductor: null,
+      copyright: null,
+      comment: null,
+      disc: 0,
+      discCount: 0,
+      description: null,
+      duration: 734798.3673469388,
+      encoder: null,
+      encodedBy: null,
+      encoderSettings: null,
+      genres: 'Instrumental',
+      isCompilation: 0,
+      isrc: null,
+      lyrics: null,
+      performers: 'Aidan Baker & Tomas Jarmyr',
+      performersRole: '',
+      pictures: 1,
+      publisher: null,
+      remixedBy: null,
+      replayGainAlbumGain: null,
+      replayGainAlbumPeak: null,
+      replayGainTrackGain: null,
+      replayGainTrackPeak: null,
+      tagTypes: 'Id3v1, Id3v2',
+      tagWarnings: 1,
+      title: 'Werl I',
+      track: 1,
+      trackCount: 8,
+      year: 2016
+    },
+    {
+      track_id: '4d0915fa-33df-4f87-823c-a59b8a64b227',
+      root: 'D:/music',
+      audiotrack: 'D:/music/Aidan Baker and Tomas Jaermyr - Werl/02-aidan_baker_and_tomas_jarmyr-werl_ii-6f0a1d1c.mp3',  
+      modified: 1482355339082.381,
+      birthtime: '2023-07-23T19:24:49.374Z',
+      like: 0,
+      albumArtists: '',
+      album: 'Werl',
+      audioBitrate: 320,
+      audioSampleRate: 44100,
+      beatsPerMinute: 0,
+      codecs: 'MPEG Version 1 Audio, Layer 3',
+      composers: '',
+      conductor: null,
+      copyright: null,
+      comment: null,
+      disc: 0,
+      discCount: 0,
+      description: null,
+      duration: 527412.2448979592,
+      encoder: null,
+      encodedBy: null,
+      encoderSettings: null,
+      genres: 'Instrumental',
+      isCompilation: 0,
+      isrc: null,
+      lyrics: null,
+      performers: 'Aidan Baker & Tomas Jarmyr',
+      performersRole: '',
+      pictures: 1,
+      publisher: null,
+      remixedBy: null,
+      replayGainAlbumGain: null,
+      replayGainAlbumPeak: null,
+      replayGainTrackGain: null,
+      replayGainTrackPeak: null,
+      tagTypes: 'Id3v1, Id3v2',
+      tagWarnings: 1,
+      title: 'Werl II',
+      track: 2,
+      trackCount: 8,
+      year: 2016
+    }
+  ]
 }

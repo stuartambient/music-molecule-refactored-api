@@ -69,7 +69,7 @@ export function sanitizeFlacPicture(myFile) {
 
 // -- FINAL sanitizeTag() --
 export function sanitizeMp3Picture(myFile) {
-  console.log('mp3: ', myFile);
+  /* console.log('mp3: ', myFile); */
   const id3v2 = myFile.getTag(TagTypes.Id3v2, false);
 
   if (id3v2?.pictures?.length) {

@@ -46,8 +46,18 @@ export function insertFiles(db, files) {
   }
 }
 
-export function updateFiles(db, files) {
-  console.log('files: ', files);
+export function updateFiles(db, files, errors = null) {
+  /* console.log('files: ', errors); */
+
+  const errorMap = new Map(errors.map((f) => [f.track_id, f.error]));
+
+  const rowsForUI = files.map((row) => ({
+    ...row,
+    error: errorMap.get(row.track_id) ?? row.error ?? null
+  }));
+
+  console.log('rows for UI: ', rowsForUI);
+
   /* console.log('updateFiles: ', files); */
   // Log the files being passed in for debugging
   /* console.log('updateFiles: ', files); */
@@ -124,12 +134,24 @@ WHERE track_id = @track_id
     // Run the transaction
     updateMany(files);
 
-    return { success: true, message: 'Files updated successfully', files };
+    return { success: true, message: 'Files updated successfully', files: rowsForUI };
   } catch (error) {
     // Handle and log any errors during the update process
     console.error('Error updating files:', error);
     return { success: false, message: `Error updating files: ${error.message}` };
   }
+}
+
+export function markTrackWriteError(db, trackId, errorMessage) {
+  /* console.log('trackId: ', trackId, 'error: ', errorMessage); */
+  const stmt = db.prepare(`
+    UPDATE "audio-tracks"
+    SET error = ?
+    WHERE track_id = ?
+  `);
+
+  const result = stmt.run(errorMessage, trackId);
+  console.log('db result: ', result);
 }
 
 export function checkDataType(entry) {
@@ -204,7 +226,6 @@ export async function parseMeta(files, op, findRoot) {
         modified: fileStats.mtimeMs || null,
         birthtime: fileStats.birthtime.toISOString() || null,
         like: 0,
-        error: null,
         albumArtists: checkDataType(myFile.tag.albumArtists),
         album: checkDataType(myFile.tag.album),
         audioBitrate: checkDataType(myFile.properties.audioBitrate),

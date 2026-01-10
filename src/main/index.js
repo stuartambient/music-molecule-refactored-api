@@ -1294,7 +1294,7 @@ ipcMain.handle('update-tags', async (event, arr) => {
     await createUpdateTagsWorker({ workerData: { workerPath: workerPath, data: arr, logDir } })
       .on('message', (message) => {
         /*  console.log('update tags: ', message); */
-        console.log('message: ', message);
+        /* console.log('message: ', message); */
         targetWindow.webContents.send('updated-tags', message);
         mainWindow.webContents.send('updated-tags', 'updated-tags');
       })

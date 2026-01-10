@@ -42,7 +42,7 @@ const findRoot = (file) => {
 
 async function func1(data) {
   try {
-    const updateTagsResult = await updateTags(data, workerData.logDir);
+    const updateTagsResult = await updateTags(db, data, workerData.logDir);
 
     const failedTrackIds = new Set(updateTagsResult.errors.map((e) => e.track_id));
 
@@ -54,9 +54,13 @@ async function func1(data) {
 
     if (updatedArray.length > 0 && failedArray.length === 0) {
       return { status: 'success', updatedArray };
-    } else if (updatedArray.length === 0 && failedArray.length > 0) {
+    } else if (updatedArray.length === failedArray.length) {
       return { status: 'failed', failedArray };
-    } else if (updatedArray.length > 0 && failedArray.length > 0) {
+    } else if (
+      updatedArray.length > 0 &&
+      failedArray.length > 0 &&
+      updatedArray.length !== failedArray.length
+    ) {
       return { status: 'partial_success', updatedArray, failedArray };
     }
   } catch (error) {
@@ -77,10 +81,10 @@ async function func2(input) {
   });
 }
 
-async function func3(input) {
+async function func3(input, errorArray) {
   return new Promise((resolve, reject) => {
     try {
-      const updateMessage = updateFiles(db, input);
+      const updateMessage = updateFiles(db, input, errorArray);
       resolve(updateMessage);
     } catch (error) {
       reject(error);
@@ -90,7 +94,7 @@ async function func3(input) {
 
 async function runSequentially(originalData) {
   const result1 = await func1(originalData);
-  console.log('result 1: ', result1.status);
+  console.log('result 1: ', result1);
 
   if (result1.status === 'error') {
     /*  console.log('result1 on error: ', result1); */
@@ -103,7 +107,7 @@ async function runSequentially(originalData) {
   }
 
   const result2 = await func2(result1.updatedArray);
-  const result3 = await func3(result2);
+  const result3 = await func3(result2, result1.failedArray);
   console.log('result 3: ', result3);
 
   const passed = result1.updatedArray.map((file) => ({ track_id: file.track_id, track: file.id }));

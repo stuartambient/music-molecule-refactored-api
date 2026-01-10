@@ -15,7 +15,7 @@ import {
   ensureWritableWithStatus,
   restoreReadOnlyWindows
 } from './utility/ensureWritableWithStatus';
-import { isValidImageFile } from './utility/utils.js';
+import { isValidImageFile, markTrackWriteError } from './utility/utils.js';
 
 import { sanitizeFlacPicture, sanitizeMp3Picture } from './utility/repairPictures.js';
 
@@ -50,8 +50,6 @@ import { sanitizeFlacPicture, sanitizeMp3Picture } from './utility/repairPicture
     })
   );
 } */
-
-restoreReadOnlyWindows;
 
 const deleteKeys = {
   albumArtists: () => [],
@@ -133,7 +131,7 @@ const tagKeys = {
   year: (param) => (param?.toString().trim() ? Number(param) : null)
 };
 
-const updateTags = async (arr) => {
+const updateTags = async (db, arr) => {
   console.log('update tags, # of tags: ', arr);
   MpegAudioFileSettings.defaultTagTypes = TagTypes.Id3v2;
   FlacFileSettings.defaultTagTypes = TagTypes.Xiph;
@@ -145,7 +143,14 @@ const updateTags = async (arr) => {
       writeState = await ensureWritableWithStatus(a.id);
       if (writeState.status === 'unwritable') {
         console.log('write-state first called: ', writeState.status);
-        throw new Error('File is not writable');
+        markTrackWriteError(db, a.track_id, 'file is not writeable');
+        errors.push({
+          track_id: a.track_id,
+          id: a.id,
+          error: 'file is not writeable'
+        });
+
+        continue;
       }
 
       let id3v2 = null;
@@ -177,16 +182,10 @@ const updateTags = async (arr) => {
       } */
 
       let info = await inspectTags(myFile);
-      console.log(
-        'sending to extraneousTags from inpsectTags: ',
-        info.fileType,
-        '--',
-        info.typesList
-      );
+
       const removeMask = await extraneousTags(info.fileType, info.typesList);
 
       if (removeMask) {
-        console.log('remove mask: ', removeMask);
         if (removeMask === 2 && path.extname(a.id).toLowerCase() === '.mp3' && id3v2) {
           const id3v1 = myFile.getTag(TagTypes.Id3v1, false);
           /* const id3v2 = myFile.getTag(TagTypes.Id3v2, true); */
@@ -260,20 +259,28 @@ const updateTags = async (arr) => {
       myFile.save();
       myFile.dispose();
     } catch (e) {
+      console.log('final catch: ', e);
       /* console.error('🔴 Outer error caught for file:', a.id, '\n', e); */
-
-      let errMessage;
+      /*      let errMessage;
 
       if (e instanceof Error) {
         errMessage = e.stack || e.message;
+        console.error('errMessage-1: ', errMessage);
       } else if (typeof e === 'object' && e !== null) {
         errMessage = JSON.stringify(e);
+        console.error('errMessage-2: ', errMessage);
       } else {
         errMessage = String(e);
-      }
-
+        console.error('errMessage-3: ', errMessage);
+      } */
+      /*   const errMessage =
+        e instanceof Error
+          ? e.message // NOT stack
+          : typeof e === 'object' && e !== null
+            ? JSON.stringify(e)
+            : String(e); */
       //console.error(`Error processing file ${a.id}: ${errMessage}`);
-      errors.push({ track_id: a.track_id, id: a.id, error: errMessage });
+      /* errors.push({ track_id: a.track_id, id: a.id, error: errMessage }); */
     } finally {
       if (writeState.status === 'changed-to-writable') {
         console.log('write-state finally called: ', writeState.status);
