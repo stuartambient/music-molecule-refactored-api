@@ -47,16 +47,20 @@ export function insertFiles(db, files) {
 }
 
 export function updateFiles(db, files, errors = null) {
-  /* console.log('files: ', errors); */
+  /* console.log('files: ', files, 'error: ', errors); */
+  let rowsForUI;
+  if (errors) {
+    const errorMap = new Map(errors.map((f) => [f.track_id, f.error]));
 
-  const errorMap = new Map(errors.map((f) => [f.track_id, f.error]));
+    rowsForUI = files.map((row) => ({
+      ...row,
+      error: errorMap.get(row.track_id) ?? row.error ?? null
+    }));
+  } else {
+    rowsForUI = files;
+  }
 
-  const rowsForUI = files.map((row) => ({
-    ...row,
-    error: errorMap.get(row.track_id) ?? row.error ?? null
-  }));
-
-  console.log('rows for UI: ', rowsForUI);
+  /*  console.log('rows for UI: ', rowsForUI); */
 
   /* console.log('updateFiles: ', files); */
   // Log the files being passed in for debugging
@@ -151,7 +155,7 @@ export function markTrackWriteError(db, trackId, errorMessage) {
   `);
 
   const result = stmt.run(errorMessage, trackId);
-  console.log('db result: ', result);
+  /* console.log('db result: ', result); */
 }
 
 export function checkDataType(entry) {

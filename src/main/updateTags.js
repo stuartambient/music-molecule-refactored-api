@@ -158,7 +158,12 @@ const updateTags = async (db, arr) => {
       try {
         myFile = File.createFromPath(a.id);
       } catch (err) {
-        console.error(`File ${a.id} failed`);
+        /*  console.error(`File ${a.id} failed`); */
+        errors.push({
+          track_id: a.track_id,
+          id: a.id,
+          error: err.toString()
+        });
       }
       if (path.extname(a.id).toLowerCase() === '.mp3') {
         sanitizeMp3Picture(myFile);
@@ -259,7 +264,8 @@ const updateTags = async (db, arr) => {
       myFile.save();
       myFile.dispose();
     } catch (e) {
-      console.log('final catch: ', e);
+      /* console.log('final catch: ', e.toString()); */
+      /* const errMessage = e.toString(); */
       /* console.error('🔴 Outer error caught for file:', a.id, '\n', e); */
       /*      let errMessage;
 
@@ -280,6 +286,7 @@ const updateTags = async (db, arr) => {
             ? JSON.stringify(e)
             : String(e); */
       //console.error(`Error processing file ${a.id}: ${errMessage}`);
+      /* console.log({ track_id: a.track_id, id: a.id, error: errMessage }); */
       /* errors.push({ track_id: a.track_id, id: a.id, error: errMessage }); */
     } finally {
       if (writeState.status === 'changed-to-writable') {

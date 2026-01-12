@@ -489,6 +489,9 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
 
   const handleCellValueChanged = useCallback(
     (event) => {
+      if (event.colDef.field === 'error') {
+        return;
+      }
       if (!isUndoAction && !isRedoAction) {
         const { api, node, colDef } = event;
         if (node.data.error) {
