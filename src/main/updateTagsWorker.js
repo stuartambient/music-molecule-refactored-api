@@ -70,14 +70,14 @@ async function func1(data) {
     const updatedArray = data.filter((obj) => obj);
     const failedArray = updateTagsResult.errors; // <- no `updates` included
 
-    const updateTagResults = classifyUpdateResults(updatedArray, failedArray);
-    console.log('updateTagResults: ', updateTagResults);
+    const updateResults = classifyUpdateResults(updatedArray, failedArray);
+    console.log('updateTagResults: ', updateResults);
 
-    if (updatedArray.length > 0 && failedArray.length === 0) {
+    if (updateResults.failedCount === 0) {
       return { status: 'success', updatedArray };
-    } else if (updatedArray.length === 0 && failedArray.length > 0) {
+    } else if (updateResults.allFailed === true) {
       return { status: 'failed', updatedArray, failedArray };
-    } else if (updatedArray.length > 0 && failedArray.length > 0) {
+    } else if (updateResults.mixed === true) {
       return { status: 'partial_success', updatedArray, failedArray };
     }
   } catch (error) {
@@ -111,7 +111,7 @@ async function func3(input, errorArray) {
 
 async function runSequentially(originalData) {
   const result1 = await func1(originalData);
-  console.log('result 1: ', result1);
+  /* console.log('result 1: ', result1); */
 
   /*   if (result1.status === 'error') {
     console.log('result1 on error: ', result1);
@@ -131,7 +131,7 @@ async function runSequentially(originalData) {
   const failed = result1.failedArray; /* ?.map((file) => file.id) || []; */
   /*  console.log('result-1: status: ', result1.status);
   console.log('result-2:  ', result2); */
-  console.log('result-3:  ', result3);
+  /* console.log('result-3:  ', result3); */
 
   if (result1.status === 'success') {
     return { status: 'success', passed, res: result3 /* updatedRows: result3.files */ };

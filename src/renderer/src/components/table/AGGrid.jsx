@@ -117,14 +117,16 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
 
   useIpcEvent('send-to-child', handleSendToChild, 'tagEditApi');
 
-  useEffect(() => {
+  /*   useEffect(() => {
     const handleView = () => {
       if (!gridRef.current || !tagReport?.trackIds?.length) return;
 
       const updates = tagReport.trackIds.map((track_id, index) => ({
         track_id,
-        viewOrder: index
+        viewOrder: index + 1
       }));
+
+      console.log('updates: ', updates);
 
       gridRef.current.api.applyTransaction({ update: updates });
 
@@ -139,7 +141,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
       console.log('tag report: ', tagReport);
       handleView();
     }
-  }, [tagReport, viewUpdate]);
+  }, [tagReport, viewUpdate]); */
 
   const myTheme = useMemo(() => {
     return themeQuartz
@@ -331,6 +333,7 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
         gridApi.applyTransaction({
           update: val.res.files
         });
+        console.log('rowData: ', rowData);
         return setUndos([]);
 
       case 'partial_status':

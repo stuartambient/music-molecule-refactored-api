@@ -3,7 +3,8 @@ import { parentPort, workerData } from 'worker_threads';
 import path from 'node:path';
 import Database from 'better-sqlite3';
 import { File } from 'node-taglib-sharp';
-import { updateFiles, parseMeta } from './utility/utils.js';
+
+import { updateFiles, parseMeta, markTrackWriteError } from './utility/utils.js';
 import {
   ensureWritableWithStatus,
   restoreReadOnlyWindows
@@ -48,7 +49,12 @@ const processTrack = async (track, id, result) => {
     writeState = await ensureWritableWithStatus(track);
     console.log('writeState: ', writeState);
     if (writeState.status === 'unwritable') {
-      throw new Error('File is not writable');
+      markTrackWriteError(db, a.track_id, 'file is not writeable');
+      /*       errors.push({
+        track_id: a.track_id,
+        id: a.id,
+        error: 'file is not writeable'
+      }); */
     }
   } catch (err) {
     result.success = false;
@@ -60,6 +66,7 @@ const processTrack = async (track, id, result) => {
     myFile = File.createFromPath(track);
   } catch (err) {
     console.log('err: ', err);
+    markTrackWriteError(db, id, err.toString());
     if (writeState.status === 'changed-to-writable') {
       restoreReadOnlyWindows(track);
     }
