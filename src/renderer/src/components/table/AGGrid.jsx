@@ -355,9 +355,22 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
     }
   };
 
+  const flashRow = (nodeIndex) => {
+    // pick fourth and fifth row at random
+    // flash whole row, so leave column selection out
+    const rowNode1 = gridRef.current.api.getDisplayedRowAtIndex(nodeIndex);
+    // flash whole row, so leave column selection out
+    gridRef.current.api.flashCells({ rowNodes: [rowNode1] });
+  };
+
   const handleUpdatedRow = (result) => {
     console.log('rescanned-track: ', result);
     const gridApi = gridRef.current?.api;
+    if (result.status === 'starting') {
+      const row = gridApi.getRowNode(result.id);
+      return flashRow(row.rowIndex);
+    }
+
     gridApi.applyTransaction({
       update: [result.rescanned]
     });

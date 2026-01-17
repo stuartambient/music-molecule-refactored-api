@@ -47,9 +47,13 @@ const processTrack = async (track, id, result) => {
   let writeState;
   try {
     writeState = await ensureWritableWithStatus(track);
-    console.log('writeState: ', writeState);
     if (writeState.status === 'unwritable') {
-      markTrackWriteError(db, a.track_id, 'file is not writeable');
+      console.log('writeState.status: ', writeState.status);
+      markTrackWriteError(db, id, 'file is fucked');
+      result.id = id;
+      const rescanned = getRescannedTrack(id);
+      result.rescanned = rescanned;
+      return result;
       /*       errors.push({
         track_id: a.track_id,
         id: a.id,
@@ -57,8 +61,12 @@ const processTrack = async (track, id, result) => {
       }); */
     }
   } catch (err) {
+    console.log('write failure: ', track, '---', id, '---', result);
     result.success = false;
     result.error = 'Write permissions failed';
+    result.id = id;
+    const rescanned = getRescannedTrack(id);
+    result.rescanned = rescanned;
     return result;
   }
   let myFile;

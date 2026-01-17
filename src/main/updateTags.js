@@ -140,6 +140,16 @@ const updateTags = async (db, arr) => {
   for (const a of arr) {
     let writeState;
     try {
+      /*   if (!fs.existsSync(a.id)) {
+        markTrackWriteError(db, a.track_id, 'file does not exist');
+        errors.push({
+          track_id: a.track_id,
+          id: a.id,
+          error: 'file does not exist'
+        });
+        continue;
+      } */
+
       writeState = await ensureWritableWithStatus(a.id);
       if (writeState.status === 'unwritable') {
         console.log('write-state first called: ', writeState.status);
@@ -158,7 +168,7 @@ const updateTags = async (db, arr) => {
       try {
         myFile = File.createFromPath(a.id);
       } catch (err) {
-        /*  console.error(`File ${a.id} failed`); */
+        console.error(`File ${a.id} failed`);
         errors.push({
           track_id: a.track_id,
           id: a.id,

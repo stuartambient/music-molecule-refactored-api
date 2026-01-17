@@ -1325,7 +1325,8 @@ ipcMain.handle('rescan-track-error', async (event, track, id) => {
     /* targetWindow.webContents.send('rescanned-track', { status: 'starting' }); */
     const workerPath = process.resourcesPath;
     const worker = await createRescanTrackErrorWorker({ workerData: { track, id, workerPath } });
-    console.log('Worker resolved to:', worker.threadId);
+    targetWindow.webContents.send('rescanned-track', { status: 'starting', id: id });
+    /* console.log('Worker resolved to:', worker.threadId); */
     worker
       .on('message', (msg) => {
         if (msg.type === 'completed') {

@@ -47,6 +47,7 @@ export function insertFiles(db, files) {
 }
 
 export function updateFiles(db, files, errors = null) {
+  console.log('update files: ', files, '---', errors);
   /* console.log('files: ', files, 'error: ', errors); */
   let rowsForUI;
   if (errors) {
@@ -155,7 +156,7 @@ export function markTrackWriteError(db, trackId, errorMessage) {
   `);
 
   const result = stmt.run(errorMessage, trackId);
-  /* console.log('db result: ', result); */
+  console.log('db result: ', result);
 }
 
 export function checkDataType(entry) {
@@ -208,6 +209,7 @@ const findRoot = (file) => {
 }; */
 
 export async function parseMeta(files, op, findRoot) {
+  console.log('parseMeta: ', files);
   /* console.log('parseMeta files; ', files); */
   MpegAudioFileSettings.defaultTagTypes = TagTypes.Id3v2;
   FlacFileSettings.defaultTagTypes = TagTypes.Xiph;
@@ -270,13 +272,30 @@ export async function parseMeta(files, op, findRoot) {
       });
     } catch (error) {
       console.error(`Error processing file ${file}: ${error.message}`);
-      const fileStats = await fs.promises.stat(op === 'new' ? file : file.id);
-      filesMetadata.push({
+
+      let stats = null;
+      try {
+        stats = await fs.promises.stat(op === 'new' ? file : file.id);
+      } catch {
+        console.log('stats failed');
+      }
+
+      /*  const fileStats = await fs.promises.stat(op === 'new' ? file : file.id); */
+      /*       filesMetadata.push({
         track_id: op === 'new' ? uuidv4() : file.track_id,
         root: findRoot(op === 'new' ? file : file.id),
         audiotrack: op === 'new' ? file : file.id,
         modified: fileStats.mtimeMs || null,
         birthtime: fileStats.birthtime.toISOString() || null,
+        error: error.toString()
+      }); */
+
+      filesMetadata.push({
+        track_id: op === 'new' ? uuidv4() : file.track_id,
+        root: findRoot(op === 'new' ? file : file.id),
+        audiotrack: op === 'new' ? file : file.id,
+        modified: stats?.mtimeMs ?? null,
+        birthtime: stats?.birthtime?.toISOString() ?? null,
         error: error.toString()
       });
     }

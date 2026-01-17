@@ -86,6 +86,7 @@ async function func1(data) {
 }
 
 async function func2(input) {
+  console.log('input: ', input);
   /* console.log('parseMeta: '); */
   /* console.log('func2: ', input); */
   return new Promise((resolve, reject) => {
@@ -93,6 +94,7 @@ async function func2(input) {
       const updatedMeta = parseMeta(input, 'mod', findRoot);
       resolve(updatedMeta);
     } catch (error) {
+      console.log('func2 error: ', error);
       reject(error);
     }
   });
@@ -111,6 +113,7 @@ async function func3(input, errorArray) {
 
 async function runSequentially(originalData) {
   const result1 = await func1(originalData);
+  console.log('result1: ', result1);
   /* console.log('result 1: ', result1); */
 
   /*   if (result1.status === 'error') {
@@ -124,7 +127,9 @@ async function runSequentially(originalData) {
   } */
 
   const result2 = await func2(result1.updatedArray);
+  console.log('result2: ', result2);
   const result3 = await func3(result2, result1.failedArray);
+  console.log('result3: ', result3);
   /* console.log('result 3: ', result3); */
 
   const passed = result1.updatedArray.map((file) => ({ track_id: file.track_id, track: file.id }));
@@ -133,9 +138,17 @@ async function runSequentially(originalData) {
   console.log('result-2:  ', result2); */
   /* console.log('result-3:  ', result3); */
 
+  /*   if (result1.status === 'success') {
+    return { status: 'success', passed, res: result3};
+  } else {
+    return { status: 'partial_status', passed, failed, res: result3 };
+  } */
+
   if (result1.status === 'success') {
     return { status: 'success', passed, res: result3 /* updatedRows: result3.files */ };
-  } else {
+  } else if (result1.status === 'failed') {
+    return { status: 'failed', passed, failed, res: result3 };
+  } else if (result1.status === 'partial_status') {
     return { status: 'partial_status', passed, failed, res: result3 };
   }
 }
