@@ -136,11 +136,12 @@ const updateTags = async (db, arr) => {
   MpegAudioFileSettings.defaultTagTypes = TagTypes.Id3v2;
   FlacFileSettings.defaultTagTypes = TagTypes.Xiph;
   const errors = [];
+  const passed = [];
 
   for (const a of arr) {
     let writeState;
     try {
-      /*   if (!fs.existsSync(a.id)) {
+      if (!fs.existsSync(a.id)) {
         markTrackWriteError(db, a.track_id, 'file does not exist');
         errors.push({
           track_id: a.track_id,
@@ -148,7 +149,7 @@ const updateTags = async (db, arr) => {
           error: 'file does not exist'
         });
         continue;
-      } */
+      }
 
       writeState = await ensureWritableWithStatus(a.id);
       if (writeState.status === 'unwritable') {
@@ -272,6 +273,10 @@ const updateTags = async (db, arr) => {
         }
       }
       myFile.save();
+      passed.push({
+        track_id: a.track_id,
+        id: a.id
+      });
       myFile.dispose();
     } catch (e) {
       /* console.log('final catch: ', e.toString()); */
@@ -306,7 +311,8 @@ const updateTags = async (db, arr) => {
     }
   }
 
-  return { message: 'Tag updates completed with some errors', errors };
+  /*  return { passed, errors }; */
+  return { message: 'Tag updates completed with some errors', passed, errors };
 };
 
 export default updateTags;

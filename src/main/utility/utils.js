@@ -47,7 +47,7 @@ export function insertFiles(db, files) {
 }
 
 export function updateFiles(db, files, errors = null) {
-  console.log('update files: ', files, '---', errors);
+  /* console.log('update files: ', files, '---', errors); */
   /* console.log('files: ', files, 'error: ', errors); */
   let rowsForUI;
   if (errors) {
@@ -209,7 +209,7 @@ const findRoot = (file) => {
 }; */
 
 export async function parseMeta(files, op, findRoot) {
-  console.log('parseMeta: ', files);
+  /* console.log('parseMeta: ', files); */
   /* console.log('parseMeta files; ', files); */
   MpegAudioFileSettings.defaultTagTypes = TagTypes.Id3v2;
   FlacFileSettings.defaultTagTypes = TagTypes.Xiph;

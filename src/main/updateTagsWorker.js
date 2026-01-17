@@ -41,7 +41,7 @@ const findRoot = (file) => {
 };
 
 function classifyUpdateResults(updatedArray, failedArray) {
-  console.log('UA: ', updatedArray, 'FA: ', failedArray);
+  /* console.log('UA: ', updatedArray, 'FA: ', failedArray); */
   const failedIdSet = new Set(failedArray.map((f) => f.track_id));
 
   let failedCount = 0;
@@ -67,11 +67,12 @@ async function func1(data) {
     /* console.log('updateTagsResult: ', updateTagsResult); */
 
     /* const updatedArray = data.filter((obj) => !failedTrackIds.has(obj.track_id)); */
+    console.log('updateTagsResult: ', updateTagsResult);
     const updatedArray = data.filter((obj) => obj);
     const failedArray = updateTagsResult.errors; // <- no `updates` included
 
     const updateResults = classifyUpdateResults(updatedArray, failedArray);
-    console.log('updateTagResults: ', updateResults);
+    /* console.log('updateTagResults: ', updateResults); */
 
     if (updateResults.failedCount === 0) {
       return { status: 'success', updatedArray };
@@ -86,7 +87,7 @@ async function func1(data) {
 }
 
 async function func2(input) {
-  console.log('input: ', input);
+  /* console.log('input: ', input); */
   /* console.log('parseMeta: '); */
   /* console.log('func2: ', input); */
   return new Promise((resolve, reject) => {
@@ -127,9 +128,9 @@ async function runSequentially(originalData) {
   } */
 
   const result2 = await func2(result1.updatedArray);
-  console.log('result2: ', result2);
+  /* console.log('result2: ', result2); */
   const result3 = await func3(result2, result1.failedArray);
-  console.log('result3: ', result3);
+  /* console.log('result3: ', result3); */
   /* console.log('result 3: ', result3); */
 
   const passed = result1.updatedArray.map((file) => ({ track_id: file.track_id, track: file.id }));

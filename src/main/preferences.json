@@ -717,7 +717,7 @@
         },
         {
           "colId": "error",
-          "width": 287,
+          "width": 220,
           "hide": false,
           "pinned": null,
           "sort": "desc",
