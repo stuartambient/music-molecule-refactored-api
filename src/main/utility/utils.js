@@ -209,7 +209,7 @@ const findRoot = (file) => {
 }; */
 
 export async function parseMeta(files, op, findRoot) {
-  console.log('parseMeta: ', files);
+  /* console.log('parseMeta: ', files); */
   /* console.log('parseMeta files; ', files); */
   MpegAudioFileSettings.defaultTagTypes = TagTypes.Id3v2;
   FlacFileSettings.defaultTagTypes = TagTypes.Xiph;

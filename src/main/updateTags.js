@@ -51,6 +51,8 @@ import { sanitizeFlacPicture, sanitizeMp3Picture } from './utility/repairPicture
   );
 } */
 
+console.log('ENTER updateTags');
+
 const deleteKeys = {
   albumArtists: () => [],
   album: () => '',
@@ -140,15 +142,30 @@ const updateTags = async (db, arr) => {
   for (const a of arr) {
     let writeState;
     try {
-      /*   if (!fs.existsSync(a.id)) {
-        markTrackWriteError(db, a.track_id, 'file does not exist');
+      /* try {
+        const acc = await fs.promises.access(a.id);
+        console.log('acc: ', acc);
+      } catch (err) {
+        console.error('access file: ', err.toString());
         errors.push({
           track_id: a.track_id,
           id: a.id,
-          error: 'file does not exist'
+          error: err.toString()
         });
         continue;
       } */
+
+      if (fs.existsSync(a.id)) {
+        console.log('File exists.');
+      } else {
+        console.log('File does not exist.');
+        errors.push({
+          track_id: a.track_id,
+          id: a.id,
+          error: 'Wrong path or file does not eixts'
+        });
+        continue;
+      }
 
       writeState = await ensureWritableWithStatus(a.id);
       if (writeState.status === 'unwritable') {
@@ -167,6 +184,7 @@ const updateTags = async (db, arr) => {
       let myFile;
       try {
         myFile = File.createFromPath(a.id);
+        console.log('createFromPath: ', a.id);
       } catch (err) {
         console.error(`File ${a.id} failed`);
         errors.push({
@@ -211,6 +229,7 @@ const updateTags = async (db, arr) => {
       }
 
       for (const [key, value] of Object.entries(allUpdates)) {
+        console.log('Key: ', key, 'value: ', value);
         /* console.log('a.updates ', a.updates); */
         if (key === 'picture-location') {
           if (isValidImageFile(value)) {
@@ -267,14 +286,18 @@ const updateTags = async (db, arr) => {
               '\n   stack:',
               err.stack
             );
-            throw err; // rethrow if you want to stop execution
+            /*  throw err */ // rethrow if you want to stop execution
           }
         }
       }
       myFile.save();
       myFile.dispose();
     } catch (e) {
-      /* console.log('final catch: ', e.toString()); */
+      /*   errors.push({
+        track_id: a.track_id,
+        id: a.id,
+        error: e.toString()
+      }); */
       /* const errMessage = e.toString(); */
       /* console.error('🔴 Outer error caught for file:', a.id, '\n', e); */
       /*      let errMessage;
@@ -305,7 +328,8 @@ const updateTags = async (db, arr) => {
       }
     }
   }
-
+  console.log('errors: ', errors);
+  console.log('EXIT updateTags');
   return { message: 'Tag updates completed with some errors', errors };
 };
 

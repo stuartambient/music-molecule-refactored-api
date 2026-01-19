@@ -41,7 +41,7 @@ const findRoot = (file) => {
 };
 
 function classifyUpdateResults(updatedArray, failedArray) {
-  console.log('UA: ', updatedArray, 'FA: ', failedArray);
+  /*  console.log('UA: ', updatedArray, 'FA: ', failedArray); */
   const failedIdSet = new Set(failedArray.map((f) => f.track_id));
 
   let failedCount = 0;
@@ -64,14 +64,13 @@ function classifyUpdateResults(updatedArray, failedArray) {
 async function func1(data) {
   try {
     const updateTagsResult = await updateTags(db, data, workerData.logDir);
-    /* console.log('updateTagsResult: ', updateTagsResult); */
+    console.log('updateTagsResult: ', updateTagsResult);
 
-    /* const updatedArray = data.filter((obj) => !failedTrackIds.has(obj.track_id)); */
     const updatedArray = data.filter((obj) => obj);
-    const failedArray = updateTagsResult.errors; // <- no `updates` included
+    const failedArray = updateTagsResult.errors;
+    /* console.log('failedArray: ', failedArray); */
 
     const updateResults = classifyUpdateResults(updatedArray, failedArray);
-    console.log('updateTagResults: ', updateResults);
 
     if (updateResults.failedCount === 0) {
       return { status: 'success', updatedArray };
@@ -81,14 +80,12 @@ async function func1(data) {
       return { status: 'partial_success', updatedArray, failedArray };
     }
   } catch (error) {
-    return { status: 'error', error: error instanceof Error ? error.message : String(error) };
+    console.error('error in func1: ', error);
+    // return { status: 'error', error: error instanceof Error ? error.message : String(error) };
   }
 }
 
 async function func2(input) {
-  console.log('input: ', input);
-  /* console.log('parseMeta: '); */
-  /* console.log('func2: ', input); */
   return new Promise((resolve, reject) => {
     try {
       const updatedMeta = parseMeta(input, 'mod', findRoot);
@@ -114,35 +111,13 @@ async function func3(input, errorArray) {
 async function runSequentially(originalData) {
   const result1 = await func1(originalData);
   console.log('result1: ', result1);
-  /* console.log('result 1: ', result1); */
-
-  /*   if (result1.status === 'error') {
-    console.log('result1 on error: ', result1);
-    return result1;
-  }
-
-  if (result1.status === 'failed') {
-    console.log('result1 failed: ', result1);
-    return { status: 'failed', failed: result1.failedArray };
-  } */
 
   const result2 = await func2(result1.updatedArray);
-  console.log('result2: ', result2);
+
   const result3 = await func3(result2, result1.failedArray);
-  console.log('result3: ', result3);
-  /* console.log('result 3: ', result3); */
 
   const passed = result1.updatedArray.map((file) => ({ track_id: file.track_id, track: file.id }));
-  const failed = result1.failedArray; /* ?.map((file) => file.id) || []; */
-  /*  console.log('result-1: status: ', result1.status);
-  console.log('result-2:  ', result2); */
-  /* console.log('result-3:  ', result3); */
-
-  /*   if (result1.status === 'success') {
-    return { status: 'success', passed, res: result3};
-  } else {
-    return { status: 'partial_status', passed, failed, res: result3 };
-  } */
+  const failed = result1.failedArray;
 
   if (result1.status === 'success') {
     return { status: 'success', passed, res: result3 /* updatedRows: result3.files */ };
@@ -153,12 +128,12 @@ async function runSequentially(originalData) {
   }
 }
 
-// Listen for messages from the main thread
 parentPort.on('message', async () => {
   try {
     const finalResult = await runSequentially(workerData.data);
     parentPort.postMessage(finalResult);
   } catch (error) {
+    console.error('caught in worker end: ', error);
     parentPort.postMessage({
       status: 'error',
       message: 'Worker execution failed',

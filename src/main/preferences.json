@@ -717,7 +717,7 @@
         },
         {
           "colId": "error",
-          "width": 287,
+          "width": 335,
           "hide": false,
           "pinned": null,
           "sort": "desc",
@@ -731,7 +731,7 @@
         },
         {
           "colId": "audiotrack",
-          "width": 937,
+          "width": 1043,
           "hide": false,
           "pinned": null,
           "sort": null,
@@ -829,7 +829,7 @@
         },
         {
           "colId": "album",
-          "width": 357,
+          "width": 510,
           "hide": false,
           "pinned": null,
           "sort": null,
