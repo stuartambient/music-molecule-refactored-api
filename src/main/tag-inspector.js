@@ -26,7 +26,7 @@ export async function inspectTags(input) {
   const f = typeof input === 'string' ? await File.createFromPath(input) : input; // can accept File instance directly
 
   const path = typeof input === 'string' ? input : f.name;
-  console.log('f name from inspect tags: ', f.name);
+  /* console.log('f name from inspect tags: ', f.name); */
   const kind = fileType(path);
   const mask = f.tagTypesOnDisk;
 
@@ -51,6 +51,7 @@ export async function extraneousTags(fileType, tags) {
   let mask = 0;
   const hasId3v1 = tags.includes('Id3v1');
   const hasId3v2 = tags.includes('Id3v2');
+  const hasApe = tags.includes('Ape');
 
   if (fileType === 'flac') {
     if (hasId3v1) mask |= 2; // remove Id3v1
@@ -60,6 +61,9 @@ export async function extraneousTags(fileType, tags) {
   if (fileType === 'mp3') {
     if (hasId3v1 && hasId3v2) {
       mask |= 2; // remove Id3v1, keep v2
+    }
+    if (hasApe) {
+      mask |= 8;
     }
   }
 

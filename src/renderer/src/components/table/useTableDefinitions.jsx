@@ -73,7 +73,14 @@ const useColumnDefinitions = (/* failedIds, failedErrorMap */) => {
       },
       { colId: 'title', field: 'title', filter: true },
       { colId: 'performers', field: 'performers', filter: true },
-      { colId: 'performersRole', field: 'performersRole' },
+      {
+        colId: 'performersRole',
+        field: 'performersRole',
+        editable: (params) => {
+          const codecs = params.data?.codecs;
+          return codecs !== 'MPEG Version 1 Audio, Layer 3';
+        }
+      },
       { colId: 'albumArtists', field: 'albumArtists', filter: true },
       { colId: 'album', field: 'album', filter: true },
       {

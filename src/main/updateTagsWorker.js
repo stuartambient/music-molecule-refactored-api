@@ -64,13 +64,15 @@ function classifyUpdateResults(updatedArray, failedArray) {
 async function func1(data) {
   try {
     const updateTagsResult = await updateTags(db, data, workerData.logDir);
-    console.log('updateTagsResult: ', updateTagsResult);
+    /* console.log('updateTagsResult: ', updateTagsResult); */
 
     const updatedArray = data.filter((obj) => obj);
     const failedArray = updateTagsResult.errors;
     /* console.log('failedArray: ', failedArray); */
 
     const updateResults = classifyUpdateResults(updatedArray, failedArray);
+
+    /* console.log('updateResults: ', updateResults); */
 
     if (updateResults.failedCount === 0) {
       return { status: 'success', updatedArray };
@@ -101,6 +103,7 @@ async function func3(input, errorArray) {
   return new Promise((resolve, reject) => {
     try {
       const updateMessage = updateFiles(db, input, errorArray);
+      /* console.log('sql updateMessage: ', updateMessage); */
       resolve(updateMessage);
     } catch (error) {
       reject(error);
@@ -110,7 +113,7 @@ async function func3(input, errorArray) {
 
 async function runSequentially(originalData) {
   const result1 = await func1(originalData);
-  console.log('result1: ', result1);
+  /*  console.log('result1: ', result1); */
 
   const result2 = await func2(result1.updatedArray);
 
@@ -123,7 +126,7 @@ async function runSequentially(originalData) {
     return { status: 'success', passed, res: result3 /* updatedRows: result3.files */ };
   } else if (result1.status === 'failed') {
     return { status: 'failed', passed, failed, res: result3 };
-  } else if (result1.status === 'partial_status') {
+  } else if (result1.status === 'partial_success') {
     return { status: 'partial_status', passed, failed, res: result3 };
   }
 }

@@ -211,6 +211,7 @@ const useTopHundredArtistsStat = () => {
     const getTopHundredArtists = async () => {
       const topHundredArtistsRequest = await window.ipcApi.invoke('artists-by-num-tracks');
       if (topHundredArtistsRequest && subscribed) {
+        console.log('top hundred artist request: ', topHundredArtistsRequest);
         setTopHundredArtists(topHundredArtistsRequest);
       } else {
         return;

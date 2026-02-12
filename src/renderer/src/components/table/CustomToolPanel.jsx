@@ -46,6 +46,7 @@ const CustomToolPanel = ({
     { name: 'conductor', label: 'conductor', defaultChecked: true },
     { name: 'copyright', label: 'copyright', defaultChecked: true },
     { name: 'comment', label: 'comment', defaultChecked: true },
+    { name: 'created_datetime', label: 'date-created', defaultChecked: true },
     { name: 'disc', label: 'disc', defaultChecked: true },
     { name: 'discCount', label: 'discCount', defaultChecked: true },
     { name: 'description', label: 'description', defaultChecked: true },
@@ -134,6 +135,7 @@ const CustomToolPanel = ({
           </button>
           <TagUpdateState
             setUndos={setUndos}
+            undos={undos}
             updateStatus={updateStatus}
             tagReport={tagReport}
             setTagReport={setTagReport}

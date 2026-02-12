@@ -47,9 +47,10 @@ export function insertFiles(db, files) {
 }
 
 export function updateFiles(db, files, errors = null) {
-  console.log('update files: ', files, '---', errors);
-  /* console.log('files: ', files, 'error: ', errors); */
-  let rowsForUI;
+  /* console.log('update files: ', files, '---', errors); */
+
+  const updatedRows = [];
+  /*   let rowsForUI;
   if (errors) {
     const errorMap = new Map(errors.map((f) => [f.track_id, f.error]));
 
@@ -60,16 +61,7 @@ export function updateFiles(db, files, errors = null) {
   } else {
     rowsForUI = files;
   }
-
-  /*  console.log('rows for UI: ', rowsForUI); */
-
-  /* console.log('updateFiles: ', files); */
-  // Log the files being passed in for debugging
-  /* console.log('updateFiles: ', files); */
-
-  // A cache to store prepared SQL statements, keyed by the column set being updated
-  // In this app, since every file object likely includes *all* columns, only one cached
-  // statement will typically be created and reused for all updates.
+ */
   const stmtCache = new Map();
 
   /**
@@ -105,7 +97,7 @@ export function updateFiles(db, files, errors = null) {
 UPDATE "audio-tracks"
 SET ${assignments}
 WHERE track_id = @track_id
-`;
+RETURNING *`;
 
     // Prepare the statement and store it in the cache
     const stmt = db.prepare(sql);
@@ -132,14 +124,17 @@ WHERE track_id = @track_id
         const stmt = getUpdateStmt(cleaned);
 
         // Execute the statement with the file's data
-        stmt.run(cleaned);
+        /*  stmt.run(cleaned); */
+
+        const updatedRow = stmt.get(cleaned);
+        updatedRows.push(updatedRow);
       }
     });
 
     // Run the transaction
     updateMany(files);
 
-    return { success: true, message: 'Files updated successfully', files: rowsForUI };
+    return { success: true, message: 'Files updated successfully', files: updatedRows };
   } catch (error) {
     // Handle and log any errors during the update process
     console.error('Error updating files:', error);
@@ -156,10 +151,11 @@ export function markTrackWriteError(db, trackId, errorMessage) {
   `);
 
   const result = stmt.run(errorMessage, trackId);
-  console.log('db result: ', result);
+  /* console.log('db result: ', result); */
 }
 
 export function checkDataType(entry) {
+  /*  console.log('check data type: ', entry); */
   if (entry === undefined || entry === null) {
     return null;
   } else if (Array.isArray(entry)) {
@@ -249,6 +245,7 @@ export async function parseMeta(files, op, findRoot) {
         encoder: checkDataType(encoder, 'encoder'),
         encodedBy: checkDataType(encodedBy, 'encoded_by'),
         encoderSettings: checkDataType(encoderSettings, 'encoder_settings'),
+        error: null,
         genres: checkDataType(myFile.tag.genres),
         isCompilation: checkDataType(myFile.tag.isCompilation),
         isrc: checkDataType(myFile.tag.isrc),

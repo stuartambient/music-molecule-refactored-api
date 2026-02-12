@@ -51,7 +51,7 @@ import { sanitizeFlacPicture, sanitizeMp3Picture } from './utility/repairPicture
   );
 } */
 
-console.log('ENTER updateTags');
+/* console.log('ENTER updateTags'); */
 
 const deleteKeys = {
   albumArtists: () => [],
@@ -110,7 +110,14 @@ const tagKeys = {
           .map((s) => s.trim())
           .filter(Boolean)
       : [],
-  performersRole: (param) => param?.trim()?.split(', ') || [],
+  performersRole: (param) =>
+    typeof param === 'string'
+      ? param
+          .split(/[;,]/)
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [],
+  /* performersRole: (param) => param?.trim()?.split(', ') || [], */
   pictures: (param) => {
     Picture.fromFullData(
       ByteVector.fromByteArray(param.data),
@@ -155,7 +162,7 @@ const updateTags = async (db, arr) => {
         continue;
       } */
 
-      if (fs.existsSync(a.id)) {
+      /*       if (fs.existsSync(a.id)) {
         console.log('File exists.');
       } else {
         console.log('File does not exist.');
@@ -165,11 +172,12 @@ const updateTags = async (db, arr) => {
           error: 'Wrong path or file does not eixts'
         });
         continue;
-      }
+      } */
 
       writeState = await ensureWritableWithStatus(a.id);
       if (writeState.status === 'unwritable') {
-        console.log('write-state first called: ', writeState.status);
+        /* console.log('write-state first called: ', writeState.status); */
+        console.log('unwritable');
         markTrackWriteError(db, a.track_id, 'file is not writeable');
         errors.push({
           track_id: a.track_id,
@@ -178,13 +186,20 @@ const updateTags = async (db, arr) => {
         });
 
         continue;
+      } else if (writeState.status === 'missing') {
+        errors.push({
+          track_id: a.track_id,
+          id: a.id,
+          error: 'file is missing'
+        });
+        continue;
       }
 
       let id3v2 = null;
       let myFile;
       try {
         myFile = File.createFromPath(a.id);
-        console.log('createFromPath: ', a.id);
+        /* console.log('createFromPath: ', a.id); */
       } catch (err) {
         console.error(`File ${a.id} failed`);
         errors.push({
@@ -220,16 +235,32 @@ const updateTags = async (db, arr) => {
 
       if (removeMask) {
         if (removeMask === 2 && path.extname(a.id).toLowerCase() === '.mp3' && id3v2) {
-          const id3v1 = myFile.getTag(TagTypes.Id3v1, false);
+          let id3v1 = myFile.getTag(TagTypes.Id3v1, false);
           /* const id3v2 = myFile.getTag(TagTypes.Id3v2, true); */
-          id3v1.copyTo(id3v2, false);
+          try {
+            id3v1.copyTo(id3v2, false);
+          } catch (e) {
+            console.warn('Skipping id3v1 copy', a.id, e?.message);
+            id3v1 = null;
+            /* myFile.dispose();
+            myFile = File.createFromPath(a.id);
+            id3v2 = myFile.getTag(TagTypes.Id3v2, true);
+            id3v2.version = 3; */
+          }
         }
         myFile.removeTags(removeMask);
         myFile.save();
+        if (removeMask === 8 && path.extname(a.id).toLowerCase() === '.mp3' && id3v2) {
+          /* const id3v1 = myFile.getTag(TagTypes.Id3v1, false); */
+          /* const id3v2 = myFile.getTag(TagTypes.Id3v2, true); */
+          /*  id3v1.copyTo(id3v2, false); */
+          myFile.removeTags(removeMask);
+          myFile.save();
+        }
       }
 
       for (const [key, value] of Object.entries(allUpdates)) {
-        console.log('Key: ', key, 'value: ', value);
+        /* console.log('Key: ', key, 'value: ', value); */
         /* console.log('a.updates ', a.updates); */
         if (key === 'picture-location') {
           if (isValidImageFile(value)) {
@@ -293,6 +324,7 @@ const updateTags = async (db, arr) => {
       myFile.save();
       myFile.dispose();
     } catch (e) {
+      console.log('updateTags final catch: ', e);
       /*   errors.push({
         track_id: a.track_id,
         id: a.id,
@@ -323,13 +355,13 @@ const updateTags = async (db, arr) => {
       /* errors.push({ track_id: a.track_id, id: a.id, error: errMessage }); */
     } finally {
       if (writeState.status === 'changed-to-writable') {
-        console.log('write-state finally called: ', writeState.status);
+        /* console.log('write-state finally called: ', writeState.status); */
         await restoreReadOnlyWindows(a.id);
       }
     }
   }
-  console.log('errors: ', errors);
-  console.log('EXIT updateTags');
+  /*   console.log('errors: ', errors);
+  console.log('EXIT updateTags'); */
   return { message: 'Tag updates completed with some errors', errors };
 };
 

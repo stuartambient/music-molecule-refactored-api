@@ -10,6 +10,7 @@ const TagUpdateState = ({
   setViewUpdate,
   tagReport,
   setTagReport,
+  undos,
   setUndos
 }) => {
   /* const [tagReport, setTagReport] = useState({ result: '', passed: [], failed: [] }); */
@@ -20,7 +21,7 @@ const TagUpdateState = ({
   }, [updateStatus, setUpdateStatus]); */
 
   const handleUpdateTagsStatus = (msg) => {
-    console.log('msg: ', msg);
+    console.log('handleUpdateTagsStatus hit');
     setUpdateStatus(msg.status);
     if (!Array.isArray(msg?.res?.files)) return;
     const { status, passed = [], failed = [] } = msg;
@@ -41,7 +42,8 @@ const TagUpdateState = ({
 
   const dismissHandler = useCallback(() => {
     setTagReport({ result: '', passed: [], failed: [] });
-    setUndos([]);
+    /* setUndos([]); */
+    console.log('dismiss handler: ', undos);
   }, [setTagReport, setUndos]);
 
   const handleDismiss = () => {

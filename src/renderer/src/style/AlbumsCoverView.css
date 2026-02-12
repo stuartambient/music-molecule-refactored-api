@@ -68,8 +68,12 @@
 }
 
 .overlay .play-stop-button svg:hover {
-  color: var(--overlay-hover);
+  color: var(--overlay-play-stop-button-hover);
   transform: scale(1.2);
+}
+
+.overlay-text {
+  color: white;
 }
 
 .overlay-text.text-small {

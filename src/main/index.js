@@ -303,7 +303,7 @@ async function changeSemicolonDelimeter() {
     console.log('Handling subsequent code after worker error.');
   }
 }
-setTimeout(() => changeSemicolonDelimeter(), 3000);
+/* setTimeout(() => changeSemicolonDelimeter(), 3000); */
 
 async function updateFolders() {
   try {
@@ -1042,7 +1042,7 @@ ipcMain.handle('total-tracks-stat', async () => {
 
 ipcMain.handle('artists-by-num-tracks', async () => {
   const artistList = await topHundredArtists();
-  return artistList.slice(1);
+  return artistList; /* .slice(1); */
 });
 
 async function openWindowAndSendData(queryResults, listType) {

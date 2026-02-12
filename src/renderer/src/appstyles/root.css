@@ -18,7 +18,8 @@
   --button-on: #ff0080;
   --container-home-background: #000000;
   --control-on: #ff0080;
-  --controls-background: #0064d3;
+  --controls-background: none;
+  --controls-blink: #ff0080;
   --controls-button-hover: lightgray;
   --controls-button-icon-hover: #26b0ff;
   --controls-icon: #ffffff;
@@ -51,7 +52,10 @@
   --main-nav-hover-menu-color: #ffffff;
   --minimode-control-icons: #265bff;
   --overlay: #390502cc;
-  --overlay-color: #ffffff;
+  --overlay-menu: #26b0ff;
+  --overlay-hover: #26b0ff;
+  --overlay-play-stop-button: #26b0ff;
+  --overlay-play-stop-button-hover: #ff0080;
   --player-background: #000000;
   --player-font-color: #ffffff;
   --root-highlight: #ff0080;

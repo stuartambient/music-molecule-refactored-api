@@ -50,8 +50,16 @@ export async function ensureWritableWithStatus(filePath) {
   try {
     await fs.access(filePath, fs.constants.W_OK);
     return { status: 'writable', hadReadOnly: false };
-  } catch {
+  } catch (err) {
     // Check attribute explicitly (Windows only)
+
+    if (err.code === 'ENOENT') {
+      return {
+        status: 'missing',
+        hadReadOnly: false,
+        error: err
+      };
+    }
     if (os.platform() === 'win32') {
       hadReadOnly = await hasReadOnlyAttribute(filePath);
 

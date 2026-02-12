@@ -326,14 +326,13 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
   );
 
   const handleTagUpdateStatus = (val) => {
-    console.log('val: ', val);
+    console.log('handleTagUpdateStatus hit');
     const gridApi = gridRef.current?.api;
     switch (val.status) {
       case 'success':
         gridApi.applyTransaction({
           update: val.res.files
         });
-        console.log('rowData: ', rowData);
         return setUndos([]);
 
       case 'partial_status':
@@ -342,9 +341,6 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
         });
         break;
       case 'failed': {
-        /* const currentFailedIds = new Set(val.failed.map((f) => f.id));
-        const retainedUndos = undos.filter((u) => currentFailedIds.has(u.audiotrack));
-        setUndos(retainedUndos); */
         gridApi.applyTransaction({
           update: val.res.files
         });
