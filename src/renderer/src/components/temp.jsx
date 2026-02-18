@@ -1,40 +1,72 @@
-getTheme
----------> save-preferences { grids: { tagEdit: { columns: [Array] } } }
-new preferences,  { grids: { tagEdit: { columns: [Array] } } }
-window action:  minimize
 update tags, # of tags:  [
   {
-    id: 'D:/G_MUSIC/Various - Scattered and Smothered A Whifflefist Compliation/21.Krapper Keeper - Chewbacca Is Gay (Gay Delay Mix).mp3',
-    track_id: '6b210ce8-814a-4d92-899c-f1b8c5e2564f',
-    updates: { performers: 'vvv' }
+    id: 'D:/music/The Future Sound of London - Music From Calendars (WEB, 2021)/01 Frozen Air.flac',
+    track_id: '7b5dfd59-153e-4445-aeb6-0544b6e98151',
+    updates: { disc: '1', discCount: '1' }
   }
 ]
-access file:  Error: ENOENT: no such file or directory, access 'D:\G_MUSIC\Various - Scattered and Smothered A Whifflefist Compliation\21.Krapper Keeper - Chewbacca Is Gay (Gay Delay Mix).mp3'
-errors after push: 1 {
-  track_id: '6b210ce8-814a-4d92-899c-f1b8c5e2564f',
-  id: 'D:/G_MUSIC/Various - Scattered and Smothered A Whifflefist Compliation/21.Krapper Keeper - Chewbacca Is Gay (Gay Delay Mix).mp3',
-  error: "Error: ENOENT: no such file or directory, access 'D:\\G_MUSIC\\Various - Scattered and Smothered A Whifflefist Compliation\\21.Krapper Keeper - Chewbacca Is Gay (Gay Delay Mix).mp3'"
-}
-result1:  undefined
-error in func1:  TypeError: Cannot read properties of undefined (reading 'status')
-    at updateTags (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CphvA855.js:268:22)
-    at async func1 (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CphvA855.js:312:30)
-    at async runSequentially (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CphvA855.js:350:19)
-    at async MessagePort.<anonymous> (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CphvA855.js:371:25)
-caught in worker end:  TypeError: Cannot read properties of undefined (reading 'updatedArray')
-    at runSequentially (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CphvA855.js:352:39)
-    at async MessagePort.<anonymous> (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CphvA855.js:371:25)
+Error updating files: TypeError: SQLite3 can only bind numbers, strings, bigints, buffers, and null
+    at C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\utils-BuEUTXZH.js:257:33
+    at sqliteTransaction (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\node_modules\better-sqlite3\lib\methods\transaction.js:65:24)
+    at Object.updateFiles (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\utils-BuEUTXZH.js:261:5)
+    at C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-Cp9KNfot.js:389:35
+    at new Promise (<anonymous>)
+Error updating files: TypeError: SQLite3 can only bind numbers, strings, bigints, buffers, and null
+    at C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\utils-BuEUTXZH.js:257:33
+    at sqliteTransaction (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\node_modules\better-sqlite3\lib\methods\transaction.js:65:24)
+    at Object.updateFiles (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\utils-BuEUTXZH.js:261:5)
+    at C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-Cp9KNfot.js:389:35
+Error updating files: TypeError: SQLite3 can only bind numbers, strings, bigints, buffers, and null
+    at C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\utils-BuEUTXZH.js:257:33
+    at sqliteTransaction (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\node_modules\better-sqlite3\lib\methods\transaction.js:65:24)
+    at Object.updateFiles (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\utils-BuEUTXZH.js:261:5)
+    at C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-Cp9Error updating files: TypeError: SQLite3 can only bind numbers, strings, bigints, buffers, and null
+    at C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\utils-BuEUTXZH.js:257:33
+    at sqliteTransaction (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\node_modules\better-sqlite3\lib\methods\transaction.js:65:24)
+    at Object.updateFiles (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\Error updating files: TypeError: SQLite3 can only bind numbers, strings, bigints, buffers, and null
+    at C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\utils-BuEUTXZH.js:257:33
+    at sqliteTransaction (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\node_modulError updating files: TypeError: SQLite3 can only bind numbers, strings, bigints, buffers, and null
+    at C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\utils-BuEUTXZH.js:257:33
+    at sqliteTransaction (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\node_modules\better-sqlite3\lib\methods\transaction.js:65:24)
+    at Object.updateFiles (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\Error updating files: TypeError: SQLite3 can only bind numbers, strings, bigints, buffers, and null
+    at C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\utils-BuEUTXZH.js:257:33
+    at sqliteTransaction (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\node_modules\better-sqlite3\lib\methods\transaction.js:65:24)
+    at Object.updateFiles (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\l
+    at C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\utils-BuEUTXZH.js:257:33
+    at sqliteTransaction (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\node_modules\better-sqlite3\lib\methods\transaction.js:65:24)
+    at Object.updateFiles (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\es\better-sqlite3\lib\methods\transaction.js:65:24)
+    at Object.updateFiles (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\utils-BuEUTXZH.js:261:5)
+    at C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-Cp9KNfot.js:389:35
+    at new Promise (<anonymous>)
+    at func3 (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-Cp9KNfot.js:387:10)
+    at runSequentially (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-Cp9KNfot.js:399:25)
+    at async MessagePort.<anonymous> (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-Cp9KNfot.js:417:25)
 
-    at async runSequentially (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CphvA855.js:350:19)
-    at async MessagePort.<anonymous> (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CphvA855.js:371:25)
-caught in worker end:  TypeError: Cannot read properties of undefined (reading 'updatedArray')
-    at runSequentially (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CphvA855.js:352:39)
-    at async MessagePort.<anonymous> (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmp    at async runSequentially (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CphvA855.js:350:19)
-    at async MessagePort.<anonymous> (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CphvA855.js:371:25)
-caught in worker end:  TypeError: Cannot read properties of undefined (reading 'updatedArray')
-    at runSequentially (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\ma    at async runSequentially (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CphvA855.js:350:19)
-    at async MessagePort.<anonymous> (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmp    at async runSequentially (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\    at async runSequentially (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CphvA855.js:350:19)
-    at async MessagePort.<anonymous> (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CphvA855.js:371:25)
-caught in worker end:  TypeError: Cannot read properties of undefined (reading 'updatedArray')
-    at runSequentially (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CphvA855.js:352:39)
-    at async MessagePort.<anonymous> (C:\Users\sambi\Documents\nodeProjs\music-molecule-ffmpeg-test\out\main\updateTagsWorker-CphvA855.js:371:25)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

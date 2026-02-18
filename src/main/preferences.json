@@ -689,7 +689,7 @@
         },
         {
           "colId": "#",
-          "width": 125,
+          "width": 37,
           "hide": false,
           "pinned": "left",
           "sort": null,
@@ -717,7 +717,7 @@
         },
         {
           "colId": "error",
-          "width": 100,
+          "width": 45,
           "hide": false,
           "pinned": null,
           "sort": null,
@@ -731,11 +731,11 @@
         },
         {
           "colId": "audiotrack",
-          "width": 772,
+          "width": 1052,
           "hide": false,
           "pinned": null,
-          "sort": "asc",
-          "sortIndex": 0,
+          "sort": null,
+          "sortIndex": null,
           "aggFunc": null,
           "rowGroup": false,
           "rowGroupIndex": null,
@@ -748,8 +748,8 @@
           "width": 118,
           "hide": false,
           "pinned": null,
-          "sort": null,
-          "sortIndex": null,
+          "sort": "desc",
+          "sortIndex": 0,
           "aggFunc": null,
           "rowGroup": false,
           "rowGroupIndex": null,
@@ -773,7 +773,7 @@
         },
         {
           "colId": "performers",
-          "width": 241,
+          "width": 377,
           "hide": false,
           "pinned": null,
           "sort": null,
@@ -844,7 +844,7 @@
         {
           "colId": "remixedBy",
           "width": 339,
-          "hide": false,
+          "hide": true,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -871,7 +871,7 @@
         },
         {
           "colId": "conductor",
-          "width": 312,
+          "width": 135,
           "hide": false,
           "pinned": null,
           "sort": null,
@@ -885,7 +885,7 @@
         },
         {
           "colId": "disc",
-          "width": 80,
+          "width": 168,
           "hide": false,
           "pinned": null,
           "sort": null,
@@ -914,7 +914,7 @@
         {
           "colId": "isCompilation",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -928,7 +928,7 @@
         {
           "colId": "description",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -956,7 +956,7 @@
         {
           "colId": "created_datetime",
           "width": 216,
-          "hide": false,
+          "hide": true,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -984,7 +984,7 @@
         {
           "colId": "genres",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -1054,7 +1054,7 @@
         {
           "colId": "picture-location",
           "width": 200,
-          "hide": true,
+          "hide": false,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -1068,7 +1068,7 @@
         {
           "colId": "duration",
           "width": 200,
-          "hide": false,
+          "hide": true,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -1124,7 +1124,7 @@
         {
           "colId": "audioBitrate",
           "width": 200,
-          "hide": false,
+          "hide": true,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -1138,7 +1138,7 @@
         {
           "colId": "audioSampleRate",
           "width": 333,
-          "hide": false,
+          "hide": true,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -1152,7 +1152,7 @@
         {
           "colId": "codecs",
           "width": 217,
-          "hide": false,
+          "hide": true,
           "pinned": null,
           "sort": null,
           "sortIndex": null,
@@ -1166,7 +1166,7 @@
         {
           "colId": "tagTypes",
           "width": 139,
-          "hide": false,
+          "hide": true,
           "pinned": null,
           "sort": null,
           "sortIndex": null,

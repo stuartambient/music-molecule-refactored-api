@@ -60,8 +60,9 @@
   --player-font-color: #ffffff;
   --root-highlight: #ff0080;
   --root-highlight-color: #ffffff;
-  --sort-icon-active: #ff0000;
+  --sort-icon-active: #26b0ff;
   --sort-icon-inactive: #ffffff;
+  --sort-icon-inactive-hover: #ffffff;
   --status-loader-background: #ffffff;
   --status-loader-bar: #26b0ff;
   --tab-background-active: #26b0ff;
@@ -81,8 +82,8 @@
   --tags-list-header-input: #ffffff;
   --tags-list-header-icon: #ff0000;
   --tags-nav-selected: #ff0080;
-  --tags-nav-selected-color: #ffffff;
-  --tags-row-even: #26b0ff;
+  --tags-nav-selected-color: #000000;
+  --tags-row-even: #ffffff;
   --tags-row-even-color: #000000;
   --tags-row-odd: #000000;
   --tags-row-odd-color: #ffffff;

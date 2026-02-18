@@ -1,27 +1,10 @@
-import fs from 'node:fs/promises';
+import fs from 'node:fs';
+import fsp from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import os from 'node:os';
-import { promisify } from 'util';
+import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
-
-export async function hasReadOnlyAttribute(filePath) {
-  try {
-    const { stdout } = await execFileAsync('attrib', [filePath]);
-
-    // Example output:
-    // "R    C:\\Music\\track.flac"
-    // "RA   C:\\Music\\track.flac"
-
-    const match = stdout.match(/^([A-Z]+)\s+/);
-    if (!match) return false;
-
-    return match[1].includes('R');
-  } catch {
-    // If attrib fails (missing file, etc.), assume not read-only
-    return false;
-  }
-}
 
 export function restoreReadOnlyWindows(filePath) {
   console.log('restore: ', filePath);
@@ -33,6 +16,17 @@ export function restoreReadOnlyWindows(filePath) {
       resolve(true);
     });
   });
+}
+
+async function hasReadOnlyAttribute(filePath) {
+  try {
+    const { stdout } = await execFileAsync('attrib', [filePath]);
+    const match = stdout.match(/^\s*([A-Z]+)\s+/);
+    if (!match) return false;
+    return match[1].includes('R');
+  } catch {
+    return false;
+  }
 }
 
 function removeReadOnlyWindows(filePath) {
@@ -47,41 +41,44 @@ function removeReadOnlyWindows(filePath) {
 export async function ensureWritableWithStatus(filePath) {
   let hadReadOnly = false;
 
+  // 1️⃣ Check real OS write permission
   try {
-    await fs.access(filePath, fs.constants.W_OK);
-    return { status: 'writable', hadReadOnly: false };
+    console.log('constants?', fs.constants?.W_OK);
+    await fsp.access(filePath, fs.constants.W_OK);
   } catch (err) {
-    // Check attribute explicitly (Windows only)
-
-    if (err.code === 'ENOENT') {
-      return {
-        status: 'missing',
-        hadReadOnly: false,
-        error: err
-      };
+    if (err?.code === 'ENOENT') {
+      return { status: 'missing', hadReadOnly: false, error: err };
     }
+
+    // 2️⃣ Attempt attribute / chmod correction
     if (os.platform() === 'win32') {
       hadReadOnly = await hasReadOnlyAttribute(filePath);
-
       if (hadReadOnly) {
         await removeReadOnlyWindows(filePath);
       }
     } else {
-      await fs.chmod(filePath, 0o666);
+      await fsp.chmod(filePath, 0o666);
     }
 
+    // 3️⃣ Re-check permission
     try {
-      await fs.access(filePath, fs.constants.W_OK);
-      return {
-        status: hadReadOnly ? 'changed-to-writable' : 'writable-after-retry',
-        hadReadOnly
-      };
-    } catch (err) {
-      return {
-        status: 'unwritable',
-        hadReadOnly,
-        error: err
-      };
+      console.log('constants?', fs.constants?.W_OK);
+      await fsp.access(filePath, fs.constants.W_OK);
+    } catch (err2) {
+      return { status: 'unwritable', hadReadOnly, error: err2 };
     }
   }
+
+  // 4️⃣ Detect Windows file locks (sharing violation)
+  try {
+    const handle = await fsp.open(filePath, 'r+');
+    await handle.close();
+  } catch (err3) {
+    return { status: 'locked', hadReadOnly, error: err3 };
+  }
+
+  return {
+    status: hadReadOnly ? 'changed-to-writable' : 'writable',
+    hadReadOnly
+  };
 }

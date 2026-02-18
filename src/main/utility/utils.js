@@ -5,6 +5,7 @@ import { File, MpegAudioFileSettings, FlacFileSettings, TagTypes } from 'node-ta
 import decodeTagTypes from '../decodeTagTypes.js';
 import { getTagInfo } from '../musicMetadata.js';
 import { flattenTagValue, getEncoderFieldsFromNative } from '../tags/utils.js';
+import { ensureWritableWithStatus } from './ensureWritableWithStatus.js';
 /* import { findRoot } from '../updateFilesWorker.js'; */
 
 export function insertFiles(db, files) {
@@ -47,8 +48,6 @@ export function insertFiles(db, files) {
 }
 
 export function updateFiles(db, files, errors = null) {
-  /* console.log('update files: ', files, '---', errors); */
-
   const updatedRows = [];
   /*   let rowsForUI;
   if (errors) {
@@ -154,6 +153,15 @@ export function markTrackWriteError(db, trackId, errorMessage) {
   /* console.log('db result: ', result); */
 }
 
+export function removeNullUndefinedWithReduce(obj) {
+  return Object.entries(obj).reduce((acc, [key, value]) => {
+    if (value !== null && value !== undefined && value !== '') {
+      acc[key] = typeof value === 'object' ? removeNullUndefinedWithReduce(value) : value;
+    }
+    return acc;
+  }, {});
+}
+
 export function checkDataType(entry) {
   /*  console.log('check data type: ', entry); */
   if (entry === undefined || entry === null) {
@@ -165,7 +173,7 @@ export function checkDataType(entry) {
   } else if (typeof entry === 'string') {
     return entry;
   } else if (typeof entry === 'number') {
-    return Number(entry);
+    return entry === 0 ? null : Number(entry);
   } else if (typeof entry === 'boolean') {
     if (entry === true) return 1;
     return 0;
@@ -204,9 +212,16 @@ const findRoot = (file) => {
   return 'No root found';
 }; */
 
+async function checkWriteStatus(file) {
+  const writeStatus = await ensureWritableWithStatus(file);
+  console.log('write status: ', writeStatus);
+  if (writeStatus.status === 'unwritiable') {
+    return 'file is not writeable';
+  }
+  return null;
+}
+
 export async function parseMeta(files, op, findRoot) {
-  /* console.log('parseMeta: ', files); */
-  /* console.log('parseMeta files; ', files); */
   MpegAudioFileSettings.defaultTagTypes = TagTypes.Id3v2;
   FlacFileSettings.defaultTagTypes = TagTypes.Xiph;
   const filesMetadata = [];

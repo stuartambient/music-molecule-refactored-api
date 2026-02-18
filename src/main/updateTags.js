@@ -15,9 +15,18 @@ import {
   ensureWritableWithStatus,
   restoreReadOnlyWindows
 } from './utility/ensureWritableWithStatus';
-import { isValidImageFile, markTrackWriteError } from './utility/utils.js';
+import {
+  isValidImageFile,
+  markTrackWriteError,
+  removeNullUndefinedWithReduce
+} from './utility/utils.js';
 
-import { sanitizeFlacPicture, sanitizeMp3Picture } from './utility/repairPictures.js';
+import {
+  sanitizeFlacPicture,
+  sanitizeMp3Picture,
+  extractPictures
+} from './utility/repairPictures.js';
+import { getRow } from './updateTagsWorker.js';
 
 /* function logBadFrame(logDir, filePath, count) {
   try {
@@ -174,10 +183,27 @@ const updateTags = async (db, arr) => {
         continue;
       } */
 
+      // write error with ocde
+      /*     error: JSON.stringify({
+  type: 'write-check',
+  status: res.status,
+  hadReadOnly: res.hadReadOnly,
+  code: res.error?.code,
+  message: res.error?.message
+}) */
+
       writeState = await ensureWritableWithStatus(a.id);
+      if (writeState.status !== 'writable' && writeState.status !== 'changed-to-writable') {
+        console.log('UNWRITE CHECK FAIL:', {
+          file: a.id,
+          status: writeState.status,
+          hadReadOnly: writeState.hadReadOnly,
+          code: writeState.error?.code,
+          message: writeState.error?.message
+        });
+      }
       if (writeState.status === 'unwritable') {
-        /* console.log('write-state first called: ', writeState.status); */
-        console.log('unwritable');
+        console.log('unwritable', a.id);
         markTrackWriteError(db, a.track_id, 'file is not writeable');
         errors.push({
           track_id: a.track_id,
@@ -210,7 +236,33 @@ const updateTags = async (db, arr) => {
       }
       if (path.extname(a.id).toLowerCase() === '.mp3') {
         sanitizeMp3Picture(myFile);
-        myFile.save();
+        try {
+          myFile.save();
+        } catch (e) {
+          /* dumpSemantic(myFile); */
+          const row = getRow(a.track_id);
+          const rowValuesOnly = removeNullUndefinedWithReduce(row);
+          if (rowValuesOnly.pictures && rowValuesOnly.pictures === 1) {
+            /* rowValuesOnly.pictures = myFile.tag.pictures; */
+            const picData = extractPictures(myFile.tag);
+            const { data, type, mimeType, description } = picData[0];
+            console.log(data, type, mimeType, description);
+            /* rowValuesOnly.pictures = Picture.fromFullData(data, type, mimeType, description); */
+            rowValuesOnly.pictures = { data, type, mimeType, description };
+            /* console.log('rowValuesOnly: ', rowValuesOnly.pictures); */
+
+            /*   rowValuesOnly.pictures = Picture.fromFullData(data, type, mimeType, description);
+            console.log('pic: ', rowValuesOnly.pictures); */
+          }
+
+          /* console.log(rowValuesOnly); */
+          a.updates = { ...rowValuesOnly, ...a.updates };
+          /* console.log('a.updates: ', a.updates); */
+
+          myFile.removeTags(4294967295);
+          /*  throw new Error('ending update');
+          console.log('cant save: ', e.message); */
+        }
         id3v2 = myFile.getTag(TagTypes.Id3v2, true);
         id3v2.version = 3;
       }
@@ -271,17 +323,25 @@ const updateTags = async (db, arr) => {
             errors.push({ track_id: a.track_id, id: a.id, error: 'Invalid image' });
           }
         } else if (key === 'pictures') {
-          if (value && value.data) {
+          /* if (value && value.data) {
             const pic = Picture.fromFullData(
               ByteVector.fromByteArray(value.data),
               value.type ?? PictureType.FrontCover,
               value.format,
               value.description ?? ''
-            );
-            myFile.tag.pictures = [pic]; // <-- CORRECT
-          } else {
+            ); */
+          console.log(value.data, '--', value.type, '--', value.mimeType, '--', value.description);
+
+          const pic = Picture.fromFullData(
+            value.data,
+            value.type,
+            value.mimeType,
+            value.description
+          );
+          myFile.tag.pictures = [pic]; // <-- CORRECT
+          /*     } else {
             myFile.tag.pictures = []; // optional clear
-          }
+          } */
         } else {
           try {
             if (value === '-' && key === 'performersRole') {

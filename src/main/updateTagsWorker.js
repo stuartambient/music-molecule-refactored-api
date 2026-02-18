@@ -31,6 +31,40 @@ const getRoots = () => {
 
 getRoots();
 
+export function getRow(rowId) {
+  const row = db.prepare(`SELECT albumArtists,
+                                 album,
+                                 beatsPerMinute,
+                                 composers,
+                                 conductor,
+                                 copyright,
+                                 comment,
+                                 disc,
+                                 discCount,
+                                 description,
+                                 genres,
+                                 isCompilation,
+                                 isrc,
+                                 lyrics,
+                                 performers,
+                                 pictures,
+                                 publisher,
+                                 remixedBy,
+                                 replayGainAlbumGain,
+                                 replayGainAlbumPeak,
+                                 replayGainTrackGain,
+                                 replayGainTrackPeak,
+                                 title,
+                                 track,
+                                 trackCount,
+                                 year,
+                                 encoder,
+                                 encoderSettings,
+                                 encodedBy FROM "audio-tracks" WHERE track_id = ?`);
+  const rowData = row.get(rowId);
+  return rowData;
+}
+
 const findRoot = (file) => {
   for (const root of newestRoots) {
     if (file.startsWith(root)) {
