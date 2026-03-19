@@ -7,7 +7,6 @@ import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
 
 export function restoreReadOnlyWindows(filePath) {
-  console.log('restore: ', filePath);
   return new Promise((resolve, reject) => {
     execFile('attrib', ['+R', filePath], (err) => {
       if (err) {
@@ -43,7 +42,6 @@ export async function ensureWritableWithStatus(filePath) {
 
   // 1️⃣ Check real OS write permission
   try {
-    console.log('constants?', fs.constants?.W_OK);
     await fsp.access(filePath, fs.constants.W_OK);
   } catch (err) {
     if (err?.code === 'ENOENT') {

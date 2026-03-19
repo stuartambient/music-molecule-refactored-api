@@ -64,6 +64,7 @@ function App() {
     const handleLoadedMetadata = (/* e */) => {
       dispatch({ type: 'duration', duration: convertDuration(audio) });
       dispatch({ type: 'set-delay', delay: true });
+      console.log('nextTrack: ', state.nextTrack, 'prevTrack: ', state.prevTrack);
     };
 
     const handleError = (e) => {
