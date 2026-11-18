@@ -242,7 +242,7 @@ export async function parseMeta(files, op, findRoot) {
         audiotrack: filePath /* op === 'new' ? file : file.audiotrack, */,
         modified: fileStats.mtimeMs || null,
         birthtime: fileStats.birthtime.toISOString() || null,
-        like: 0,
+        ...(op === 'new' ? { like: 0 } : {}),
         albumArtists: checkDataType(myFile.tag.albumArtists),
         album: checkDataType(myFile.tag.album),
         audioBitrate: checkDataType(myFile.properties.audioBitrate),
@@ -308,6 +308,7 @@ export async function parseMeta(files, op, findRoot) {
         audiotrack: op === 'new' ? file : file.id,
         modified: stats?.mtimeMs ?? null,
         birthtime: stats?.birthtime?.toISOString() ?? null,
+        ...(op === 'new' ? { like: 0 } : {}),
         error: error.toString()
       });
     }
