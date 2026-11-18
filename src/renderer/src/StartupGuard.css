@@ -24,3 +24,15 @@
 .repair-screen-dialog button {
   margin-top: 1.5rem; /* or 2rem for more space */
 }
+
+.repair-screen-dialog .panel {
+  box-sizing: border-box;
+  max-height: 90vh;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}
+
+.repair-screen-dialog button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}

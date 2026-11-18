@@ -1,88 +1,96 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import Database from 'better-sqlite3';
-import { paths } from './paths.js';
-import { getDB } from './connection';
+import { dbPath, backupDirectory, closeDB } from './connection.js';
+import { dbHealthCheck } from './dbMaintenance.js';
 
-function integrityOK(dbPath) {
+async function stageBackup(backup, stagedPath) {
+  let source;
+  let staged;
   try {
-    const db = new Database(dbPath);
-    const result = db.prepare(`PRAGMA integrity_check`).get();
-    db.close();
-    return result.integrity_check === 'ok';
-  } catch {
+    source = new Database(backup, { readonly: true, fileMustExist: true });
+    if (source.pragma('integrity_check', { simple: true }) !== 'ok' || !dbHealthCheck(source))
+      return false;
+    await source.backup(stagedPath);
+    staged = new Database(stagedPath, { fileMustExist: true });
+    staged.pragma('journal_mode = DELETE');
+    return dbHealthCheck(staged);
+  } catch (error) {
+    console.error('Unable to use backup:', backup, error.message);
     return false;
+  } finally {
+    staged?.close();
+    source?.close();
   }
 }
 
-export function restoreLatestBackup() {
-  const prod = import.meta.env.PROD;
-
-  const backupDir = prod
-    ? paths.backups
-    : path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_BACKUP_DEV, 'backups');
-
-  const dbDir = prod
-    ? paths.local
-    : path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_BACKUP_DEV);
-  const dbPath = path.join(dbDir, 'music.db'); // adjust if your DB file path differs
-  console.log('dbDir: ', dbDir, 'dbPath: ', dbPath, 'backupDir: ', backupDir);
-
-  // 1) Locate backup directory
-  if (!fs.existsSync(backupDir)) {
-    return { restored: false, error: 'Backup directory missing' };
-  }
-
-  // 2) Get backup files
-  const backups = fs
-    .readdirSync(backupDir)
-    .filter((f) => f.startsWith('backup-') && f.endsWith('.db'))
-    .sort() // timestamps sort lexicographically -> newest last
-    .map((f) => path.join(backupDir, f));
-
-  if (backups.length === 0) {
-    return { restored: false, error: 'No backup files found' };
-  }
-
-  const newestBackup = backups[backups.length - 1];
-
-  // 3) Close active DB if open (renderer must NOT be using it now)
-  // Force close the actual shared DB connection if open
+export async function restoreLatestBackup() {
+  let stagingDirectory;
+  const moved = [];
   try {
-    /* const { getDB } = require('./connection.js'); */ // or import if ESM
-    const liveDB = getDB?.();
-    if (liveDB) liveDB.close();
-  } catch (e) {
-    console.warn('No live DB to close, continuing restore');
+    if (!fs.existsSync(backupDirectory)) {
+      return { restored: false, error: 'Backup directory missing.' };
+    }
+    const backups = fs
+      .readdirSync(backupDirectory)
+      .filter((file) => file.startsWith('backup-') && file.endsWith('.db'))
+      .sort()
+      .reverse()
+      .map((file) => path.join(backupDirectory, file));
+    if (!backups.length) return { restored: false, error: 'No backup files found.' };
+
+    fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+    stagingDirectory = fs.mkdtempSync(path.join(path.dirname(dbPath), '.catalog-restore-'));
+    const stagedPath = path.join(stagingDirectory, 'music.db');
+    let selectedBackup;
+    for (const backup of backups) {
+      if (await stageBackup(backup, stagedPath)) {
+        selectedBackup = backup;
+        break;
+      }
+      for (const suffix of ['', '-wal', '-shm']) {
+        if (fs.existsSync(stagedPath + suffix)) fs.unlinkSync(stagedPath + suffix);
+      }
+    }
+    if (!selectedBackup) {
+      return { restored: false, error: 'No healthy music catalog backup was found.' };
+    }
+
+    closeDB();
+    const preservedPath = dbPath + '.before-restore-' + path.basename(stagingDirectory);
+    for (const suffix of ['', '-wal', '-shm']) {
+      const original = dbPath + suffix;
+      if (fs.existsSync(original)) {
+        const preserved = preservedPath + suffix;
+        fs.renameSync(original, preserved);
+        moved.push({ original, preserved });
+      }
+    }
+    fs.renameSync(stagedPath, dbPath);
+    return { restored: true, backup: selectedBackup, previousDatabase: moved[0]?.preserved };
+  } catch (error) {
+    try {
+      for (const { original, preserved } of moved.reverse()) fs.renameSync(preserved, original);
+    } catch (rollbackError) {
+      return {
+        restored: false,
+        error:
+          error.message + '. Restoring the previous files also failed: ' + rollbackError.message
+      };
+    }
+    return { restored: false, error: error.message };
+  } finally {
+    if (stagingDirectory) {
+      // Only remove files in the staging directory created by this operation.
+      const stagedPath = path.join(stagingDirectory, 'music.db');
+      try {
+        for (const suffix of ['', '-wal', '-shm']) {
+          if (fs.existsSync(stagedPath + suffix)) fs.unlinkSync(stagedPath + suffix);
+        }
+        fs.rmdirSync(stagingDirectory);
+      } catch (error) {
+        console.error('Unable to remove restore staging directory:', error.message);
+      }
+    }
   }
-
-  try {
-    fs.accessSync(dbPath, fs.constants.W_OK);
-    console.log('DB file is writable');
-  } catch {
-    console.warn('DB file is NOT writeable — still locked!');
-  }
-
-  // 4) Move corrupted DB aside
-  /*   if (fs.existsSync(dbPath)) {
-    const corruptName = `music-corrupt-${Date.now()}.db`;
-    fs.renameSync(dbPath, path.join(dbDir, corruptName));
-  } */
-
-  // 5) Copy backup to DB path
-  console.log('newest: ', newestBackup, 'dbPath: ', dbPath);
-  fs.copyFileSync(newestBackup, dbPath);
-
-  // 6) Remove WAL & SHM in case they exist from corrupt run
-  ['music.db-wal', 'music.db-shm'].forEach((f) => {
-    const p = path.join(dbDir, f);
-    if (fs.existsSync(p)) fs.unlinkSync(p);
-  });
-
-  // 7) Verify integrity
-  if (!integrityOK(dbPath)) {
-    return { restored: false, error: 'Restored DB failed integrity check' };
-  }
-
-  return { restored: true, backup: newestBackup };
 }

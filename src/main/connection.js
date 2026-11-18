@@ -1,57 +1,56 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import { paths } from './paths.js';
 import Database from 'better-sqlite3';
 
-const prod = import.meta.env.PROD;
-/* const isDev = import.meta.env.MODE === 'development'; */
+export const dbPath = import.meta.env.PROD
+  ? paths.db
+  : path.resolve(process.cwd(), import.meta.env.MAIN_VITE_DB_PATH_DEV || 'src/db/music.db');
 
-const dbPath = prod ? paths.db : path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_PATH_DEV);
+export const backupDirectory = import.meta.env.PROD
+  ? paths.backups
+  : path.resolve(process.cwd(), import.meta.env.MAIN_VITE_DB_BACKUP_DEV || 'src/db', 'backups');
 
 let db = null;
 
 export function openDatabase() {
-  try {
-    db = new Database(dbPath);
-    db.pragma('journal_mode = WAL');
-    db.pragma('synchronous = normal');
-    db.pragma('temp_store = memory');
-    db.prepare('PRAGMA main.wal_checkpoint(TRUNCATE);').run();
+  if (db?.open) return db;
 
+  let opened;
+  try {
+    fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+    opened = new Database(dbPath);
+    opened.pragma('journal_mode = WAL');
+    opened.pragma('synchronous = normal');
+    opened.pragma('temp_store = memory');
+    db = opened;
     return db;
-  } catch (err) {
-    console.error('❌ Failed to open DB', err.message);
-    return null;
+  } catch (error) {
+    opened?.close();
+    db = null;
+    throw error;
   }
 }
 
-/* const extensionsPath = prod
-  ? path.join(resourcesPath, 'extensions')
-  : path.join(process.cwd(), 'src/db/extensions');
-
-db.loadExtension(path.join(extensionsPath, 'unicode')); */
-
 export function getDB() {
-  if (!db) db = new Database(dbPath);
+  if (!db?.open) throw new Error('The music database is not open.');
   return db;
 }
 
 export function closeDB() {
-  return db.close();
+  if (db?.open) db.close();
+  db = null;
 }
 
 process.on('exit', () => {
   try {
-    if (db && db.open) {
-      // ← only run if still open
-      db.pragma('optimize');
-      db.close();
-      console.log('Database optimized and closed cleanly.');
-    } else {
-      console.log('DB already closed — skipping optimize/close.');
-    }
-  } catch (err) {
-    console.error('Error during DB cleanup:', err);
+    if (db?.open) db.pragma('optimize');
+  } catch (error) {
+    console.error('Database optimization failed:', error);
+  } finally {
+    closeDB();
   }
 });
 
-export default db;
+// Keep existing query modules connected to the current handle after recovery.
+export { db as default };

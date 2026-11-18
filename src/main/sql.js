@@ -66,10 +66,12 @@ ON "audio-tracks"(audiotrack COLLATE NOCASE);
 const createRootsTable = `CREATE TABLE IF NOT EXISTS roots ( id INTEGER PRIMARY KEY AUTOINCREMENT, root TEXT UNIQUE)`;
 
 const initializeDatabase = () => {
-  db.exec(createAudioTracks);
-  db.exec(createAlbumsTable);
-  db.exec(createRootsTable);
-  db.exec(createIndexAudioTrack);
+  db.transaction(() => {
+    db.exec(createAudioTracks);
+    db.exec(createAlbumsTable);
+    db.exec(createRootsTable);
+    db.exec(createIndexAudioTrack);
+  })();
 };
 
 const getAlbumsNullImg = () => {

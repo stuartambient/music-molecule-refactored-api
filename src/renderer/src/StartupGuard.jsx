@@ -1,55 +1,92 @@
 import { useEffect, useState } from 'react';
+import useIpcEvent from './hooks/useIpcEvent';
 import './StartupGuard.css';
 
-async function onRestore() {
-  const res = await window.ipcApi.invoke('db-restore');
-  if (res.restored) {
-    alert('Database restored. Restarting app…');
-    /*  window.ipcApi.send('recovery-complete'); */
-    /* setTimeout(() => window.location.reload(), 1000); */
-    /*  setStatus('ok'); */
-    window.ipcApi.send('recovery-complete');
-    /* setTimeout(() => window.location.reload(), 2000); */
-  } else {
-    alert('Restore failed: ' + res.error);
-  }
-}
+function RepairScreen({ reason }) {
+  const [message, setMessage] = useState('Attempting to repair the music catalog…');
+  const [busy, setBusy] = useState(true);
 
-function RepairScreen() {
-  const [msg, setMsg] = useState('Attempting repair...');
+  useIpcEvent('recovery-error', (error) => {
+    setMessage(error);
+    setBusy(false);
+  });
 
   useEffect(() => {
-    window.ipcApi.invoke('db-repair').then((res) => {
-      if (res.fixed) window.ipcApi.send('app-restart');
-      else setMsg('Unable to repair. Please restore backup.');
-    });
+    let active = true;
+    window.ipcApi
+      .invoke('db-repair')
+      .then((result) => {
+        if (!active) return;
+        if (result.fixed) {
+          setMessage('Catalog repaired. Opening Music Molecule…');
+          window.ipcApi.send('recovery-complete');
+        } else {
+          setMessage(result.error || 'Unable to repair the catalog. Restore a backup to continue.');
+          setBusy(false);
+        }
+      })
+      .catch((error) => {
+        if (active) {
+          setMessage(error.message);
+          setBusy(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
   }, []);
+
+  const restore = async () => {
+    setBusy(true);
+    setMessage('Looking for a healthy catalog backup…');
+    try {
+      const result = await window.ipcApi.invoke('db-restore');
+      if (result.restored) {
+        setMessage('Catalog restored. Opening Music Molecule…');
+        window.ipcApi.send('recovery-complete');
+      } else {
+        setMessage(result.error || 'The catalog could not be restored.');
+        setBusy(false);
+      }
+    } catch (error) {
+      setMessage(error.message);
+      setBusy(false);
+    }
+  };
 
   return (
     <div className="repair-screen-dialog">
       <div className="panel">
-        <p>{msg}</p>
-        {!msg.startsWith('Attempting') && (
-          <button onClick={onRestore}>Restore Latest Backup</button>
-        )}
+        <h2>Catalog recovery</h2>
+        <p>{reason}</p>
+        <p role="status">{message}</p>
+        <button onClick={restore} disabled={busy}>
+          Restore Latest Healthy Backup
+        </button>
       </div>
     </div>
   );
 }
 
 export function StartupGuard({ children }) {
-  const [status, setStatus] = useState('checking'); // checking | ok | repair | fail
+  const [status, setStatus] = useState(null);
 
   useEffect(() => {
-    window.ipcApi.invoke('db-check').then((result) => {
-      if (result.ok) setStatus('ok');
-      else setStatus('repair');
-    });
+    let active = true;
+    window.ipcApi
+      .invoke('db-check')
+      .then((result) => {
+        if (active) setStatus(result);
+      })
+      .catch((error) => {
+        if (active) setStatus({ ok: false, error: error.message });
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
-  if (status === 'checking') return <div>Checking database...</div>;
-
-  if (status === 'repair') return <RepairScreen />;
-
-  return children; // load real app
+  if (!status) return <div role="status">Checking music catalog…</div>;
+  if (!status.ok) return <RepairScreen reason={status.error} />;
+  return children;
 }
