@@ -360,16 +360,19 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
   };
 
   const handleUpdatedRow = (result) => {
-    console.log('rescanned-track: ', result);
     const gridApi = gridRef.current?.api;
+    if (!gridApi) return;
+    const row = gridApi.getRowNode(result.id);
     if (result.status === 'starting') {
-      const row = gridApi.getRowNode(result.id);
-      return flashRow(row.rowIndex);
+      if (row?.rowIndex != null) flashRow(row.rowIndex);
+      return;
     }
 
-    gridApi.applyTransaction({
-      update: [result.rescanned]
-    });
+    if (result.rescanned?.track_id) {
+      gridApi.applyTransaction({ update: [result.rescanned] });
+    } else if (row && result.error) {
+      row.setDataValue('error', result.error);
+    }
   };
 
   useIpcEvent('updated-tags', handleTagUpdateStatus, 'tagEditApi');

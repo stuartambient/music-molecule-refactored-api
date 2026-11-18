@@ -28,7 +28,7 @@ import createUpdateMetadataWorker from './updateMetadataWorker?nodeWorker';
 import createLoadPlaylistWorker from './loadPlaylistWorker?nodeWorker';
 import createUpdateTagFramesWorker from './updateTagFramesWorker?nodeWorker';
 import createRescanTrackErrorWorker from './rescanTrackErrorWorker?nodeWorker';
-import { getDB, backupDirectory } from './connection';
+import { getDB, backupDirectory, dbPath } from './connection';
 import { initializeCatalog, repairCatalog } from './catalogStartup.js';
 import axios from 'axios';
 /* import { simulateCorruption } from './simulateDbCorruption.js'; */
@@ -1210,36 +1210,41 @@ ipcMain.handle('update-tags', async (event, arr) => {
   }
 });
 
-ipcMain.handle('rescan-track-error', async (event, track, id) => {
-  console.log('handler: ', track, id);
+ipcMain.handle('rescan-track-error', (event, track, id) => {
+  const sender = event.sender;
+  const sendResult = (result) => {
+    if (!sender.isDestroyed()) sender.send('rescanned-track', result);
+  };
 
-  try {
-    const senderWebContents = event.sender;
-    const senderWindow = BrowserWindow.fromWebContents(senderWebContents);
-    const targetWindow = BrowserWindow.fromId(senderWindow.id);
-    /* targetWindow.webContents.send('rescanned-track', { status: 'starting' }); */
-    const workerPath = process.resourcesPath;
-    const worker = await createRescanTrackErrorWorker({ workerData: { track, id, workerPath } });
-    targetWindow.webContents.send('rescanned-track', { status: 'starting', id: id });
-    /* console.log('Worker resolved to:', worker.threadId); */
-    worker
-      .on('message', (msg) => {
-        if (msg.type === 'completed') {
-          /* console.log('Worker finished', msg.result); */
-          targetWindow.webContents.send('rescanned-track', msg.result);
-        }
-        /* if (m?.done) worker.terminate(); */
-      })
-      .on('error', (err) => console.error('update tag frames error:', err))
-      .on('exit', (code) => {
-        if (code !== 0) console.error(`Update Tag Frames Worker stopped with exit code ${code}`);
-      })
-      .postMessage({ cmd: 'start' });
-  } catch (error) {
-    console.error('Update Tag Frames Worker encountered an error:', error);
+  sendResult({ status: 'starting', id });
+  return new Promise((resolve) => {
+    let completed = false;
+    let workerResult;
+    const finish = (result) => {
+      if (completed) return;
+      completed = true;
+      sendResult(result);
+      resolve(result);
+    };
+    const fail = (error) => finish({ id, processed: track, success: false, error });
 
-    console.log('Handling subsequent code after worker error.');
-  }
+    try {
+      const worker = createRescanTrackErrorWorker({ workerData: { track, id, dbPath } });
+      worker.on('message', (message) => {
+        if (message.type === 'completed') workerResult = message.result;
+        if (message.type === 'fatal') fail(message.error);
+      });
+      worker.once('error', (error) => fail(error.message));
+      worker.once('exit', (code) => {
+        if (code !== 0) fail(`Rescan worker stopped with exit code ${code}.`);
+        else if (workerResult) finish(workerResult);
+        else fail('Rescan worker exited without returning a result.');
+      });
+      worker.postMessage({ cmd: 'start' });
+    } catch (error) {
+      fail(error.message);
+    }
+  });
 });
 
 ipcMain.on('show-context-menu', (event, id, type, path = undefined) => {

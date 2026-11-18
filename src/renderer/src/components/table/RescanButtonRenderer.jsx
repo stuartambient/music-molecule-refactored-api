@@ -1,32 +1,38 @@
+import { useState } from 'react';
 import { IoMdRefreshCircle } from 'react-icons/io';
 import './styles/RescanButtonRenderer.css';
 
-const RescanButtonRenderer = (props) => {
-  const { data, context } = props;
-  /* console.log('rescanButtonRenderer: ', data.audiotrack); */
-
+const RescanButtonRenderer = ({ data }) => {
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState('');
   if (!data?.error) return null;
-  /* console.log('data error: ', data.error); */
 
-  async function handleRescanTrack(track, id) {
-    await window.tagEditApi.invoke('rescan-track-error', track, id);
+  async function handleRescanTrack() {
+    setPending(true);
+    setError('');
+    try {
+      await window.tagEditApi.invoke('rescan-track-error', data.audiotrack, data.track_id);
+    } catch (failure) {
+      setError(failure.message);
+    } finally {
+      setPending(false);
+    }
   }
-
-  // No error → render nothing
-  /*   if (!error) return null; */
 
   return (
     <div className="rescan-cell">
       <button
         type="button"
         className="rescan-btn"
-        onClick={() => handleRescanTrack(data.audiotrack, data.track_id)}
-        title="Rescan file"
+        onClick={handleRescanTrack}
+        disabled={pending}
+        aria-busy={pending}
+        title={pending ? 'Rescanning file…' : 'Rescan file'}
         aria-label="Rescan"
       >
         <IoMdRefreshCircle />
       </button>
-      <span className="rescan-msg">{data.error}</span>
+      <span className="rescan-msg">{error || data.error}</span>
     </div>
   );
 };
