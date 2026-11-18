@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import { useAudioPlayer } from '../mainAudioContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import useIpcEvent from '../hooks/useIpcEvent';
 import StatusLoader from './table/StatusLoader';
 import { AiOutlineMenu, AiOutlineInfoCircle } from 'react-icons/ai';
@@ -15,21 +15,29 @@ const MainNav = ({ onClick }) => {
   const { state, dispatch } = useAudioPlayer();
   const [updateOption, setUpdateOption] = useState(null);
   const [updateResults, setUpdateResults] = useState(null);
+  const resultTimer = useRef(null);
+
+  useEffect(() => () => clearTimeout(resultTimer.current), []);
 
   const parseUpdateType = (type, result) => {
     console.log('type: ', type, 'update-results: ', updateResults);
     switch (type) {
       case 'files':
-      case 'folders':
-        return result.nochange
+      case 'folders': {
+        const summary = result.nochange
           ? `${type} update completed, no changes`
           : `${type} new: ${result.new} del: ${result.deleted}`;
+        const skipped = result.skippedRoots?.map(({ root }) => root);
+        return skipped?.length
+          ? `${summary}. Skipped unreadable roots: ${skipped.join(', ')}`
+          : summary;
+      }
 
       case 'folders-error':
-        return 'folder update error';
+        return `Folder update failed. ${result?.result || 'Please check the terminal for details.'}`;
 
       case 'files-error':
-        return 'file update error';
+        return `File update failed. ${result?.result || 'Please check the terminal for details.'}`;
 
       case 'covers-error':
         return 'cover update error';
@@ -63,9 +71,10 @@ const MainNav = ({ onClick }) => {
 
   function handleUpdate(type, result) {
     console.log('type:', type, 'result:', result);
+    clearTimeout(resultTimer.current);
     setUpdateResults(parseUpdateType(type, result));
     setUpdateOption(null);
-    setTimeout(() => setUpdateResults(null), 4000);
+    resultTimer.current = setTimeout(() => setUpdateResults(null), 15000);
   }
 
   /*   useEffect(() => {
@@ -197,6 +206,19 @@ const MainNav = ({ onClick }) => {
 
   return (
     <nav className={mainNav}>
+      {updateResults && !state.minimalmode && (
+        <div className="scan-result" role="status" aria-live="polite">
+          <span className="scan-result-message">{updateResults}</span>
+          <button
+            type="button"
+            className="scan-result-dismiss"
+            aria-label="Dismiss scan result"
+            onClick={() => setUpdateResults(null)}
+          >
+            ×
+          </button>
+        </div>
+      )}
       {!state.minimalmode && (
         <>
           <ul className="main-nav--left" style={{ justifySelf: 'start' }}>
@@ -242,20 +264,6 @@ const MainNav = ({ onClick }) => {
             updateOption === 'theme-preferences' ? null : (
               <li className="status-loader-container">
                 <StatusLoader config="status-loader nav" />
-              </li>
-            )}
-            {updateResults && !state.library && (
-              <li className="results-container">
-                <span style={{ color: 'var(--list-font-color', whiteSpace: 'nowrap' }}>
-                  {updateResults}
-                </span>
-              </li>
-            )}
-            {updateResults && state.library && (
-              <li>
-                <span style={{ color: 'var(--list-font-color', whiteSpace: 'nowrap' }}>
-                  Completed
-                </span>
               </li>
             )}
           </ul>

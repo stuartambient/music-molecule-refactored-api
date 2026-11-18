@@ -2,9 +2,9 @@ import { parentPort, workerData } from 'worker_threads';
 import { promises as fsPromises } from 'node:fs';
 import path from 'node:path';
 import { v4 as uuidv4 } from 'uuid';
-/* import fg from 'fast-glob'; */
 import Database from 'better-sqlite3';
 import searchCover from './utility/searchCover.js';
+import { findScanRoot, scanRoots } from './utility/scanRoots.js';
 
 const mode = import.meta.env.MODE;
 const dbPath =
@@ -69,25 +69,15 @@ const parseNewEntries = (newEntries) => {
 
   for (const entry of newEntries) {
     const id = uuidv4();
-    let name, root, fullpath;
-    fullpath = entry;
-    //birthtime = getStats(entry);
-    for (const r of newestRoots) {
-      if (entry.startsWith(r)) {
-        const newStr = entry.replace(`${r}/`, '');
-        root = r;
-        name = newStr;
-      }
-    }
-
-    /*console.log(birthtime, '====', modified); */
+    const root = findScanRoot(entry, newestRoots);
+    const name = path.basename(entry);
     const cover = searchCover(entry);
     /* console.log('name: ' name) */
     const newAlbum = {
       id,
       root,
       name,
-      fullpath
+      fullpath: entry
     };
 
     if (cover) {
@@ -118,128 +108,30 @@ async function addTimesToAlbums(albums) {
   return albumsWithTimes;
 }
 
-const difference = (setA, setB) => {
-  const _difference = new Set(setA);
-  for (const elem of setB) {
-    _difference.delete(elem);
-  }
-  return _difference;
-};
-
-/* const checkAgainstEntries = (data) => {
-  return new Promise((resolve, reject) => {
-    let status = { deleted: 0, new: 0, nochange: false };
-
-    try {
-      const dbAlbums = getAlbums();
-      const dbAlbumsFullpath = dbAlbums.map((album) => album.fullpath);
-      const allAlbums = new Set(data);
-      const dbEntries = new Set(dbAlbumsFullpath);
-
-      const newEntries = Array.from(difference(allAlbums, dbEntries));
-      const missingEntries = Array.from(difference(dbEntries, allAlbums));
-
-      if (newEntries.length > 0) {
-        parseNewEntries(newEntries)
-          .then((newAlbums) => {
-            insertAlbums(newAlbums);
-          })
-          .catch((error) => {
-            console.error('Error:', error);
-          });
-        status.new = newEntries.length;
-      }
-      if (missingEntries.length > 0) {
-        deleteAlbums(missingEntries);
-        status.deleted = missingEntries.length;
-      }
-      if (!newEntries.length && !missingEntries.length) {
-        status.nochange = true;
-      }
-      return resolve(status);
-    } catch (error) {
-      console.error(error.message);
-      reject(error);
-    }
-  });
-}; */
-
-async function checkAgainstEntries(data) {
-  const status = { deleted: 0, new: 0, nochange: false };
-
-  const dbAlbums = getAlbums();
-  const dbAlbumsFullpath = dbAlbums.map((a) => a.fullpath);
-
-  const allAlbums = new Set(data);
-  const dbEntries = new Set(dbAlbumsFullpath);
-
-  const newEntries = Array.from(difference(allAlbums, dbEntries));
-  const missingEntries = Array.from(difference(dbEntries, allAlbums));
-
-  if (newEntries.length > 0) {
-    const newAlbums = await parseNewEntries(newEntries);
-    await insertAlbums(newAlbums);
-    status.new = newEntries.length;
-  }
-
-  if (missingEntries.length > 0) {
-    await deleteAlbums(missingEntries);
-    status.deleted = missingEntries.length;
-  }
-
-  if (!newEntries.length && !missingEntries.length) {
-    status.nochange = true;
-  }
-
-  return status;
+async function listFolders(root) {
+  const entries = await fsPromises.readdir(root, { withFileTypes: true });
+  return entries.filter((entry) => entry.isDirectory()).map((entry) => `${root}/${entry.name}`);
 }
 
-const topDirs = async (root) => {
-  /*  const entries = await fsPromises.readdir(root);
-  return entries.map((entry) => `${root}/${entry}`); */
+async function processFolders() {
+  const scan = await scanRoots(newestRoots, listFolders);
+  const { added, missing } = scan.compare(getAlbums().map((row) => row.fullpath));
 
-  try {
-    const entries = await fsPromises.readdir(root, { withFileTypes: true });
+  if (added.length) insertAlbums(await parseNewEntries(added));
+  if (missing.length) await deleteAlbums(missing);
 
-    return entries
-      .filter((dirent) => dirent.isDirectory())
-      .map((dirent) => `${root}/${dirent.name}`);
-  } catch (err) {
-    // Root itself might be missing, unreadable, or not a directory
-    console.error(`Skipping root ${root}:`, err.message);
-    return [];
-  }
-};
-
-const run = async (cb) => {
-  let dirs = [];
-
-  for (const root of newestRoots) {
-    /* console.log('root: ', root); */
-    const tmp = await topDirs(root);
-    dirs = [...dirs, ...tmp];
-  }
-  Promise.resolve(checkAgainstEntries(dirs)).then((response) => cb(response));
-  /* return cb(dirs) */
-};
-
-const initAlbums = async () => {
-  /* run((result) => res.status(200).send({ 'album-update': result })) */
-  return new Promise((res, rej) => {
-    try {
-      run((result) => res(result));
-    } catch (error) {
-      console.error(error.message);
-      rej(error.message);
-    }
-  });
-};
+  return {
+    new: added.length,
+    deleted: missing.length,
+    nochange: !added.length && !missing.length,
+    skippedRoots: scan.skippedRoots
+  };
+}
 
 if (!parentPort) throw Error('IllegalState');
-parentPort.on('message', async (message) => {
-  console.log('message: ', message);
+parentPort.on('message', async () => {
   try {
-    const result = await initAlbums();
+    const result = await processFolders();
     parentPort.postMessage({ result });
   } catch (error) {
     parentPort.postMessage({ error: error.message });

@@ -310,7 +310,8 @@ async function updateFolders() {
     const workerPath = paths.db;
     await createUpdateFoldersWorker({ workerData: workerPath })
       .on('message', (message) => {
-        console.log('updateFolders Message: ', message.result);
+        if (message.error) console.error('Scheduled folder update failed:', message.error);
+        else console.log('updateFolders Message: ', message.result);
       })
       .on('error', (err) => {
         console.error('updateFoldera Worker error:', err);
@@ -335,7 +336,8 @@ async function updateFiles() {
     const workerPath = paths.db;
     await createUpdateFilesWorker({ workerData: workerPath })
       .on('message', (message) => {
-        console.log('updateFiles Message: ', getObjectWithLengths(message.result));
+        if (message.error) console.error('Scheduled file update failed:', message.error);
+        else console.log('updateFiles Message: ', getObjectWithLengths(message.result));
       })
       .on('error', (err) => {
         console.error('Worker error:', err);
@@ -779,8 +781,10 @@ ipcMain.handle('update-folders', async () => {
     const workerPath = paths.db;
     await createUpdateFoldersWorker({ workerData: workerPath })
       .on('message', (message) => {
-        //console.log('message from worker: ', message);
-        console.log('update-folders message: ', message);
+        if (message.error) {
+          mainWindow.webContents.send('update-error', 'folders-error', { result: message.error });
+          return;
+        }
         mainWindow.webContents.send('update-complete', 'folders', message.result);
       })
       .on('error', (err) => {
@@ -806,7 +810,8 @@ function getObjectWithLengths(obj) {
   return {
     new: Array.isArray(obj.new) ? obj.new.length : 0,
     deleted: Array.isArray(obj.deleted) ? obj.deleted.length : 0,
-    nochange: obj.nochange
+    nochange: obj.nochange,
+    skippedRoots: obj.skippedRoots
   };
 }
 
@@ -816,7 +821,10 @@ ipcMain.handle('update-files', async () => {
     const workerPath = paths.db;
     await createUpdateFilesWorker({ workerData: workerPath })
       .on('message', (message) => {
-        //console.log('message from worker: ', message);
+        if (message.error) {
+          mainWindow.webContents.send('update-error', 'files-error', { result: message.error });
+          return;
+        }
         mainWindow.webContents.send(
           'update-complete',
           'files',
