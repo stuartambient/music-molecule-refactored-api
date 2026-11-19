@@ -1,86 +1,130 @@
 import { BrowserWindow, ipcMain } from 'electron';
 import { is } from '@electron-toolkit/utils';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { mainWindow, theme } from './index.js';
 
 const windows = new Map();
+const preloadDirectory = path.join(path.dirname(fileURLToPath(import.meta.url)), '../preload');
 
-function createOrUpdateChildWindow(name, type, config, data /* theme */) {
-  /* console.log('theme: ', theme); */
-  let window = windows.get(name);
-  if (window) {
-    console.log(`Window ${name} already exists. Sending data to it.`);
-    return window.webContents.send('send-to-child', data);
-  }
-
-  if (!window) {
-    window = new BrowserWindow({
-      width: config.width,
-      height: config.height,
-      show: config.show,
-      parent: windows.get(config.parent) || null,
-      modal: !!config.parent,
-      resizable: config.resizable,
-      webPreferences: {
-        preload: path.join(__dirname, `../preload/${config.preload}.js`),
-        additionalArguments: [`--theme=${theme}`],
-        sandbox: config.sandbox,
-        webSecurity: config.webSecurity,
-        contextIsolation: config.contextIsolation,
-        nodeIntegration: false
-      }
-    });
-    /* window.setBackgroundColor('blueviolet'); */
-    window.removeMenu();
-
-    const url =
-      is.dev && process.env['ELECTRON_RENDERER_URL']
-        ? `${process.env['ELECTRON_RENDERER_URL']}/${config.preload}.html`
-        : path.join(__dirname, `../renderer/${config.preload}.html`);
-
-    is.dev ? window.loadURL(url) : window.loadFile(url);
-  }
-
-  window.on('closed', () => {
-    console.log(`Window ${name} closed`);
-    windows.delete(name);
-    mainWindow.webContents.send('window-closed', name);
-  });
-
-  windows.set(name, window);
-
-  let readyToShow = false;
-  let childReady = false;
-
-  const sendDataIfReady = () => {
-    if (readyToShow && childReady) {
-      console.log('=====> Both events occurred. Sending data...');
-      window.webContents.send('send-to-child', data);
-    }
-  };
-
-  window.once('ready-to-show', () => {
-    console.log('=====> ready-to-show');
-    readyToShow = true;
-    window.show();
-    sendDataIfReady();
-  });
-
-  ipcMain.removeAllListeners('child-ready'); // Clear any previous listeners
-
-  ipcMain.once('child-ready', () => {
-    console.log('=====> Child window is ready.');
-    childReady = true;
-    sendDataIfReady();
-  });
+function deliverPendingData(entry) {
+  if (
+    !entry.readyToShow ||
+    !entry.rendererReady ||
+    !entry.pending ||
+    entry.closing ||
+    entry.window.isDestroyed()
+  )
+    return;
+  entry.window.webContents.send('send-to-child', entry.data);
+  entry.pending = false;
 }
 
-function getWindow(win) {
-  return windows.get(win);
+// A ready message releases data only for the top-level renderer that sent it.
+ipcMain.on('child-ready', (event) => {
+  const entry = [...windows.values()].find(({ window }) => window.webContents === event.sender);
+  if (
+    !entry ||
+    entry.window.isDestroyed() ||
+    entry.closing ||
+    event.senderFrame !== entry.window.webContents.mainFrame
+  )
+    return;
+  entry.rendererReady = true;
+  deliverPendingData(entry);
+});
+
+function sendToChild(name, data) {
+  const entry = windows.get(name);
+  if (!entry || entry.closing || entry.window.isDestroyed()) return false;
+  entry.data = data;
+  entry.hasData = true;
+  entry.pending = true;
+  deliverPendingData(entry);
+  return true;
+}
+
+function createOrUpdateChildWindow(name, type, config, data) {
+  const existing = windows.get(name);
+  if (existing?.closing && !existing.window.isDestroyed()) {
+    return new Promise((resolve) => existing.window.once('closed', resolve)).then(() =>
+      createOrUpdateChildWindow(name, type, config, data)
+    );
+  }
+  if (existing && !existing.window.isDestroyed()) {
+    if (data !== undefined) sendToChild(name, data);
+    if (existing.readyToShow) {
+      if (existing.window.isMinimized()) existing.window.restore();
+      existing.window.show();
+      existing.window.focus();
+    }
+    return;
+  }
+
+  const window = new BrowserWindow({
+    width: config.width,
+    height: config.height,
+    show: config.show,
+    parent: getWindow(config.parent) || null,
+    modal: !!config.parent,
+    resizable: config.resizable,
+    webPreferences: {
+      preload: path.join(preloadDirectory, `${config.preload}.js`),
+      additionalArguments: [`--theme=${theme}`],
+      sandbox: config.sandbox,
+      webSecurity: config.webSecurity,
+      contextIsolation: config.contextIsolation,
+      nodeIntegration: false
+    }
+  });
+  const entry = {
+    window,
+    readyToShow: false,
+    rendererReady: false,
+    closing: false,
+    data,
+    hasData: data !== undefined,
+    pending: data !== undefined
+  };
+  windows.set(name, entry);
+  window.removeMenu();
+
+  window.webContents.on('did-start-navigation', (event) => {
+    if (!event.isMainFrame || event.isSameDocument) return;
+    entry.rendererReady = false;
+    entry.pending = entry.hasData;
+  });
+  window.once('ready-to-show', () => {
+    if (entry.closing || window.isDestroyed()) return;
+    entry.readyToShow = true;
+    deliverPendingData(entry);
+    window.show();
+  });
+  window.on('close', () => {
+    entry.closing = true;
+  });
+  window.on('closed', () => {
+    if (windows.get(name) !== entry) return;
+    windows.delete(name);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('window-closed', name);
+    }
+  });
+
+  const loading =
+    is.dev && process.env.ELECTRON_RENDERER_URL
+      ? window.loadURL(`${process.env.ELECTRON_RENDERER_URL}/${config.preload}.html`)
+      : window.loadFile(path.join(preloadDirectory, '../renderer', `${config.preload}.html`));
+  loading.catch((error) => console.error('Child window failed to load:', name, error.message));
+}
+
+function getWindow(name) {
+  const entry = windows.get(name);
+  return entry && !entry.closing && !entry.window.isDestroyed() ? entry.window : undefined;
 }
 
 function getWindowNames() {
-  return Array.from(windows.keys());
+  return [...windows.keys()].filter((name) => getWindow(name));
 }
 
-export { createOrUpdateChildWindow, getWindowNames, getWindow };
+export { createOrUpdateChildWindow, sendToChild, getWindowNames, getWindow };

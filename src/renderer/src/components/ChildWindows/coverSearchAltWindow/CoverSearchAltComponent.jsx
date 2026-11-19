@@ -191,12 +191,6 @@ const CoverSearchAltApp = () => {
 
   //}
 
-  useEffect(() => {
-    // fire-and-forget; no need for state
-    window.coverSearchApi.send('child-ready');
-    console.log('Notified parent that child is ready');
-  }, []);
-
   const handleSearchParams = useCallback(
     (args) => {
       /* if (!args.results.artist) return; */
@@ -212,6 +206,10 @@ const CoverSearchAltApp = () => {
   );
 
   useIpcEvent('send-to-child', handleSearchParams, 'coverSearchApi');
+
+  useEffect(() => {
+    window.coverSearchApi.send('child-ready');
+  }, []);
 
   useEffect(() => {
     const messageHandler = (event) => {

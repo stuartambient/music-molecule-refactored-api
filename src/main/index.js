@@ -17,7 +17,12 @@ import process from 'node:process';
 import fs from 'node:fs';
 import { pruneBackups } from './utility/utils.js';
 import { paths } from './paths.js';
-import { createOrUpdateChildWindow, getWindowNames, getWindow } from './windowManager.js';
+import {
+  createOrUpdateChildWindow,
+  sendToChild,
+  getWindowNames,
+  getWindow
+} from './windowManager.js';
 import mime from 'mime-types';
 import { File } from 'node-taglib-sharp';
 import createUpdateTagsWorker from './updateTagsWorker?nodeWorker';
@@ -941,20 +946,9 @@ ipcMain.handle('artists-by-num-tracks', async () => {
   return artistList; /* .slice(1); */
 });
 
-async function openWindowAndSendData(queryResults, listType) {
-  const targetWindow = await getWindow('table-data');
-  console.log('list-type: ', listType);
-
-  if (targetWindow) {
-    if (targetWindow.webContents.isLoading()) {
-      targetWindow.webContents.once('did-finish-load', () => {
-        targetWindow.webContents.send('send-to-child', { listType, results: queryResults });
-      });
-    } else {
-      targetWindow.webContents.send('send-to-child', { listType, results: queryResults });
-    }
-  } else {
-    console.error('Target window not found');
+function openWindowAndSendData(queryResults, listType) {
+  if (!sendToChild('table-data', { listType, results: queryResults })) {
+    console.error('The metadata editor window is not open.');
   }
 }
 
@@ -1025,7 +1019,7 @@ ipcMain.handle('check-for-open-table', async (event, name) => {
 ipcMain.on('clear-table', () => {
   const targetWindow = getWindow('table-data');
   /* targetWindow.webContents.send('clear-table', 'clear'); */
-  targetWindow.webContents.send('reset-table');
+  targetWindow?.webContents.send('reset-table');
 });
 
 ipcMain.handle('get-albums-by-root', async (event, dirs) => {

@@ -16,7 +16,7 @@ const initTable = /* async */ (type, data = null) => {
     webSecurity: true,
     contextIsolation: true
   };
-  openChildWindow(name, type, config, data);
+  return openChildWindow(name, type, config, data);
 };
 
 const tableStatus = async () => {

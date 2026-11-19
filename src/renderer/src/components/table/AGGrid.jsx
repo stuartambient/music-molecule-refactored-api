@@ -28,7 +28,7 @@ import { debounce } from './helper';
 import './styles/AGGrid.css';
 import { useTheme } from '../../ThemeContext';
 
-const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
+const AGGrid = () => {
   /* const [originalData, setOriginalData] = useState(null); */
   // eslint-disable-next-line no-unused-vars, unused-imports/no-unused-vars
   const [gridReady, setGridReady] = useState(false);
@@ -110,12 +110,21 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
 
   const handleSendToChild = (e) => {
     setLoading(false);
-    setListType(e.listType);
-    insertData(e.results);
-    setReset(false);
+    insertData(Array.isArray(e.results) ? e.results : []);
+  };
+
+  const handleClearTable = () => {
+    setRowData([]);
+    setLoading(true);
   };
 
   useIpcEvent('send-to-child', handleSendToChild, 'tagEditApi');
+  useIpcEvent('reset-table', handleClearTable, 'tagEditApi');
+
+  // Register the data subscription before notifying main that this renderer is ready.
+  useEffect(() => {
+    window.tagEditApi.send('child-ready');
+  }, []);
 
   /*   useEffect(() => {
     const handleView = () => {
@@ -148,13 +157,6 @@ const AGGrid = ({ reset, setListType, setReset /*  data */ }) => {
       .withParams({ spacing: 12, fontSize: 16, headerFontWeight: 600 })
       .withPart(themeScheme);
   }, [themeScheme]);
-
-  useEffect(() => {
-    if (reset) {
-      setRowData([]);
-      setLoading(true);
-    }
-  }, [reset]);
 
   const resetAudio = () => {
     const event = new Event('resetAudio');
