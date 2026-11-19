@@ -11,6 +11,9 @@ const mainWindow = {
   isDestroyed() {
     return this.destroyed;
   },
+  getBounds() {
+    return { x: 100, y: 100, width: 800, height: 600 };
+  },
   webContents: {
     send(...args) {
       mainMessages.push(args);
@@ -30,6 +33,9 @@ class FakeWindow extends EventEmitter {
     this.webContents = new EventEmitter();
     this.webContents.mainFrame = {};
     this.webContents.send = (...args) => this.messages.push(args);
+  }
+  getBounds() {
+    return { x: 100, y: 100, width: 800, height: 600, ...this.options };
   }
   removeMenu() {}
   loadFile(file) {
@@ -66,10 +72,15 @@ class FakeWindow extends EventEmitter {
     this.emit('closed');
   }
 }
-globalThis.__childWindowFixture = { ipcMain, mainWindow, BrowserWindow: FakeWindow };
+globalThis.__childWindowFixture = {
+  ipcMain,
+  mainWindow,
+  BrowserWindow: FakeWindow,
+  screen: { getDisplayMatching: () => ({ workArea: { x: 0, y: 0, width: 1920, height: 1080 } }) }
+};
 const mockModule = (source) => 'data:text/javascript,' + encodeURIComponent(source);
 const electron = mockModule(
-  'export const { ipcMain, BrowserWindow } = globalThis.__childWindowFixture;'
+  'export const { ipcMain, BrowserWindow, screen } = globalThis.__childWindowFixture;'
 );
 const index = mockModule(
   'export const { mainWindow } = globalThis.__childWindowFixture; export const theme="dark";'
@@ -114,6 +125,29 @@ test('child readiness is owned by each window', async (suite) => {
     for (const name of getWindowNames()) getWindow(name).close();
   });
   try {
+    await suite.test(
+      'independent editor and cover windows are offset without adding a parent',
+      () => {
+        const grid = open('grid');
+        const cover = open('cover');
+        assert.equal(grid.options.parent, null);
+        assert.equal(cover.options.parent, null);
+        assert.equal(grid.options.y, 140);
+        assert.equal(cover.options.y, 180);
+        assert.equal(grid.options.modal, false);
+      }
+    );
+    await suite.test(
+      'cover search opened by the editor keeps its existing modal relationship',
+      () => {
+        const grid = open('grid');
+        const cover = open('cover', data('cover'), { ...config, parent: 'grid' });
+        assert.equal(cover.options.parent, grid);
+        assert.equal(cover.options.modal, true);
+        assert.equal(cover.options.x, grid.options.x + 40);
+        assert.equal(cover.options.y, grid.options.y + 40);
+      }
+    );
     await suite.test('one child cannot release the other child data', () => {
       const grid = open('grid');
       const cover = open('cover', data('cover'), { ...config, preload: 'coverSearchAlt' });

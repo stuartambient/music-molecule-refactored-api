@@ -1,8 +1,9 @@
-import { BrowserWindow, ipcMain } from 'electron';
+import { BrowserWindow, ipcMain, screen } from 'electron';
 import { is } from '@electron-toolkit/utils';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mainWindow, theme } from './index.js';
+import { childWindowBounds } from './childWindowBounds.js';
 
 const windows = new Map();
 const preloadDirectory = path.join(path.dirname(fileURLToPath(import.meta.url)), '../preload');
@@ -44,11 +45,11 @@ function sendToChild(name, data) {
   return true;
 }
 
-function createOrUpdateChildWindow(name, type, config, data) {
+function createOrUpdateChildWindow(name, type, config, data, opener) {
   const existing = windows.get(name);
   if (existing?.closing && !existing.window.isDestroyed()) {
     return new Promise((resolve) => existing.window.once('closed', resolve)).then(() =>
-      createOrUpdateChildWindow(name, type, config, data)
+      createOrUpdateChildWindow(name, type, config, data, opener)
     );
   }
   if (existing && !existing.window.isDestroyed()) {
@@ -61,11 +62,22 @@ function createOrUpdateChildWindow(name, type, config, data) {
     return;
   }
 
+  const parent = getWindow(config.parent) || null;
+  const origin = parent || opener || mainWindow;
+  const bounds =
+    origin && !origin.isDestroyed()
+      ? childWindowBounds(
+          origin.getBounds(),
+          config,
+          screen.getDisplayMatching(origin.getBounds()).workArea,
+          [origin, ...getWindowNames().map(getWindow)].map((window) => window.getBounds())
+        )
+      : { width: config.width, height: config.height };
+
   const window = new BrowserWindow({
-    width: config.width,
-    height: config.height,
+    ...bounds,
     show: config.show,
-    parent: getWindow(config.parent) || null,
+    parent,
     modal: !!config.parent,
     resizable: config.resizable,
     webPreferences: {

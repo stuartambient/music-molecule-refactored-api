@@ -35,6 +35,7 @@ import createUpdateTagFramesWorker from './updateTagFramesWorker?nodeWorker';
 import createRescanTrackErrorWorker from './rescanTrackErrorWorker?nodeWorker';
 import { getDB, backupDirectory, dbPath } from './connection';
 import { initializeCatalog, repairCatalog } from './catalogStartup.js';
+import { createStartupWindow } from './startupWindow.js';
 import axios from 'axios';
 /* import { simulateCorruption } from './simulateDbCorruption.js'; */
 import { restoreLatestBackup } from './restoreBackup.js';
@@ -331,11 +332,21 @@ const capitalizeDriveLetter = (str) => {
 
 export let mainWindow;
 let recWindow;
+let startupWindow;
+
+function showWhenReady(window) {
+  window.once('ready-to-show', () => {
+    window.show();
+    if (startupWindow && !startupWindow.isDestroyed()) startupWindow.destroy();
+    startupWindow = null;
+    if (window === mainWindow && recWindow && !recWindow.isDestroyed()) recWindow.close();
+  });
+}
 
 export function createRecoveryWindow() {
   recWindow = new BrowserWindow({
     frame: true,
-    show: true,
+    show: false,
     resizable: false,
     width: 520,
     height: 360,
@@ -351,6 +362,8 @@ export function createRecoveryWindow() {
       nodeIntegration: true
     }
   });
+
+  showWhenReady(recWindow);
 
   // Load the same app URL — StartupGuard handles rendering the right UI
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
@@ -368,8 +381,8 @@ function createWindow() {
     frame: false,
     useContentSize: true,
     transparent: true,
-    alwaysOnTop: true,
-    show: true,
+    alwaysOnTop: false,
+    show: false,
     ...(process.platform === 'linux' ? { icon: path.join(__dirname, '../../build/icon.png') } : {}),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
@@ -382,6 +395,8 @@ function createWindow() {
       /* nodeIntegration: true */
     }
   });
+
+  showWhenReady(mainWindow);
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url);
@@ -444,12 +459,12 @@ function startNormalApp() {
   if (normalAppStarted) return;
   createWindow();
   normalAppStarted = true;
-  if (recWindow && !recWindow.isDestroyed()) recWindow.close();
   void backupDatabase();
   getCurrentSchedule().catch((error) => console.error('Unable to load update schedule:', error));
 }
 
 app.whenReady().then(async () => {
+  startupWindow = await createStartupWindow();
   console.log('is music-molecule handled?', await protocol.isProtocolHandled('streaming'));
   console.log('is app handled?', await protocol.isProtocolHandled('cover'));
 
@@ -577,6 +592,11 @@ app.whenReady().then(async () => {
     else createRecoveryWindow();
   });
 }).catch((error) => {
+  if (startupWindow && !startupWindow.isDestroyed()) startupWindow.destroy();
+  if (error.name === 'StartupCancelled') {
+    app.quit();
+    return;
+  }
   console.error('Application startup failed:', error);
   dialog.showErrorBox('Music Molecule could not start', error.message);
   app.quit();
@@ -892,6 +912,7 @@ ipcMain.handle('get-cover', async (event, arg) => {
 });
 
 ipcMain.on('screen-mode', async (event, ...args) => {
+  mainWindow.setAlwaysOnTop(args[0] === 'mini' || args[0] === 'mini-expanded');
   if (args[0] === 'mini') {
     await mainWindow.setMinimumSize(290, 350);
     await mainWindow.setSize(290, 350, false);
@@ -1452,7 +1473,8 @@ ipcMain.handle('show-text-input-menu', (event) => {
 ipcMain.handle('show-child', async (event, args) => {
   console.log('show-child: ', 'hit');
   const { name, type, winConfig, data } = args;
-  await createOrUpdateChildWindow(name, type, winConfig, data /* , theme */);
+  const opener = BrowserWindow.fromWebContents(event.sender);
+  await createOrUpdateChildWindow(name, type, winConfig, data, opener);
 });
 
 // Helper function for downloading and saving
