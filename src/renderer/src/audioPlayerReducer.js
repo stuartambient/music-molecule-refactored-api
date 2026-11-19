@@ -5,6 +5,12 @@ const audioPlayerReducer = (state, action) => {
     console.log('action: ', action);
   }
   switch (action.type) {
+    case 'music-notice':
+      return { ...state, musicNotice: action.notice };
+    case 'music-notice-result':
+      return state.musicNotice?.id === action.id ? { ...state, musicNotice: action.notice } : state;
+    case 'dismiss-music-notice':
+      return { ...state, musicNotice: null };
     case 'library': {
       return { ...state, library: !state.library };
     }

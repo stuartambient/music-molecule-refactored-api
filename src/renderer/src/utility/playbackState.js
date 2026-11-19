@@ -1,4 +1,5 @@
 export function getPlaybackQueue(state) {
+  if (state.activeList === 'albumTracksActive') return state.playbackQueue || [];
   if (state.activeList === 'playlistActive') return state.playlistTracks;
   if (state.activeList === 'tracklistActive') {
     return state.tracks.some((track) => track.track_id === state.active)

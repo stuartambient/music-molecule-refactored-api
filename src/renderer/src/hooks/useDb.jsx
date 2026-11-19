@@ -1,5 +1,6 @@
 /* import { is } from '@electron-toolkit/utils'; */
 import { useState, useEffect, useCallback } from 'react';
+import { requestMusicTracks } from '../utility/musicRequests';
 
 const useTracks = (
   tracksPageNumber,
@@ -187,7 +188,7 @@ const useAlbums = (albumsPageNumber, albumsSearchTerm, sortType, resetKey, dispa
   return { albumsLoading, hasMoreAlbums, albumsError };
 };
 
-const useAlbumTracks = (pattern) => {
+const useAlbumTracks = (pattern, dispatch) => {
   const [albumTracks, setAlbumTracks] = useState([]);
   const [error, setError] = useState([]);
 
@@ -195,7 +196,15 @@ const useAlbumTracks = (pattern) => {
     let subscribed = true;
     const loadAlbumTracks = async () => {
       try {
-        const albumTracksRequest = await window.ipcApi.invoke('get-album-tracks', pattern);
+        setAlbumTracks([]);
+        const albumTracksRequest = await requestMusicTracks(
+          'prepare-music-tracks',
+          [{ album: pattern, inspect: true }],
+          dispatch,
+          'Album availability',
+          () => subscribed,
+          true
+        );
         if (albumTracksRequest && subscribed) {
           setAlbumTracks(albumTracksRequest);
         }
@@ -211,7 +220,7 @@ const useAlbumTracks = (pattern) => {
       loadAlbumTracks();
     }
     return () => (subscribed = false);
-  }, [pattern]);
+  }, [pattern, dispatch]);
   return { albumTracks, setAlbumTracks, error };
 };
 
@@ -328,9 +337,15 @@ const usePlaylistDialog = (req, playlistTracks, dispatch, setPlaylistReq) => {
 
     const openplaylist = async () => {
       try {
-        const openpl = await window.ipcApi.invoke('open-playlist');
+        const openpl = await requestMusicTracks(
+          'open-playlist',
+          [],
+          dispatch,
+          'Open Playlist',
+          () => isSubscribed
+        );
         if (isSubscribed) {
-          if (openpl === 'action cancelled') {
+          if (!openpl?.length) {
             setPlaylistReq('');
           } else {
             dispatch({
@@ -342,6 +357,7 @@ const usePlaylistDialog = (req, playlistTracks, dispatch, setPlaylistReq) => {
         }
       } catch (e) {
         console.log(e.message);
+        if (isSubscribed) setPlaylistReq('');
       }
     };
 

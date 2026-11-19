@@ -14,6 +14,7 @@ export const AudioPlayerProvider = ({ children }) => {
     playbackQueue: [],
     playbackRequest: 0,
     playbackError: null,
+    musicNotice: null,
     pendingAdvance: null,
     tracksHasMore: false,
     /* trackRef, */

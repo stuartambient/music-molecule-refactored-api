@@ -8,6 +8,7 @@ import NoImage from '../assets/noimage.jpg';
 import { useVirtualizer } from '@tanstack/react-virtual';
 const Overlay = React.lazy(() => import('./Overlay'));
 import { openChildWindow } from './ChildWindows/openChildWindow';
+import { requestMusicTracks } from '../utility/musicRequests';
 //import Overlay from './Overlay';
 import '../style/AlbumsCoverView.css';
 
@@ -104,7 +105,15 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
     async (event, id) => {
       const request = ++albumPlayRequest.current;
       setCurrentAlbum(id);
-      const albumTracks = await window.ipcApi.invoke('get-album-tracks', id);
+      const albumTracks = await requestMusicTracks(
+        'prepare-music-tracks',
+        [{ album: id }],
+        dispatch,
+        'Play album',
+        () => request === albumPlayRequest.current
+      );
+
+      if (request === albumPlayRequest.current && !albumTracks?.length) setCurrentAlbum('');
 
       if (request === albumPlayRequest.current && albumTracks?.length) {
         dispatch({
@@ -163,8 +172,13 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
 
   const handleAlbumToPlaylist = async (path) => {
     console.log('path: ', path);
-    const albumTracks = await window.ipcApi.invoke('get-album-tracks', path);
-    if (albumTracks) {
+    const albumTracks = await requestMusicTracks(
+      'prepare-music-tracks',
+      [{ album: path }],
+      dispatch,
+      'Add album to Playlist'
+    );
+    if (albumTracks?.length) {
       dispatch({
         type: 'play-album',
         playlistTracks: albumTracks
@@ -366,14 +380,16 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
                     }}
                   >
                     {item.img ? (
-                      /*    <img
-                        className={coverImageSize}
-                        src={`cover://${item.img}`}
-                        alt=""
-                        loading="lazy"
-                      /> */
                       <LazyLoadImage
                         src={`cover://${item.img}`}
+                        alt={item.foldername || 'Album cover'}
+                        onError={({ currentTarget: image }) => {
+                          if (image.getAttribute('src') === NoImage) return;
+                          image.setAttribute('src', NoImage);
+                          image.alt = 'Cover unavailable';
+                          image.title =
+                            'Cover image unavailable. Refresh Covers after restoring the folder.';
+                        }}
                         width={`${estimatedSize}px`}
                         height={`${estimatedSize}px`}
                       />

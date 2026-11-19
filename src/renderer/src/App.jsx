@@ -4,6 +4,7 @@ import { useAudioPlayer } from './mainAudioContext';
 import useIpcEvent from './hooks/useIpcEvent';
 
 import PlaybackError from './components/PlaybackError';
+import MusicNotice from './components/MusicNotice';
 import Player from './components/Player';
 import InfiniteList from './Components/InfiniteList';
 import Home from './Components/Home';
@@ -354,6 +355,7 @@ function App() {
   return (
     <div className={containerClassNames}>
       <PlaybackError />
+      <MusicNotice />
       {state.player && !state.library && !state.minimalmode ? null : (
         <MainNav onClick={handleMainNav} />
       )}

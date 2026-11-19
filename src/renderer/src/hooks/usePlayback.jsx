@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { createPlaybackSession } from '../utility/playbackSession';
+import { createAvailablePlayback } from '../utility/availablePlayback';
 import { convertDuration } from './useTime';
 import { handlePicture } from '../utility/audioUtils';
 
@@ -16,35 +16,43 @@ export default function usePlayback(state, dispatch) {
       encodeURI(track.audiotrack).replaceAll('?', '%3F').replaceAll('#', '%23') +
       '?playback=' +
       crypto.randomUUID();
-    const session = createPlaybackSession(audio, source, {
-      onMetadata: (element) => {
-        dispatch({ type: 'duration', request, duration: convertDuration(element) });
-        dispatch({ type: 'set-delay', request, delay: true });
-      },
-      onError: (error) => {
-        console.error('Playback failed', { trackId: track.track_id, source, ...error });
-        dispatch({ type: 'playback-error', request, error });
-      },
-      onEnded: () =>
-        dispatch({ type: 'advance-track', direction: 1, play: true, ended: true, request }),
-      onSeeking: (seeking) => dispatch({ type: 'seeking', seeking }),
-      onVolume: (volume) => dispatch({ type: 'set-volume', volume })
-    });
+    const session = createAvailablePlayback(
+      audio,
+      source,
+      () => window.ipcApi.invoke('check-track-availability', track.audiotrack),
+      {
+        onAvailable: () => loadCover(),
+        onMetadata: (element) => {
+          dispatch({ type: 'duration', request, duration: convertDuration(element) });
+          dispatch({ type: 'set-delay', request, delay: true });
+        },
+        onError: (error) => {
+          console.error('Playback failed', { trackId: track.track_id, source, ...error });
+          dispatch({ type: 'playback-error', request, error });
+        },
+        onEnded: () =>
+          dispatch({ type: 'advance-track', direction: 1, play: true, ended: true, request }),
+        onSeeking: (seeking) => dispatch({ type: 'seeking', seeking }),
+        onVolume: (volume) => dispatch({ type: 'set-volume', volume })
+      }
+    );
     sessionRef.current = session;
 
     // Artwork and like lookups cannot delay source loading or restart playback.
-    window.ipcApi
-      .invoke('get-cover', track.audiotrack)
-      .then((picture) => {
-        if (session.isCurrent()) {
-          dispatch({
-            type: 'set-cover',
-            request,
-            cover: picture ? handlePicture(picture) : 'not available'
-          });
-        }
-      })
-      .catch((error) => console.warn('Artwork unavailable:', error.message));
+    function loadCover() {
+      window.ipcApi
+        .invoke('get-cover', track.audiotrack)
+        .then((picture) => {
+          if (session.isCurrent()) {
+            dispatch({
+              type: 'set-cover',
+              request,
+              cover: picture ? handlePicture(picture) : 'not available'
+            });
+          }
+        })
+        .catch((error) => console.warn('Artwork unavailable:', error.message));
+    }
 
     window.ipcApi
       .invoke('is-liked', track.track_id)

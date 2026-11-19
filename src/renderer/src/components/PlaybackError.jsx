@@ -13,6 +13,9 @@ export default function PlaybackError() {
       <strong>Playback paused</strong>
       <p className="playback-error-track">{state.title}</p>
       <p>{state.playbackError.message}</p>
+      {state.playbackError.path && (
+        <p className="playback-error-path">{state.playbackError.path}</p>
+      )}
       {!hasNext && <p>No next track is available in the current list.</p>}
       <div className="playback-error-actions">
         <button type="button" onClick={() => dispatch({ type: 'retry-track' })}>

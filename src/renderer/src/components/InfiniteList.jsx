@@ -45,7 +45,7 @@ const InfiniteList = () => {
 
   const [contSize, setContSize] = useState(0);
 
-  const { albumTracks, setAlbumTracks } = useAlbumTracks(albumPattern);
+  const { albumTracks, setAlbumTracks } = useAlbumTracks(albumPattern, dispatch);
 
   const fileslistRef = useRef(null);
   const playlistRef = useRef(null);
@@ -89,28 +89,31 @@ const InfiniteList = () => {
 
   usePlaylistDialog(playlistReq, state.playlistTracks, dispatch, setPlaylistReq);
 
-  const albumsTracks = albumTracks.map((track) => {
-    if (track.title) {
-      return (
-        <li key={track.track_id} className="albumtrack">
-          <span>Disc: {track.disc}</span>{' '}
-          <span>
-            Track: {track.track} of {track.trackCount}
-          </span>
-          <a href={track.audiotrack}>{track.title}</a>
-          <span style={{ backgroundColor: 'transparent' }}>
-            <GiPlayButton style={{ fill: 'var(--album-tracks-play' }} />
-          </span>
-        </li>
-      );
-    } else {
-      return (
-        <li key={track.track_id} className="albumtrack">
-          <a href={track.audiotrack}>{track.audiotrack}</a>
-        </li>
-      );
-    }
-  });
+  const albumsTracks = albumTracks.map((track, index) => (
+    <li key={track.track_id} className="albumtrack">
+      <span>Disc: {track.disc}</span>{' '}
+      <span>
+        Track: {track.track} of {track.trackCount}
+      </span>
+      <a
+        href={track.audiotrack}
+        onClick={(event) => {
+          event.preventDefault();
+          dispatch({
+            type: 'select-track',
+            track,
+            index,
+            queue: albumTracks,
+            list: 'albumTracksActive',
+            play: true
+          });
+        }}
+      >
+        {track.title || track.audiotrack}{' '}
+        <GiPlayButton style={{ fill: 'var(--album-tracks-play)' }} />
+      </a>
+    </li>
+  ));
 
   const playbackPosition = getPlaybackPosition(state, getPlaybackQueue(state));
   const { activeList, listType, listScroll } = state;

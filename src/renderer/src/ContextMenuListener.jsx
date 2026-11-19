@@ -1,5 +1,6 @@
 import useIpcEvent from './hooks/useIpcEvent';
 import { useAudioPlayer } from './mainAudioContext';
+import { requestMusicTracks } from './utility/musicRequests';
 
 export function ContextMenuListener({ children }) {
   const { state, dispatch } = useAudioPlayer();
@@ -13,7 +14,7 @@ export function ContextMenuListener({ children }) {
   return children;
 }
 
-function handleContextMenuCommand(command, item, state, dispatch) {
+async function handleContextMenuCommand(command, item, state, dispatch) {
   console.log('command: ', command);
   switch (command) {
     case 'add-track-to-playlist': {
@@ -21,9 +22,16 @@ function handleContextMenuCommand(command, item, state, dispatch) {
       if (track) {
         const alreadyInPlaylist = state.playlistTracks.find((e) => e.track_id === item.id);
         if (!alreadyInPlaylist) {
+          const available = await requestMusicTracks(
+            'prepare-music-tracks',
+            [{ tracks: [track] }],
+            dispatch,
+            'Add track to Playlist'
+          );
+          if (!available?.length) return;
           dispatch({
             type: 'track-to-playlist',
-            playlistTracks: [...state.playlistTracks, track]
+            playlistTracks: available
           });
           dispatch({
             type: 'flash-div',
@@ -39,8 +47,13 @@ function handleContextMenuCommand(command, item, state, dispatch) {
     }
     case 'add-album-to-playlist': {
       const getAlbumTracks = async () => {
-        const albumTracks = await window.ipcApi.invoke('get-album-tracks', item.path);
-        if (!albumTracks) return console.log('no tracks associated with album');
+        const albumTracks = await requestMusicTracks(
+          'prepare-music-tracks',
+          [{ album: item.path }],
+          dispatch,
+          'Add album to Playlist'
+        );
+        if (!albumTracks?.length) return;
 
         dispatch({ type: 'play-album', playlistTracks: albumTracks });
         const diff = albumTracks.filter(

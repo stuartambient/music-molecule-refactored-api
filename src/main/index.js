@@ -36,6 +36,7 @@ import createRescanTrackErrorWorker from './rescanTrackErrorWorker?nodeWorker';
 import { getDB, backupDirectory, dbPath } from './connection';
 import { initializeCatalog, repairCatalog } from './catalogStartup.js';
 import { createStartupWindow } from './startupWindow.js';
+import { availableMusicTracks, createMusicAvailabilityCheck } from './musicAvailability.js';
 import axios from 'axios';
 /* import { simulateCorruption } from './simulateDbCorruption.js'; */
 import { restoreLatestBackup } from './restoreBackup.js';
@@ -863,6 +864,16 @@ ipcMain.handle('get-album-tracks', async (event, args) => {
   return allAlbumTracks;
 });
 
+ipcMain.handle('check-track-availability', async (_event, file) => {
+  return createMusicAvailabilityCheck()(file);
+});
+
+ipcMain.handle('prepare-music-tracks', async (_event, request) => {
+  const tracks = request.album !== undefined ? filesByAlbum(request.album) : request.tracks;
+  const result = await availableMusicTracks(tracks);
+  return request.inspect ? { ...result, catalogTracks: tracks } : result;
+});
+
 const getRoot = (currentDir) => {
   /* console.log(currentDir); */
   const root = getRoots();
@@ -1066,21 +1077,21 @@ ipcMain.handle('open-playlist', async () => {
   });
   if (open.canceled) return 'action cancelled';
 
-  const workerPath = paths.db;
-
   const result = await new Promise((resolve, reject) => {
     const worker = createLoadPlaylistWorker({
-      workerData: { workerPath: workerPath, data: open.filePaths }
+      workerData: { dbPath, data: open.filePaths }
     });
 
-    /*     await createLoadPlaylistWorker({
-      workerData: { workerPath: workerPath, data: open.filePaths }
-    }) */
-
-    worker.on('message', (msg) => resolve(msg.data));
+    let replied = false;
+    worker.on('message', (msg) => {
+      replied = true;
+      if (msg.error) reject(new Error(msg.error));
+      else resolve(msg.data);
+    });
     worker.on('error', reject);
     worker.on('exit', (code) => {
-      if (code !== 0) reject(new Error(`Worker stopped with exit code ${code}`));
+      if (code !== 0 || !replied)
+        reject(new Error(`Playlist worker stopped without a result (exit ${code}).`));
     });
 
     worker.postMessage(''); // optional trigger
