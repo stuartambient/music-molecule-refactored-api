@@ -15,6 +15,7 @@ const useTracks = (
   const [hasMoreTracks, setHasMoreTracks] = useState(false);
 
   const isSubBoolean = useCallback(() => {
+    if (state.pendingAdvance) return true;
     if (tracksPageNumber === 0 && state.tracks.length === 200) {
       /*       console.log('case #: ', 1); */
       return false;
@@ -34,7 +35,13 @@ const useTracks = (
       /* console.log('case #: ', 6); */
       return true;
     }
-  }, [tracksPageNumber, state.tracks.length, state.tracksShuffle, state.listType]);
+  }, [
+    tracksPageNumber,
+    state.tracks.length,
+    state.tracksShuffle,
+    state.listType,
+    state.pendingAdvance
+  ]);
 
   useEffect(() => {
     //let isSubscribed = true;
@@ -53,26 +60,22 @@ const useTracks = (
       );
       if (trackRequest && isSubscribed) {
         if (tracksPageNumber === 0) {
-          setTimeout(() => {
-            dispatch({
-              type: 'add-tracks',
-              tracks: trackRequest
-            });
+          dispatch({
+            type: 'add-tracks',
+            tracks: trackRequest
+          });
 
-            setTracksLoading(false);
-            setHasMoreTracks(trackRequest.length === 200);
-          }, 500);
+          setTracksLoading(false);
+          setHasMoreTracks(trackRequest.length === 200);
         }
         if (tracksPageNumber > 0) {
-          setTimeout(() => {
-            dispatch({
-              type: 'tracks-playlist',
-              tracks: trackRequest
-            });
+          dispatch({
+            type: 'tracks-playlist',
+            tracks: trackRequest
+          });
 
-            setTracksLoading(false);
-            setHasMoreTracks(trackRequest.length === 200);
-          }, 500);
+          setTracksLoading(false);
+          setHasMoreTracks(trackRequest.length === 200);
         }
       }
     };
@@ -90,30 +93,38 @@ const useTracks = (
       isSubscribed = isSubBoolean();
       if (shuffledTracks && isSubscribed) {
         if (tracksPageNumber === 0) {
-          setTimeout(() => {
-            dispatch({
-              type: 'add-tracks',
-              tracks: shuffledTracks
-            });
-            setHasMoreTracks(shuffledTracks.length === 200);
-            setTracksLoading(false);
-          }, 500);
+          dispatch({
+            type: 'add-tracks',
+            tracks: shuffledTracks
+          });
+          setHasMoreTracks(shuffledTracks.length === 200);
+          setTracksLoading(false);
         }
 
         if (tracksPageNumber > 0) {
-          setTimeout(() => {
-            dispatch({
-              type: 'tracks-playlist',
-              tracks: shuffledTracks
-            });
-            setHasMoreTracks(shuffledTracks.length === 200);
-            setTracksLoading(false);
-          }, 500);
+          dispatch({
+            type: 'tracks-playlist',
+            tracks: shuffledTracks
+          });
+          setHasMoreTracks(shuffledTracks.length === 200);
+          setTracksLoading(false);
         }
       }
     };
 
-    tracksShuffle && state.listType === 'files' ? loadShuffledTracks() : loadTracks();
+    const request = tracksShuffle ? loadShuffledTracks() : loadTracks();
+    request.catch((error) => {
+      if (!isSubscribed) return;
+      setTracksLoading(false);
+      setTracksError(error.message);
+      dispatch({
+        type: 'tracks-load-failed',
+        error: {
+          message:
+            'The next library page could not be loaded. Reload the list or select another track.'
+        }
+      });
+    });
     return () => (isSubscribed = false);
   }, [
     tracksPageNumber,

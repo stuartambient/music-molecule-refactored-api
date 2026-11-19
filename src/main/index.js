@@ -450,7 +450,8 @@ app.whenReady().then(async () => {
 
   protocol.registerStreamProtocol('streaming', async (request, cb) => {
     try {
-      const uri = decodeURIComponent(request.url);
+      // A fresh request token makes retries re-read the source instead of a cached failure.
+      const uri = decodeURIComponent(request.url.split('?')[0]);
       const filePath = uri.replace('streaming://', '');
       const path = capitalizeDriveLetter(filePath);
 

@@ -1,10 +1,9 @@
 import { useEffect, useCallback } from 'react';
 import classNames from 'classnames';
-import { handleManualChange } from './utility/audioUtils';
 import { useAudioPlayer } from './mainAudioContext';
 import useIpcEvent from './hooks/useIpcEvent';
 
-import { convertDuration } from './hooks/useTime';
+import PlaybackError from './components/PlaybackError';
 import Player from './components/Player';
 import InfiniteList from './Components/InfiniteList';
 import Home from './Components/Home';
@@ -57,84 +56,6 @@ function App() {
   }, [handleThemeUpdate]); */
 
   useIpcEvent('main-theme-updated', checkMainTheme);
-
-  useEffect(() => {
-    const audio = state.audioRef.current;
-
-    const handleLoadedMetadata = (/* e */) => {
-      dispatch({ type: 'duration', duration: convertDuration(audio) });
-      dispatch({ type: 'set-delay', delay: true });
-      console.log('nextTrack: ', state.nextTrack, 'prevTrack: ', state.prevTrack);
-    };
-
-    const handleError = (e) => {
-      const { code, message } = e.target.error; // Note: Adjusted for potential cross-browser compatibility
-      if (code === 3 && message === 'AUDIO_RENDERER_ERROR: audio render error') {
-        console.log(code, message);
-      }
-      if (code === 4) {
-        if (state.nextTrack) {
-          handleManualChange(state.nextTrack, state, dispatch);
-        }
-      }
-    };
-
-    const handleSeeking = () => {
-      dispatch({ type: 'seeking', seeking: true });
-      setTimeout(() => dispatch({ type: 'seeking', seeking: false }), 2000);
-    };
-
-    const handleVolumeChange = () => {
-      dispatch({ type: 'set-volume', volume: audio.volume });
-    };
-
-    const handleEnded = () => {
-      dispatch({ type: 'direction', playNext: true });
-      dispatch({ type: 'set-delay', delay: false });
-    };
-
-    audio.onloadedmetadata = handleLoadedMetadata;
-    audio.onerror = handleError;
-    audio.onseeking = handleSeeking;
-    audio.onvolumechange = handleVolumeChange;
-    audio.onended = handleEnded;
-
-    return () => {
-      audio.onloadedmetadata = null;
-      audio.onerror = null;
-      audio.onseeking = null;
-      audio.onvolumechange = null;
-      audio.onended = null;
-    };
-  }, [state.audioRef, dispatch, state]);
-
-  useEffect(() => {
-    const audio = state.audioRef.current;
-    if (!audio) return;
-
-    const handleReady = () => {
-      if (!state.pause) {
-        audio.play().catch((err) => {
-          console.error('play() failed:', err);
-        });
-      }
-    };
-
-    if (state.pause) {
-      audio.pause();
-    } else {
-      // If already loaded, play immediately
-      if (audio.readyState >= 2) {
-        audio.play().catch(console.error);
-      } else {
-        audio.addEventListener('loadedmetadata', handleReady);
-      }
-    }
-
-    return () => {
-      audio.removeEventListener('loadedmetadata', handleReady);
-    };
-  }, [state.pause, state.audioRef]);
 
   useIpcEvent('track-like-removed', handleLikeRemoved);
   useIpcEvent('track-liked', handleTrackLiked);
@@ -194,15 +115,6 @@ function App() {
     return () => (subscribed = false);
   }, [state.minimalmode, state.player, state.miniModePlaylist, state.library]);
 
-  const shouldReturn = (/* direction */) => {
-    return (
-      state.listType === 'albums' ||
-      (state.listType === 'playlist' && state.playlistTracks.length === 0) ||
-      (state.listType === 'files' && state.activeList === 'playlistActive') ||
-      (state.listType === 'playlist' && state.activeList === 'tracklistActive')
-    );
-  };
-
   const handleUpdateLike = async (id) => {
     if (!id) return;
     /* await window.api.updateLike(id); */
@@ -230,20 +142,10 @@ function App() {
         break;
 
       case 'backward':
-        if (shouldReturn('backward')) return;
-        dispatch({
-          type: 'direction',
-          playNext: false,
-          playPrev: true
-        });
+        dispatch({ type: 'advance-track', direction: -1 });
         break;
       case 'forward':
-        if (shouldReturn('forward')) return;
-        dispatch({
-          type: 'direction',
-          playPrev: false,
-          playNext: true
-        });
+        dispatch({ type: 'advance-track', direction: 1 });
         break;
       case 'like':
         handleUpdateLike(state.active);
@@ -451,6 +353,7 @@ function App() {
 
   return (
     <div className={containerClassNames}>
+      <PlaybackError />
       {state.player && !state.library && !state.minimalmode ? null : (
         <MainNav onClick={handleMainNav} />
       )}

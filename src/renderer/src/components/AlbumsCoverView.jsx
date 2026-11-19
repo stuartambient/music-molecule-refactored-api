@@ -4,7 +4,6 @@ import { LazyLoadImage } from 'react-lazy-load-image-component';
 import { useAudioPlayer } from '../mainAudioContext';
 import { useAllAlbumsCovers } from '../hooks/useDb';
 import useIpcEvent from '../hooks/useIpcEvent';
-import handleTrackSelect from '../utility/audioUtils';
 import NoImage from '../assets/noimage.jpg';
 import { useVirtualizer } from '@tanstack/react-virtual';
 const Overlay = React.lazy(() => import('./Overlay'));
@@ -14,6 +13,7 @@ import '../style/AlbumsCoverView.css';
 
 const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
   const { state, dispatch } = useAudioPlayer();
+  const albumPlayRequest = useRef(0);
   /*  const [menu, setMenu] = useState(false); */
   const [openFolder, setOpenFolder] = useState(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
@@ -92,64 +92,37 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
   }, [state.covers.length, rowVirtualizer]);
 
   const stopAlbumPlay = useCallback(() => {
+    albumPlayRequest.current++;
     setCurrentAlbum('');
-    state.audioRef.current.src = '';
     dispatch({
       type: 'stop-this-album'
     });
-    dispatch({
-      type: 'newtrack',
-      pause: true,
-      newtrack: '',
-      artist: '',
-      title: '',
-      album: '',
-      active: '',
-      nextTrack: '',
-      prevTrack: ''
-    });
-  }, [setCurrentAlbum, state.audioRef, dispatch]);
+    dispatch({ type: 'reset', pause: true });
+  }, [setCurrentAlbum, dispatch]);
 
   const handlePlayReq = useCallback(
     async (event, id) => {
+      const request = ++albumPlayRequest.current;
       setCurrentAlbum(id);
       const albumTracks = await window.ipcApi.invoke('get-album-tracks', id);
 
-      if (albumTracks) {
+      if (request === albumPlayRequest.current && albumTracks?.length) {
         dispatch({
           type: 'play-this-album',
           playlistTracks: albumTracks,
           list: 'playlistActive'
         });
 
-        const fakeEvent = {
-          target: {
-            id: albumTracks[0].track_id,
-            getAttribute: (attr) => {
-              if (attr === 'val') {
-                return 0;
-              }
-              return null; // Return null for any other attribute
-            }
-          },
-          preventDefault: () => {
-            console.log('preventDefault() called');
-          }
-        };
-        handleTrackSelect(fakeEvent, state, dispatch, {
-          artist: albumTracks[0].performers ? albumTracks[0].performers : 'not available',
-          title: albumTracks[0].title ? albumTracks[0].title : albumTracks[0].audiotrack,
-          album: albumTracks[0].album ? albumTracks[0].album : 'not available',
-          audiofile: albumTracks[0].audiotrack,
-          like: albumTracks[0].like,
-          active: albumTracks[0].track_id,
-          list: 'playlistActive'
+        dispatch({
+          type: 'select-track',
+          track: albumTracks[0],
+          index: 0,
+          list: 'playlistActive',
+          play: true
         });
-        /* setTimeout(() => dispatch({ type: 'start-album' }), 2000); */
-        dispatch({ type: 'start-album' });
       }
     },
-    [dispatch, state]
+    [dispatch]
   );
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect /* , Profiler */ } from 'react';
 import { useAudioPlayer } from '../mainAudioContext';
-import { handleManualChange, unloadFile } from '../utility/audioUtils';
+import { getPlaybackPosition, getPlaybackQueue } from '../utility/playbackState';
 import { GiPlayButton } from 'react-icons/gi';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -24,11 +24,6 @@ const InfiniteList = () => {
   const [filesSortType, setFilesSortType] = useState('DESC');
   const [albumsSortType, setAlbumsSortType] = useState('DESC');
   const [resetKey, setResetKey] = useState('');
-  const [visibleRange, setVisibleRange] = useState({
-    startIndex: 0,
-    endIndex: 0
-  });
-
   const [playlistReq, setPlaylistReq] = useState('');
 
   const { tracksLoading, hasMoreTracks, tracksError } = useTracks(
@@ -92,15 +87,6 @@ const InfiniteList = () => {
     }
   }, [dispatch, state.flashDiv]);
 
-  useEffect(() => {
-    if (state.tracksShuffle || !state.tracksShuffle) {
-      dispatch({
-        type: 'shuffle-reset',
-        newtrack: 0
-      });
-    }
-  }, [dispatch, state.tracksShuffle]);
-
   usePlaylistDialog(playlistReq, state.playlistTracks, dispatch, setPlaylistReq);
 
   const albumsTracks = albumTracks.map((track) => {
@@ -126,144 +112,18 @@ const InfiniteList = () => {
     }
   });
 
+  const playbackPosition = getPlaybackPosition(state, getPlaybackQueue(state));
+  const { activeList, listType, listScroll } = state;
   useEffect(() => {
-    if (state.listScroll) {
-      if (state.newtrack && state.activeList === 'tracklistActive') {
-        fileslistRef.current.scrollToIndex({
-          index: state.newtrack,
-          behavior: 'smooth',
-          align: 'start'
-        });
-      }
+    if (!listScroll || playbackPosition < 0) return;
+    const list = activeList === 'playlistActive' ? playlistRef : fileslistRef;
+    const showingActiveList =
+      (activeList === 'playlistActive' && listType === 'playlist') ||
+      (activeList === 'tracklistActive' && listType === 'files');
+    if (showingActiveList) {
+      list.current?.scrollToIndex({ index: playbackPosition, behavior: 'smooth', align: 'start' });
     }
-    if (state.listScroll) {
-      if (state.newtrack && state.activeList === 'playlistActive') {
-        playlistRef.current.scrollToIndex({
-          index: state.newtrack,
-          behavior: 'smooth',
-          align: 'start'
-        });
-      }
-    }
-  }, [state.activeList, state.newtrack, fileslistRef, playlistRef, state.listScroll]);
-
-  useEffect(() => {
-    const setTrackNavigation = (tracksArray) => {
-      console.log('setTrackNavigation', state.newtrack, typeof state.newtrack);
-      if (state.newtrack >= 0 && tracksArray[state.newtrack + 1]) {
-        dispatch({
-          type: 'set-next-track',
-          nextTrack: tracksArray[state.newtrack + 1].track_id
-        });
-      }
-      if (state.newtrack >= 1 && tracksArray[state.newtrack - 1]) {
-        /*  console.log('set-prev-track'); */
-        dispatch({
-          type: 'set-prev-track',
-          prevTrack: tracksArray[state.newtrack - 1].track_id
-        });
-      }
-    };
-
-    if (state.listType === 'files' && state.activeList === 'tracklistActive') {
-      /*  console.log('setTrackNavigation tripped'); */
-      setTrackNavigation(state.tracks);
-    } else if (state.listType === 'playlist' && state.activeList === 'playlistActive') {
-      setTrackNavigation(state.playlistTracks);
-    }
-  }, [
-    state.newtrack,
-    state.tracks,
-    state.listType,
-    state.playlistTracks,
-    state.activeList,
-    dispatch
-  ]);
-
-  useEffect(() => {
-    const handleTrackChange = (trackId) => {
-      /*  console.log('handleTrackChange: ', trackId); */
-      const changeTrack = new Event('click', {
-        bubbles: true,
-        cancelable: false
-      });
-
-      const toTrack = document.getElementById(trackId);
-      if (toTrack) {
-        toTrack.dispatchEvent(changeTrack);
-      } else {
-        console.error(`Element with ID ${trackId} not found in the DOM.`);
-      }
-    };
-
-    const listRef = state.activeList === 'tracklistActive' ? fileslistRef : playlistRef;
-
-    const nextIndex =
-      state.activeList === 'tracklistActive'
-        ? state.tracks.findIndex((obj) => obj.track_id === state.nextTrack)
-        : state.playlistTracks.findIndex((obj) => obj.track_id === state.nextTrack);
-
-    const prevIndex =
-      state.activeList === 'tracklistActive'
-        ? state.tracks.findIndex((obj) => obj.track_id === state.prevTrack)
-        : state.playlistTracks.findIndex((obj) => obj.track_id === state.prevTrack);
-
-    if (state.playNext && state.nextTrack && state.newtrack < state.tracks.length - 1) {
-      console.log('state.playNext: ', state.playNext);
-      /* console.log('playNext'); */
-
-      if (!state.listScroll) {
-        handleManualChange(state.nextTrack, state, dispatch);
-      }
-
-      if (state.listScroll) {
-        listRef.current.scrollToIndex({
-          index: state.newtrack + 1,
-          align: 'start'
-        });
-        if (nextIndex >= visibleRange.startIndex && nextIndex <= visibleRange.endIndex) {
-          /*    console.log(
-            'nextIndex: ',
-            nextIndex,
-            'visibleRange.startIndex: ',
-            visibleRange.startIndex
-          ); */
-          handleTrackChange(state.nextTrack);
-        }
-      }
-    }
-
-    if (state.playPrev && state.prevTrack && state.newtrack > 0) {
-      /*  console.log('playPrev'); */
-      if (!state.listScroll) {
-        handleManualChange(state.prevTrack, state, dispatch);
-      }
-
-      if (state.listScroll) {
-        listRef.current.scrollToIndex({
-          index: state.newtrack - 1,
-          align: 'start'
-        });
-        if (prevIndex >= visibleRange.startIndex && prevIndex <= visibleRange.endIndex) {
-          handleTrackChange(state.prevTrack);
-        }
-      }
-    }
-  }, [
-    state.playNext,
-    state.nextTrack,
-    state.playPrev,
-    state.prevTrack,
-    state.tracks,
-    state.playlistTracks,
-    state.activeList,
-    fileslistRef,
-    playlistRef,
-    state.newtrack,
-    visibleRange,
-    state,
-    dispatch
-  ]);
+  }, [playbackPosition, activeList, listType, listScroll]);
 
   const handleTextSearch = (e) => {
     e.preventDefault();
@@ -334,7 +194,7 @@ const InfiniteList = () => {
           duration: '',
           pause: true
         });
-        return unloadFile(state);
+        return;
       }
       default:
         return;
@@ -461,7 +321,6 @@ const InfiniteList = () => {
               style={{ height: `${contSize.height}px` }}
               ref={fileslistRef}
               data={state.tracks}
-              rangeChanged={setVisibleRange}
               totalCount={state.tracks.length}
               endReached={loadMoreTracks}
               components={{
@@ -490,7 +349,8 @@ const InfiniteList = () => {
                     divId={`${item.track_id}--item-div`}
                     className={
                       `${state.active}--item-div` === `${item.track_id}--item-div` &&
-                      state.activeList === 'tracklistActive'
+                      state.activeList === 'tracklistActive' &&
+                      state.newtrack === index
                         ? 'item active'
                         : 'item'
                     }
@@ -564,7 +424,6 @@ const InfiniteList = () => {
             <Virtuoso
               ref={playlistRef}
               data={state.playlistTracks}
-              rangeChanged={setVisibleRange}
               className="playlist-list"
               totalCount={state.playlistTracks.length}
               style={{ height: `${contSize.height}px` }}
@@ -576,7 +435,8 @@ const InfiniteList = () => {
                     divId={`${item.track_id}--item-div`}
                     className={
                       `${state.active}--item-div` === `${item.track_id}--item-div` &&
-                      state.activeList === 'playlistActive'
+                      state.activeList === 'playlistActive' &&
+                      state.newtrack === index
                         ? 'item active'
                         : 'item'
                     }
