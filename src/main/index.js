@@ -38,6 +38,8 @@ import { initializeCatalog, repairCatalog } from './catalogStartup.js';
 import { createStartupWindow } from './startupWindow.js';
 import { availableMusicTracks, createMusicAvailabilityCheck } from './musicAvailability.js';
 import { createWindowPresentation } from './windowPresentation.js';
+import { runUpdateWorker } from './updateWorkerDelivery.js';
+import { createCoverDownloads } from './coverDownloads.js';
 import axios from 'axios';
 /* import { simulateCorruption } from './simulateDbCorruption.js'; */
 import { restoreLatestBackup } from './restoreBackup.js';
@@ -400,6 +402,8 @@ function createWindow() {
   });
 
   showWhenReady(mainWindow);
+  // The independent editor and cover-search windows belong to this app session.
+  mainWindow.once('closed', () => app.quit());
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url);
@@ -765,71 +769,12 @@ ipcMain.handle('update-files', async () => {
   return;
 });
 
-ipcMain.handle('update-meta', async () => {
-  /* const senderWebContents = event.sender;
-  const senderWindow = BrowserWindow.fromWebContents(senderWebContents);
-  const targetWindow = BrowserWindow.fromId(senderWindow.id); */
-
-  try {
-    const workerPath = paths.db;
-    await createUpdateMetadataWorker({ workerData: workerPath })
-      .on('message', (message) => {
-        console.log('metadata message: ', message);
-        mainWindow.webContents.send(
-          'update-complete',
-          'metadata',
-          //getObjectWithLengths(message.result)
-          message.result
-        );
-      })
-      .on('error', (err) => {
-        console.error('Worker error:', err);
-        mainWindow.webContents.send('update-error', 'meta-error', { result: err.message });
-      })
-      .on('exit', (code) => {
-        if (code !== 0) {
-          const errorMessage = `Worker stopped with exit code ${code}`;
-          console.error(errorMessage);
-          mainWindow.webContents.send('update-error', 'meta-error', { result: errorMessage });
-        }
-      })
-      .postMessage('');
-  } catch (error) {
-    console.error('Worker encountered an error:', error);
-    console.log('Handling subsequent code after worker error.');
-  }
+ipcMain.handle('update-meta', () => {
+  runUpdateWorker(createUpdateMetadataWorker, dbPath, mainWindow?.webContents, 'metadata', 'meta-error');
 });
 
-/* function escapeSpecialChars(path) {
-  return path.replace(/[\[\]\(\)]/g, '\\$&');
-} */
-ipcMain.handle('update-covers', async () => {
-  //console.log('update-covers');
-  try {
-    /* console.log('createUpdateFilesWorker', createUpdateFilesWorker()); */
-    const workerPath = paths.db;
-    await createUpdateCoversWorker({ workerData: workerPath })
-      .on('message', (message) => {
-        //console.log('message from worker: ', message);
-        mainWindow.webContents.send('update-complete', 'covers', message.result);
-      })
-      .on('error', (err) => {
-        console.error('Worker error:', err);
-        mainWindow.webContents.send('update-error', 'covers-error', { result: err.message });
-      })
-      .on('exit', (code) => {
-        if (code !== 0) {
-          const errorMessage = `Worker stopped with exit code ${code}`;
-          console.error(errorMessage);
-          mainWindow.webContents.send('update-error', 'covers-error', { result: errorMessage });
-        }
-      })
-      .postMessage('');
-  } catch (error) {
-    console.error('Worker encountered an error:', error);
-
-    console.log('Handling subsequent code after worker error.');
-  }
+ipcMain.handle('update-covers', () => {
+  runUpdateWorker(createUpdateCoversWorker, dbPath, mainWindow?.webContents, 'covers', 'covers-error');
 });
 
 ipcMain.handle('get-tracks', async (event, ...args) => {
@@ -1488,92 +1433,25 @@ const downloadFile = async (fileUrl, savePath) => {
       return false;
     }
   } catch (err) {
-    console.error('Error during download or save:', err);
-    throw new Error(`Error: ${err.message}`);
+    console.error('Cover download failed:', err.message);
+    throw new Error(err.message);
   }
 };
 
-ipcMain.handle('download-file', async (event, ...args) => {
-  const [fileUrl, filePath] = args;
-  console.log('download-file: ', fileUrl, filePath);
-
-  const extension = path.extname(new URL(fileUrl).pathname);
-  const defaultFilename = `cover${extension}`;
-  const initialPath = filePath ? path.join(filePath, defaultFilename) : defaultFilename;
-
-  let savePath = await dialog.showSaveDialog({
-    title: 'save image',
-    defaultPath: initialPath,
-    filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp'] }],
-    properties: ['showOverwriteConfirmation']
-  });
-
-  if (savePath.canceled) {
-    /* console.log('Download canceled by user.'); */
-    event.sender.send('download-completed', 'download cancelled');
-  }
-
-  try {
-    await downloadFile(fileUrl, savePath.filePath).then(() =>
-      event.sender.send('download-completed', 'download successful')
-    );
-  } catch (error) {
-    console.error(error.message);
-    event.sender.send('download-failed', 'download failed');
-  }
+const coverDownloads = createCoverDownloads({
+  dialog,
+  downloadFile,
+  getEditor: () => getWindow('table-data'),
+  temporaryDirectory: () => app.getPath('temp')
 });
 
-ipcMain.handle('download-tag-image', async (event, ...args) => {
-  /* console.log('download-tag-image: ====>', args); */
+ipcMain.handle('download-file', (event, fileUrl, folder) =>
+  coverDownloads.save(event.sender, fileUrl, folder)
+);
 
-  const coverSearchWindow = getWindow('cover-search-alt-tags');
-  const targetWindow = await getWindow('table-data');
-
-  const [fileUrl, filePath, delayDownload] = args;
-
-  const tempKey = crypto.randomBytes(16).toString('hex');
-  /*  if (!delayDownload) {
-    targetWindow.webContents.send('update-tags', 'starting');
-  } */
-  const extension = path.extname(new URL(fileUrl).pathname);
-  const defaultFilename = `cover-${tempKey}${extension}`;
-  const tempDir = app.getPath('temp');
-  const saveTo = path.join(tempDir, defaultFilename);
-
-  const success = await downloadFile(fileUrl, saveTo);
-  if (success) {
-    const tempFile = saveTo.replace(/\\/g, '/');
-    if (delayDownload) {
-      coverSearchWindow.webContents.send('download-completed', 'download-successful');
-      return targetWindow.webContents.send('for-submit-form', { tempFile, filePath });
-    }
-    /*     try {
-      const workerPath = process.resourcesPath;
-      await createUpdateTagImageWorker({
-        workerData: { workerPath: workerPath, data: { tempFile, filePath } }
-      })
-        .on('message', () => {
-          targetWindow.webContents.send('update-tags', 'image(s) updated');
-          coverSearchWindow.webContents.send('download-completed', 'download-successful');
-          //mainWindow.webContents.send('file-update-complete', getObjectWithLengths(message.result));
-        })
-        .on('error', (err) => {
-          console.error('Worker error:', err);
-          targetWindow.webContents.send('update-tags', 'error processing');
-          coverSearchWindow.webContents.send('download-completed', 'download-cancelled');
-        })
-        .on('exit', (code) => {
-          if (code !== 0) {
-            const errorMessage = `Worker stopped with exit code ${code}`;
-            console.error(errorMessage);
-          }
-        })
-        .postMessage('');
-    } catch (error) {
-      console.error(error.message);
-    } */
-  }
-});
+ipcMain.handle('download-tag-image', (event, fileUrl, filePath, delayDownload = true) =>
+  coverDownloads.stage(event.sender, fileUrl, filePath, delayDownload)
+);
 
 ipcMain.handle('select-image-from-folder', async (event, arr, delayDownload = false) => {
   let tempFile;

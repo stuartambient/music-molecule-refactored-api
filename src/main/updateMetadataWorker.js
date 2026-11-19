@@ -1,17 +1,10 @@
 import { parentPort, workerData } from 'worker_threads';
 import fs from 'fs';
-import path from 'path';
 import process from 'node:process';
 import { updateFiles, parseMeta } from './utility/utils.js';
 import Database from 'better-sqlite3';
 
-const mode = import.meta.env.MODE;
-const dbPath =
-  mode === 'development'
-    ? path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_PATH_DEV)
-    : workerData;
-
-const db = new Database(dbPath);
+const db = new Database(workerData, { fileMustExist: true });
 const createRootsTable = `CREATE TABLE IF NOT EXISTS roots ( id INTEGER PRIMARY KEY AUTOINCREMENT, root TEXT UNIQUE)`;
 db.exec(createRootsTable);
 
@@ -39,7 +32,7 @@ const allTracks = () => {
   return tracks;
 };
 
-const run = async (cb) => {
+const run = async () => {
   let status = { modified: 0, nochange: false };
   const updatedTracks = [];
   const result = await allTracks();
@@ -57,7 +50,7 @@ const run = async (cb) => {
   if (!updatedTracks.length) {
     /* console.log('updated tracks with no length: ', updatedTracks); */
     status.nochange = true;
-    return Promise.resolve(cb(status));
+    return status;
   }
   /* await parseMeta(updatedTracks).then((parsed) => triggerInsert(parsed)); */
   const moddedArray = updatedTracks.map((obj) => {
@@ -72,29 +65,19 @@ const run = async (cb) => {
   if (updatedMeta) {
     status = { modified: updatedMeta.length, nochange: false };
   }
-  Promise.resolve(await updateFiles(db, updatedMeta)).then(() => cb(status));
-};
-
-const initUpdateMetadata = async () => {
-  return new Promise((res, rej) => {
-    try {
-      run((result) => res(result));
-    } catch (error) {
-      console.error(error.message);
-      rej(error.message);
-    }
-  });
+  await updateFiles(db, updatedMeta);
+  return status;
 };
 
 if (!parentPort) throw Error('IllegalState');
 parentPort.on('message', async (message) => {
   console.log('message: ', message);
   try {
-    const result = await initUpdateMetadata(message);
+    const result = await run();
     console.log('meta worker result: ', result);
     parentPort.postMessage({ result });
   } catch (error) {
-    parentPort.postMessage({ error: error.message });
+    parentPort.postMessage({ error: error.message || String(error) });
   } finally {
     db.close();
     process.exit(0);

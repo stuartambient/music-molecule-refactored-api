@@ -77,3 +77,31 @@
 .integration {
   color: white;
 }
+
+.cover-download-notice {
+  position: fixed;
+  z-index: 100;
+  right: 1rem;
+  bottom: 1rem;
+  width: min(28rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  padding: 0.8rem;
+  border: 1px solid #a7b4c2;
+  border-radius: 0.4rem;
+  background: #20262d;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+.cover-download-notice p {
+  margin: 0 0 0.5rem;
+}
+.cover-download-notice button {
+  padding: 0.35rem 0.7rem;
+  margin-right: 0.5rem;
+  border: 1px solid currentColor;
+  border-radius: 0.25rem;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}

@@ -1,15 +1,8 @@
 import { parentPort, workerData } from 'worker_threads';
-import path from 'node:path';
 import Database from 'better-sqlite3';
 import fg from 'fast-glob';
 
-const mode = import.meta.env.MODE;
-const dbPath =
-  mode === 'development'
-    ? path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_PATH_DEV)
-    : workerData;
-
-const db = new Database(dbPath);
+const db = new Database(workerData, { fileMustExist: true });
 
 export const getAlbums = () => {
   const getAllAlbums = db.prepare('SELECT fullpath FROM albums');
@@ -29,19 +22,14 @@ export const updateCoversInDatabase = (coversArray) => {
       SET img = @img
       WHERE fullpath = @fullpath
     `);
-  try {
-    const transaction = db.transaction((coversArray) => {
-      coversArray.forEach((cover) => {
-        if (!cover.img) return;
-        updateStmt.run(cover);
-      });
+  const transaction = db.transaction((coversArray) => {
+    coversArray.forEach((cover) => {
+      if (!cover.img) return;
+      updateStmt.run(cover);
     });
-    transaction(coversArray);
-    /* return `found ${coversArray.length} covers`; */
-    return { added: coversArray.length };
-  } catch (e) {
-    return e.message;
-  }
+  });
+  transaction(coversArray);
+  return { added: coversArray.length };
 };
 
 async function searchCover(folder) {

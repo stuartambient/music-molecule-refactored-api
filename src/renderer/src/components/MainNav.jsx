@@ -40,10 +40,10 @@ const MainNav = ({ onClick }) => {
         return `File update failed. ${result?.result || 'Please check the terminal for details.'}`;
 
       case 'covers-error':
-        return 'cover update error';
+        return `Cover update failed. ${result?.result || 'Please try again.'}`;
 
       case 'meta-error':
-        return 'metadata update error';
+        return `Metadata update failed. ${result?.result || 'Please try again.'}`;
 
       case 'metadata':
         return result.nochange

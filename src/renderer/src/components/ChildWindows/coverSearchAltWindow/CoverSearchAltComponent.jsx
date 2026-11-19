@@ -9,6 +9,8 @@ const CoverSearchAltApp = () => {
   const [imageUrl, setImageUrl] = useState('');
   const [delayDownload, setDelayDownload] = useState(true);
   const [download, setDownload] = useState(false);
+  const [downloadResult, setDownloadResult] = useState(null);
+  const downloadPending = useRef(false);
   const [listType, setListType] = useState(null);
   const [isResizing, setIsResizing] = useState(false);
   const [div1StartWidth, setDiv1StartWidth] = useState(0);
@@ -116,26 +118,49 @@ const CoverSearchAltApp = () => {
   };
   const [nonce] = useState(generateNonce());
 
-  const handleDownloadCompleted = (val) => {
-    console.log('val: ', val);
-    if (val === 'download-successful' || val === 'download successful') {
+  const startDownload = async () => {
+    if (!imageUrl || downloadPending.current) return;
+    downloadPending.current = true;
+    setDownload(true);
+    setDownloadResult(null);
+    const selectedImage = imageUrl;
+    try {
+      let result;
+      if (listType === 'cover-search-alt')
+        result = await window.coverSearchApi.invoke('download-file', selectedImage, savePath);
+      else if (listType === 'cover-search-alt-tags')
+        result = await window.coverSearchApi.invoke(
+          'download-tag-image',
+          selectedImage,
+          savePath,
+          delayDownload
+        );
+      else throw new Error('The cover search has no save destination. Reopen it and try again.');
+      if (result?.status === 'success') {
+        setImageUrl((current) => (current === selectedImage ? '' : current));
+        setDownloadResult({
+          status: 'success',
+          message:
+            listType === 'cover-search-alt-tags'
+              ? 'Cover selected. Save the tag edit form to apply it.'
+              : 'Cover saved.'
+        });
+      } else if (result?.status === 'cancelled')
+        setDownloadResult({
+          status: 'cancelled',
+          message: 'Save cancelled. The selected image is still available.'
+        });
+      else throw new Error(result?.message || 'The cover could not be saved. Please try again.');
+    } catch (error) {
+      setDownloadResult({
+        status: 'error',
+        message: error.message || 'The cover could not be saved. Please try again.'
+      });
+    } finally {
+      downloadPending.current = false;
       setDownload(false);
-      setImageUrl('');
-    } else if (val === 'download-cancelled' || val === 'download cancelled') {
-      setDownload(false);
-      setImageUrl('');
     }
   };
-
-  useIpcEvent('download-completed', handleDownloadCompleted, 'coverSearchApi');
-
-  useEffect(() => {
-    if (download && imageUrl && listType === 'cover-search-alt') {
-      window.coverSearchApi.invoke('download-file', imageUrl, savePath /* , listType */);
-    } else if (download && imageUrl && listType === 'cover-search-alt-tags') {
-      window.coverSearchApi.invoke('download-tag-image', imageUrl, savePath, delayDownload);
-    }
-  }, [delayDownload, download, imageUrl, listType, savePath]);
 
   /*   useEffect(() => {
     window.coverSearchAltApi.onContextMenuCommand((value) => {
@@ -148,7 +173,7 @@ const CoverSearchAltApp = () => {
   const handleDownload = (value) => {
     console.log('value: ', value);
     if (value === 'save image') {
-      setDownload(true);
+      startDownload();
     }
   };
 
@@ -300,6 +325,24 @@ const CoverSearchAltApp = () => {
 
   return (
     <>
+      {(download || downloadResult) && (
+        <div
+          className="cover-download-notice"
+          role={downloadResult?.status === 'error' ? 'alert' : 'status'}
+        >
+          <p>{download ? 'Saving cover…' : downloadResult.message}</p>
+          {!download && downloadResult?.status === 'error' && imageUrl && (
+            <button type="button" onClick={startDownload}>
+              Retry
+            </button>
+          )}
+          {!download && (
+            <button type="button" onClick={() => setDownloadResult(null)}>
+              Dismiss
+            </button>
+          )}
+        </div>
+      )}
       <div
         className="iframeContainer"
         ref={div1Ref}
