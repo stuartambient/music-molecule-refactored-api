@@ -362,7 +362,7 @@ export function createRecoveryWindow() {
       sandbox: true,
       webSecurity: true,
       contextIsolation: true,
-      nodeIntegration: true
+      nodeIntegration: false
     }
   });
 
@@ -393,7 +393,7 @@ function createWindow() {
       sandbox: true,
       webSecurity: true,
       contextIsolation: true,
-      nodeIntegration: true
+      nodeIntegration: false
       /* additionalArguments: [`--mainTheme=${mainTheme}`] */
       /* nodeIntegration: true */
     }
