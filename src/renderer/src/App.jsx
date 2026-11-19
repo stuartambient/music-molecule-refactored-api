@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import classNames from 'classnames';
 import { useAudioPlayer } from './mainAudioContext';
 import useIpcEvent from './hooks/useIpcEvent';
@@ -6,6 +6,7 @@ import useIpcEvent from './hooks/useIpcEvent';
 import PlaybackError from './components/PlaybackError';
 import MusicNotice from './components/MusicNotice';
 import Player from './components/Player';
+import ArtworkView from './components/ArtworkView';
 import InfiniteList from './Components/InfiniteList';
 import Home from './Components/Home';
 import Update from './Components/Update';
@@ -25,6 +26,26 @@ import './appstyles/theme-6.css';
 
 function App() {
   const { state, dispatch } = useAudioPlayer();
+  const [artworkExpanded, setArtworkExpanded] = useState(false);
+  const openArtwork = useCallback(async () => {
+    setArtworkExpanded(true);
+    try {
+      const opened = await window.ipcApi.invoke('artwork-view', true);
+      if (!opened) setArtworkExpanded(false);
+    } catch (error) {
+      setArtworkExpanded(false);
+      console.error('Unable to expand artwork:', error);
+    }
+  }, []);
+  const closeArtwork = useCallback(async () => {
+    try {
+      await window.ipcApi.invoke('artwork-view', false);
+    } catch (error) {
+      console.error('Unable to restore the previous window:', error);
+    } finally {
+      setArtworkExpanded(false);
+    }
+  }, []);
 
   const handleThemeUpdate = useCallback(async () => {
     const preferences = await window.ipcApi.invoke('get-preferences');
@@ -98,16 +119,12 @@ function App() {
     const changeScreenMode = () => {
       if (state.minimalmode && state.player) {
         window.ipcApi.send('screen-mode', state.miniModePlaylist ? 'mini-expanded' : 'mini');
-        window.ipcApi.send('toggle-resizable', false);
       } else if (!state.minimalmode && state.player && state.library) {
         window.ipcApi.send('screen-mode', 'player-library');
-        window.ipcApi.send('toggle-resizable', true);
       } else if (state.player && !state.library) {
         window.ipcApi.send('screen-mode', 'player');
-        window.ipcApi.send('toggle-resizable', false);
       } else if (!state.player) {
         window.ipcApi.send('screen-mode', 'default');
-        window.ipcApi.send('toggle-resizable', true);
       }
     };
     if (subscribed) {
@@ -341,6 +358,7 @@ function App() {
   };
 
   const containerClassNames = classNames(`container ${state.mainTheme}`, {
+    'artwork-expanded': artworkExpanded,
     'container-home': state.home || state.tagEditor,
     'container-update': state.update,
     'container-mini-expanded': state.miniModePlaylist,
@@ -364,7 +382,7 @@ function App() {
       {state.update && <Update />}
       {/*  open to all pages */}
       {state.player || state.home ? (
-        <Player>
+        <Player onExpandArtwork={openArtwork}>
           {!state.minimalmode && (
             <>
               <Controls handlePlayerControls={handlePlayerControls} />
@@ -379,6 +397,7 @@ function App() {
       {state.player || state.miniModePlaylist || state.home || state.update || state.tagEditor ? (
         <InfiniteList />
       ) : null}
+      {artworkExpanded && <ArtworkView onExit={closeArtwork} onControl={handlePlayerControls} />}
     </div>
   );
 }

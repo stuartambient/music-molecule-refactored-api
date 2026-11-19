@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useAudioPlayer } from '../mainAudioContext';
 import classNames from 'classnames';
 import { TbWorldSearch } from 'react-icons/tb';
+import { FiMaximize2 } from 'react-icons/fi';
 import PlayerScrubber from './PlayerScrubber';
 import PlayerVolume from './PlayerVolume';
 import '../style/Player.css';
 
-const Player = ({ children }) => {
+const Player = ({ children, onExpandArtwork }) => {
   const { state, dispatch } = useAudioPlayer();
   const [cTime, setCTime] = useState('00:00');
   //const [mainTheme, setMainTheme] = useState('');
@@ -71,8 +72,17 @@ const Player = ({ children }) => {
       )}
       {state.cover && state.cover !== 'not available' && !state.minimalmode && (
         <>
-          <div style={{ backgroundImage: `url` }} className="image">
-            {!state.minimalmode && <img src={state.cover} alt="" />}
+          <div className="image">
+            <button
+              type="button"
+              className="artwork-expand"
+              aria-label="Expand album artwork"
+              title="Expand album artwork"
+              onClick={onExpandArtwork}
+            >
+              <img src={state.cover} alt="" />
+              <FiMaximize2 aria-hidden="true" />
+            </button>
           </div>
         </>
       )}

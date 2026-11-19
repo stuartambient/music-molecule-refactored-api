@@ -4,6 +4,47 @@
   overflow: hidden;
   scroll-behavior: smooth;
   background-color: var(--list-background);
+  container-type: inline-size;
+}
+
+.files-list .item,
+.playlist-list .item {
+  grid-template-columns: minmax(0, 1fr) 2rem;
+}
+
+.track-details {
+  display: grid;
+  min-width: 0;
+  gap: 0.15rem;
+}
+
+.track-field {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+  gap: 0.25rem;
+}
+
+.track-field-label {
+  flex-shrink: 0;
+  font-weight: bold;
+}
+.track-field-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Base the switch on the list's own width, leaving the player unchanged. */
+@container (min-width: 760px) {
+  .track-details {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1.2fr);
+    gap: 0.75rem;
+  }
+  .track-field + .track-field {
+    padding-left: 0.75rem;
+    border-left: 1px solid currentColor;
+  }
 }
 
 .results-minimal {

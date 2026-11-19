@@ -76,9 +76,15 @@ textarea {
 
 .container-player {
   background: none;
-  grid-template-rows: 32px 40px 1fr;
-  grid-template-columns: 300px 1fr;
+  grid-template-rows: 32px 40px minmax(0, 1fr);
+  grid-template-columns: 300px minmax(0, 1fr);
   grid-auto-rows: 0px;
+}
+
+.container-player > .audio-player {
+  grid-row: 3 / 4;
+  height: 428px;
+  align-self: start;
 }
 
 .container-centered {

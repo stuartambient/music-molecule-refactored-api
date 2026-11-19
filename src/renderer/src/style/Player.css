@@ -43,6 +43,35 @@
   grid-area: image;
 }
 
+.artwork-expand {
+  display: block;
+  position: relative;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+  -webkit-app-region: no-drag;
+}
+
+.artwork-expand img {
+  display: block;
+}
+.artwork-expand svg {
+  position: absolute;
+  bottom: 0.35rem;
+  right: 0.35rem;
+  padding: 0.2rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.25rem;
+  color: white;
+  background: rgb(0 0 0 / 65%);
+}
+.artwork-expand:focus-visible {
+  outline: 2px solid var(--controls-icon);
+  outline-offset: 3px;
+}
+
 .audio-player .image img {
   width: 200px;
   height: 200px;

@@ -9,6 +9,21 @@ import { HiMinusSm as Minus } from 'react-icons/hi';
 /* import { Plus, Minus } from '../assets/icons'; */
 import '../style/FlashEffect.css';
 
+const TrackDetails = ({ artist, title, album }) => (
+  <>
+    {[
+      ['Artist', artist],
+      ['Title', title],
+      ['Album', album]
+    ].map(([label, value]) => (
+      <span className="track-field" key={label} title={`${label}: ${value}`}>
+        <span className="track-field-label">{label}:</span>
+        <span className="track-field-value">{value}</span>
+      </span>
+    ))}
+  </>
+);
+
 const Item = forwardRef((props, ref) => {
   const { state, dispatch } = useAudioPlayer();
   /* const { setContextMenuItem } = useContextMenu(); */
@@ -24,6 +39,7 @@ const Item = forwardRef((props, ref) => {
         /* fromlisttype={props.type} */
       >
         <a
+          className="track-details"
           href={props.href}
           id={props.id}
           data-val={props['data-val']}
@@ -39,13 +55,7 @@ const Item = forwardRef((props, ref) => {
             })
           }
         >
-          <span>Artist:</span> {props.artist}
-          <br></br>
-          <span>Title:</span>
-          {props.title}
-          <br></br>
-          <span>Album:</span> {props.album}
-          <br></br>
+          <TrackDetails artist={props.artist} title={props.title} album={props.album} />
         </a>
         <div className="item-menu">
           <ContextMenu fromlisttype={props.type} id={props.id} />
@@ -94,6 +104,7 @@ const Item = forwardRef((props, ref) => {
     return (
       <div id={props.divId} className={props.className} ref={ref} /* fromlisttype={props.type} */>
         <a
+          className="track-details"
           href={props.href}
           id={props.id}
           data-val={props['data-val']}
@@ -109,11 +120,7 @@ const Item = forwardRef((props, ref) => {
             })
           }
         >
-          Artist: {props.artist}
-          <br></br>
-          Title: {props.title}
-          <br></br>
-          Album: {props.album}
+          <TrackDetails artist={props.artist} title={props.title} album={props.album} />
         </a>
         <div className="item-menu">
           <ContextMenu fromlisttype={props.type} id={props.id} divid={props.divId} />

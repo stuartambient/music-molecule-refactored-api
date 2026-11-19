@@ -37,6 +37,7 @@ import { getDB, backupDirectory, dbPath } from './connection';
 import { initializeCatalog, repairCatalog } from './catalogStartup.js';
 import { createStartupWindow } from './startupWindow.js';
 import { availableMusicTracks, createMusicAvailabilityCheck } from './musicAvailability.js';
+import { createWindowPresentation } from './windowPresentation.js';
 import axios from 'axios';
 /* import { simulateCorruption } from './simulateDbCorruption.js'; */
 import { restoreLatestBackup } from './restoreBackup.js';
@@ -332,6 +333,7 @@ const capitalizeDriveLetter = (str) => {
 };
 
 export let mainWindow;
+const windowPresentation = createWindowPresentation(() => mainWindow);
 let recWindow;
 let startupWindow;
 
@@ -414,6 +416,7 @@ function createWindow() {
         mainWindow.minimize();
         break;
       case 'maximize':
+        if (!mainWindow.isMaximizable()) break;
         if (mainWindow.isMaximized()) {
           mainWindow.unmaximize();
         } else {
@@ -610,12 +613,9 @@ app.on('window-all-closed', () => {
   }
 });
 
-ipcMain.on('toggle-resizable', (event, isResizable) => {
-  mainWindow.setResizable(isResizable);
-  const [currentWidth, currentHeight] = mainWindow.getSize();
-  if (isResizable) {
-    mainWindow.setMinimumSize(currentWidth, currentHeight);
-  }
+ipcMain.handle('artwork-view', (event, enabled) => {
+  if (event.sender !== mainWindow?.webContents) return false;
+  return windowPresentation.setArtwork(enabled === true);
 });
 
 function completeRecovery(event) {
@@ -922,28 +922,8 @@ ipcMain.handle('get-cover', async (event, arg) => {
   return 0;
 });
 
-ipcMain.on('screen-mode', async (event, ...args) => {
-  mainWindow.setAlwaysOnTop(args[0] === 'mini' || args[0] === 'mini-expanded');
-  if (args[0] === 'mini') {
-    await mainWindow.setMinimumSize(290, 350);
-    await mainWindow.setSize(290, 350, false);
-  }
-  if (args[0] === 'player-library') {
-    await mainWindow.setMinimumSize(660, 500);
-    await mainWindow.setSize(660, 500, false);
-  }
-  if (args[0] === 'player') {
-    await mainWindow.setMinimumSize(300, 500);
-    await mainWindow.setSize(300, 500, false);
-  }
-  if (args[0] === 'mini-expanded') {
-    await mainWindow.setMinimumSize(380, 620);
-    await mainWindow.setSize(380, 620, false);
-  }
-  if (args[0] === 'default') {
-    await mainWindow.setMinimumSize(800, 600);
-    await mainWindow.setSize(800, 600, true);
-  }
+ipcMain.on('screen-mode', (event, ...args) => {
+  if (event.sender === mainWindow?.webContents) windowPresentation.setMode(args[0]);
 });
 
 ipcMain.handle('update-like', async (event, ...args) => {
