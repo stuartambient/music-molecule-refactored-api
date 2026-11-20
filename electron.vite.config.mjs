@@ -3,6 +3,28 @@ import { fileURLToPath } from 'url';
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
 import react from '@vitejs/plugin-react';
 
+// React Refresh injects an inline preamble and opens a websocket only in development.
+const developmentCsp = {
+  name: 'development-csp',
+  apply: 'serve',
+  transformIndexHtml: {
+    order: 'pre',
+    handler(html, context) {
+      const updated = html
+        .replace("script-src 'self';", "script-src 'self' 'unsafe-inline';")
+        .replace("connect-src 'self';", "connect-src 'self' ws://localhost:* ws://127.0.0.1:*;");
+      if (!context.filename.endsWith('index.html')) return updated;
+      return {
+        html: updated.replace(
+          "script-src 'self' 'unsafe-inline';",
+          "script-src 'self' 'unsafe-inline' http://localhost:8097;"
+        ),
+        tags: [{ tag: 'script', attrs: { src: 'http://localhost:8097' }, injectTo: 'body' }]
+      };
+    }
+  }
+};
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -61,6 +83,6 @@ export default defineConfig({
         external: ['src/db/music.db'] // Exclude the database file
       }
     },
-    plugins: [react()]
+    plugins: [react(), developmentCsp]
   }
 });

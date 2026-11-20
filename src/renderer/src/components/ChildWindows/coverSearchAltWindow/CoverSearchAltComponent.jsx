@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import useIpcEvent from '../../../hooks/useIpcEvent';
+import { readCoverSelection } from '../../../utility/coverSelection.js';
 import './style.css';
 
 const CoverSearchAltApp = () => {
@@ -111,13 +112,6 @@ const CoverSearchAltApp = () => {
     window.addEventListener('mouseup', handleMouseUp);
   };
 
-  const generateNonce = () => {
-    return Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) =>
-      byte.toString(16).padStart(2, '0')
-    ).join('');
-  };
-  const [nonce] = useState(generateNonce());
-
   const startDownload = async () => {
     if (!imageUrl || downloadPending.current) return;
     downloadPending.current = true;
@@ -179,43 +173,6 @@ const CoverSearchAltApp = () => {
 
   useIpcEvent('context-menu-command', handleDownload, 'coverSearchApi');
 
-  useEffect(() => {
-    const metaTag = document.createElement('meta');
-    metaTag.setAttribute('http-equiv', 'Content-Security-Policy');
-    metaTag.setAttribute(
-      'content',
-      `
-        default-src 'self';
-        frame-src 'self' https://covers.musichoarders.xyz;
-        script-src 'self' https://covers.musichoarders.xyz 'nonce-${nonce}';
-        style-src 'self' 'unsafe-inline';
-        connect-src 'self' https://covers.musichoarders.xyz;
-        child-src 'self' https://covers.musichoarders.xyz;
-        img-src * data:;
-      `
-    );
-    document.head.appendChild(metaTag);
-
-    const scriptTag = document.querySelector('script[nonce="RUNTIME_NONCE"]');
-    if (scriptTag) {
-      scriptTag.setAttribute('nonce', nonce);
-    }
-
-    // Cleanup: Remove the meta tag when the component unmounts
-    return () => {
-      document.head.removeChild(metaTag);
-    };
-  }, [nonce]);
-
-  /*   useEffect(() => {
-    if (!notified) {
-      window.coverSearchAltApi.notifyReady();
-      setNotified(true);
-      console.log('Notified parent that child is ready');
-    } */
-
-  //}
-
   const handleSearchParams = useCallback(
     (args) => {
       /* if (!args.results.artist) return; */
@@ -238,24 +195,17 @@ const CoverSearchAltApp = () => {
 
   useEffect(() => {
     const messageHandler = (event) => {
-      if (event.origin !== 'https://covers.musichoarders.xyz') {
-        return;
-      }
-
       try {
-        // Ensure event data is in the expected format (an object stringified as JSON)
-        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-
-        // Validate the message structure
-        if (data && typeof data === 'object' && data.action === 'primary' && data.type === 'pick') {
-          console.log('Valid message data:', data);
-
-          setImageUrl(data.bigCoverUrl);
-        } else {
-          throw new Error('Invalid message structure');
+        const selection = readCoverSelection(event, iframeRef.current?.contentWindow);
+        if (selection) {
+          setImageUrl(selection);
+          setDownloadResult(null);
         }
-      } catch (error) {
-        console.error('Error handling message:', error);
+      } catch {
+        setDownloadResult({
+          status: 'error',
+          message: 'The selected image has an unsupported URL. Choose another cover.'
+        });
       }
     };
 

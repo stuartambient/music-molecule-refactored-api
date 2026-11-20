@@ -1,6 +1,7 @@
 import path from 'node:path';
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
+import { validateCoverDownloadUrl } from './coverDownloader.js';
 
 export function createCoverDownloads({ dialog, downloadFile, getEditor, temporaryDirectory }) {
   const notify = (sender, result) => {
@@ -23,7 +24,7 @@ export function createCoverDownloads({ dialog, downloadFile, getEditor, temporar
   return {
     async save(sender, fileUrl, folder) {
       try {
-        const filename = `cover${path.extname(new URL(fileUrl).pathname)}`;
+        const filename = `cover${path.extname(validateCoverDownloadUrl(fileUrl).pathname)}`;
         const selection = await dialog.showSaveDialog({
           title: 'save image',
           defaultPath: folder ? path.join(folder, filename) : filename,
@@ -53,7 +54,7 @@ export function createCoverDownloads({ dialog, downloadFile, getEditor, temporar
           );
         saved = path.join(
           temporaryDirectory(),
-          `cover-${crypto.randomBytes(16).toString('hex')}${path.extname(new URL(fileUrl).pathname)}`
+          `cover-${crypto.randomBytes(16).toString('hex')}${path.extname(validateCoverDownloadUrl(fileUrl).pathname)}`
         );
         if (!(await downloadFile(fileUrl, saved)))
           throw new Error('The download did not complete.');

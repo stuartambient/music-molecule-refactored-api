@@ -100,6 +100,10 @@ function createOrUpdateChildWindow(name, type, config, data, opener) {
   };
   windows.set(name, entry);
   window.removeMenu();
+  if (config.preload === 'coverSearchAlt') {
+    window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+    window.webContents.on('will-navigate', (event) => event.preventDefault());
+  }
 
   window.webContents.on('did-start-navigation', (event) => {
     if (!event.isMainFrame || event.isSameDocument) return;

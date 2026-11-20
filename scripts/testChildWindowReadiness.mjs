@@ -32,6 +32,9 @@ class FakeWindow extends EventEmitter {
     this.messages = [];
     this.webContents = new EventEmitter();
     this.webContents.mainFrame = {};
+    this.webContents.setWindowOpenHandler = (handler) => {
+      this.openWindowHandler = handler;
+    };
     this.webContents.send = (...args) => this.messages.push(args);
   }
   getBounds() {
@@ -125,6 +128,22 @@ test('child readiness is owned by each window', async (suite) => {
     for (const name of getWindowNames()) getWindow(name).close();
   });
   try {
+    await suite.test(
+      'cover search cannot open another app window or navigate its host document',
+      () => {
+        const cover = open('cover', data('cover'), { ...config, preload: 'coverSearchAlt' });
+        assert.deepEqual(cover.openWindowHandler({ url: 'https://example.com' }), {
+          action: 'deny'
+        });
+        let prevented = false;
+        cover.webContents.emit('will-navigate', {
+          preventDefault() {
+            prevented = true;
+          }
+        });
+        assert.equal(prevented, true);
+      }
+    );
     await suite.test(
       'independent editor and cover windows are offset without adding a parent',
       () => {

@@ -40,7 +40,7 @@ import { availableMusicTracks, createMusicAvailabilityCheck } from './musicAvail
 import { createWindowPresentation } from './windowPresentation.js';
 import { runUpdateWorker } from './updateWorkerDelivery.js';
 import { createCoverDownloads } from './coverDownloads.js';
-import axios from 'axios';
+import { downloadCoverFile } from './coverDownloader.js';
 /* import { simulateCorruption } from './simulateDbCorruption.js'; */
 import { restoreLatestBackup } from './restoreBackup.js';
 import { electronApp, optimizer, is } from '@electron-toolkit/utils';
@@ -1413,44 +1413,28 @@ ipcMain.handle('show-child', async (event, args) => {
   await createOrUpdateChildWindow(name, type, winConfig, data, opener);
 });
 
-// Helper function for downloading and saving
-const downloadFile = async (fileUrl, savePath) => {
-  /* console.log('save-path: ', savePath); */
-  try {
-    const response = await axios.get(fileUrl, {
-      responseType: 'arraybuffer',
-      headers: {
-        'User-Agent': 'musicplayer-electron/1.0 +https://stuartambient.github.io/musicapp-intro/'
-      }
-    });
-
-    if (response.status === 200) {
-      await fs.promises.writeFile(savePath, response.data);
-      /* console.log('Download complete:', savePath); */
-      return true;
-    } else {
-      /* console.log('Failed to download:', response.status); */
-      return false;
-    }
-  } catch (err) {
-    console.error('Cover download failed:', err.message);
-    throw new Error(err.message);
-  }
-};
-
 const coverDownloads = createCoverDownloads({
   dialog,
-  downloadFile,
+  downloadFile: downloadCoverFile,
   getEditor: () => getWindow('table-data'),
   temporaryDirectory: () => app.getPath('temp')
 });
 
+function coverRequestAllowed(event, name) {
+  const window = getWindow(name);
+  return window?.webContents === event.sender && event.senderFrame === event.sender.mainFrame;
+}
+
 ipcMain.handle('download-file', (event, fileUrl, folder) =>
-  coverDownloads.save(event.sender, fileUrl, folder)
+  coverRequestAllowed(event, 'cover-search-alt')
+    ? coverDownloads.save(event.sender, fileUrl, folder)
+    : { status: 'error', message: 'This window cannot request a cover download.' }
 );
 
 ipcMain.handle('download-tag-image', (event, fileUrl, filePath, delayDownload = true) =>
-  coverDownloads.stage(event.sender, fileUrl, filePath, delayDownload)
+  coverRequestAllowed(event, 'cover-search-alt-tags')
+    ? coverDownloads.stage(event.sender, fileUrl, filePath, delayDownload)
+    : { status: 'error', message: 'This window cannot request tag artwork.' }
 );
 
 ipcMain.handle('select-image-from-folder', async (event, arr, delayDownload = false) => {
