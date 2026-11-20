@@ -1,26 +1,87 @@
-// ThemeContext.jsx
-import { createContext, useState, useContext, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import {
+  mainThemes,
+  normalizeMainTheme,
+  normalizeEditorTheme
+} from '../../shared/themePreferences';
 
-const ThemeContext = createContext();
+import { EditorThemeContext } from './editorThemeContext';
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(() => window.initialTheme || 'light');
+  const [preferences, setPreferences] = useState(() => ({
+    mainTheme: normalizeMainTheme(window.initialMainTheme),
+    editorTheme: normalizeEditorTheme(window.initialEditorTheme)
+  }));
+  const [themeError, setThemeError] = useState('');
+  const [theme, setTheme] = useState('dark');
+  const revision = useRef(0);
 
   useEffect(() => {
-    // apply class to <html> so CSS vars work in portals too
+    let current = true;
+    const apply = (next) => {
+      revision.current++;
+      if (current)
+        setPreferences({
+          mainTheme: normalizeMainTheme(next.mainTheme),
+          editorTheme: normalizeEditorTheme(next.editorTheme)
+        });
+    };
+    const unsubscribe = window.tagEditApi.on('theme-preferences-updated', apply);
+    const request = revision.current;
+    window.tagEditApi
+      .getPreferences()
+      .then((next) => {
+        if (current && request === revision.current) apply(next);
+      })
+      .catch(() => {
+        if (current)
+          setThemeError('Could not refresh the theme. Using the window’s initial theme.');
+      });
+    return () => {
+      current = false;
+      unsubscribe();
+    };
+  }, []);
+
+  useLayoutEffect(() => {
     const root = document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(theme);
-    window.tagEditApi.savePreferences({ theme });
-  }, [theme]);
+    root.classList.remove(...mainThemes, 'light', 'dark');
+    root.classList.add(preferences.mainTheme);
+    root.dataset.editorTheme = preferences.editorTheme;
+    root.dataset.themeSurface = 'editor';
+    setTheme(
+      getComputedStyle(root).getPropertyValue('--ui-color-scheme').trim() === 'light'
+        ? 'light'
+        : 'dark'
+    );
+    return () => {
+      delete root.dataset.editorTheme;
+      delete root.dataset.themeSurface;
+    };
+  }, [preferences]);
 
-  const toggleTheme = () => setTheme((t) => (t === 'light' ? 'dark' : 'light'));
+  const setEditorTheme = async (value) => {
+    const editorTheme = normalizeEditorTheme(value);
+    const previous = preferences;
+    const request = ++revision.current;
+    setThemeError('');
+    setPreferences((current) => ({ ...current, editorTheme }));
+    try {
+      if (!(await window.tagEditApi.savePreferences({ editorTheme })))
+        throw new Error('Save failed');
+    } catch {
+      if (request === revision.current) {
+        setPreferences(previous);
+        setThemeError('Could not save the editor theme. Please try again.');
+      }
+    }
+  };
 
-  return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>;
-};
-
-export const useTheme = () => {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error('useTheme must be used within a ThemeProvider');
-  return ctx;
+  return (
+    <EditorThemeContext.Provider
+      value={{ theme, editorTheme: preferences.editorTheme, setEditorTheme, themeError }}
+    >
+      {children}
+    </EditorThemeContext.Provider>
+  );
 };

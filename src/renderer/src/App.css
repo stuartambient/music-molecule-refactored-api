@@ -94,8 +94,8 @@ textarea {
 }
 
 .container-update {
-  grid-template-rows: 2rem 1fr;
-  grid-template-columns: 100vw;
+  grid-template-rows: 2rem minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-auto-rows: 0px;
   background: var(--update-container-background);
 }

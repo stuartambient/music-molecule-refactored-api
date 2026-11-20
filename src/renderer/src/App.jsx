@@ -2,6 +2,7 @@ import { useEffect, useCallback, useState } from 'react';
 import classNames from 'classnames';
 import { useAudioPlayer } from './mainAudioContext';
 import useIpcEvent from './hooks/useIpcEvent';
+import { normalizeMainTheme } from '../../shared/themePreferences';
 
 import PlaybackError from './components/PlaybackError';
 import MusicNotice from './components/MusicNotice';
@@ -16,13 +17,7 @@ import Extras from './Components/Extras';
 import Stats from './Components/Stats';
 
 import './App.css';
-import './appstyles/root.css';
-import './appstyles/theme-1.css';
-import './appstyles/theme-2.css';
-import './appstyles/theme-3.css';
-import './appstyles/theme-4.css';
-import './appstyles/theme-5.css';
-import './appstyles/theme-6.css';
+import './appstyles/mainThemes.css';
 
 function App() {
   const { state, dispatch } = useAudioPlayer();
@@ -49,12 +44,13 @@ function App() {
 
   const handleThemeUpdate = useCallback(async () => {
     const preferences = await window.ipcApi.getPreferences();
+    const mainTheme = normalizeMainTheme(preferences?.mainTheme);
 
-    if (preferences.mainTheme && preferences.mainTheme !== state.mainTheme) {
+    if (mainTheme !== state.mainTheme) {
       console.log('not equal');
       dispatch({
         type: 'set-main-theme',
-        mainTheme: preferences.mainTheme
+        mainTheme
       });
     }
   }, [state.mainTheme, dispatch]);

@@ -89,7 +89,7 @@ const electron = mockModule(
   'export const { ipcMain, BrowserWindow, screen } = globalThis.__childWindowFixture;'
 );
 const index = mockModule(
-  'export const { mainWindow } = globalThis.__childWindowFixture; export const theme="dark";'
+  'export const { mainWindow } = globalThis.__childWindowFixture; export const theme="dark", mainTheme="theme-1", editorTheme="follow";'
 );
 const toolkit = mockModule('export const is = { dev: false };');
 const hooks = registerHooks({
@@ -102,9 +102,13 @@ const hooks = registerHooks({
     return next(specifier, context);
   }
 });
-const { createOrUpdateChildWindow, sendToChild, getWindow, getWindowNames } = await import(
-  '../src/main/windowManager.js'
-);
+const {
+  createOrUpdateChildWindow,
+  sendToChild,
+  getWindow,
+  getWindowNames,
+  broadcastThemePreferences
+} = await import('../src/main/windowManager.js');
 const config = {
   width: 800,
   height: 600,
@@ -131,6 +135,29 @@ test('child readiness is owned by each window', async (suite) => {
     for (const name of getWindowNames()) getWindow(name).close();
   });
   try {
+    await suite.test(
+      'theme launches and updates reach editors without being broadcast to cover search',
+      () => {
+        const editor = open('editor');
+        const cover = open('cover', data('cover'), { ...config, preload: 'coverSearchAlt' });
+        assert.ok(
+          editor.options.webPreferences.additionalArguments.includes('--mainTheme=theme-1')
+        );
+        assert.ok(
+          editor.options.webPreferences.additionalArguments.includes('--editorTheme=follow')
+        );
+        const preferences = { mainTheme: 'basic', editorTheme: 'follow' };
+        broadcastThemePreferences(preferences);
+        assert.deepEqual(
+          editor.messages.filter(([channel]) => channel === 'theme-preferences-updated'),
+          [['theme-preferences-updated', preferences]]
+        );
+        assert.equal(
+          cover.messages.some(([channel]) => channel === 'theme-preferences-updated'),
+          false
+        );
+      }
+    );
     await suite.test(
       'cover search cannot open another app window or navigate its host document',
       () => {

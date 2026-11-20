@@ -1,67 +1,109 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAudioPlayer } from '../mainAudioContext';
-
 import ScheduleForm from './ScheduleForm';
 import NativeDragDropFolderInput from './NativeDragDropFolderInput';
 import MainPreferences from './MainPreferences';
-/* import { GiTreeRoots } from 'react-icons/gi'; */
 import '../style/Update.css';
+
+const sections = [
+  ['setup', 'Setup / Modify', 'Choose the music folders included in your library.'],
+  ['schedule', 'Scheduling', 'Choose when automatic library updates run.'],
+  ['preferences', 'Theme Preferences', 'Choose the colors used throughout the app.']
+];
 
 const Update = () => {
   const { state, dispatch } = useAudioPlayer();
-  /*  const [rootsUpdateReq, setRootsUpdateReq] = useState(false);
-  const [scheduleUpdates, setScheduleUpdates] = useState(false); */
-  const [rootDirs, setRootDirs] = useState([]);
+  const [rootDirs, setRootDirs] = useState(null);
+  const [rootsError, setRootsError] = useState('');
+  const [reload, setReload] = useState(0);
+  const sectionRefs = useRef({});
 
   useEffect(() => {
-    const reqRoots = async () => {
-      const rootFolders = await window.ipcApi.getRoots();
-      //console.log('rootFolders: ', rootFolders);
-      setRootDirs(rootFolders);
+    let current = true;
+    setRootsError('');
+    window.ipcApi
+      .getRoots()
+      .then((roots) => {
+        if (!Array.isArray(roots)) throw new Error('Invalid folder response');
+        if (current) setRootDirs(roots);
+      })
+      .catch(() => {
+        if (current)
+          setRootsError('Could not load your music folders. Try again before editing them.');
+      });
+    return () => {
+      current = false;
     };
-    if (state.setup) {
-      reqRoots();
+  }, [reload]);
+
+  useEffect(() => {
+    if (state.setup && state.setup !== 'setup') {
+      sectionRefs.current[state.setup]?.scrollIntoView({ block: 'start' });
+    } else {
+      sectionRefs.current.setup?.parentElement?.scrollTo({ top: 0 });
     }
   }, [state.setup]);
 
-  /* const handleUpdates = async (e) => {
-    e.preventDefault();
-    switch (e.currentTarget.id) {
-      case 'rootsupdate':
-        setRootsUpdateReq((prevState) => !prevState);
-        break;
-      case 'schedule-updates':
-        setScheduleUpdates((prevState) => !prevState);
-        break;
-      default:
-        return;
-    }
-  }; */
-
   return (
-    <>
-      {state.setup === 'setup' && (
-        <div className={`update-container ${state.mainTheme}`}>
-          {/* <div className="update-roots" id="rootsupdate" onClick={handleUpdates}>
-            <GiTreeRoots /> Add root folders
-          </div> */}
-          {rootDirs && <NativeDragDropFolderInput rootDirs={rootDirs} setRootDirs={setRootDirs} />}
+    <main
+      className={`update-container settings-page ${state.mainTheme}`}
+      aria-labelledby="settings-title"
+    >
+      <header className="settings-header">
+        <h1 id="settings-title">Settings</h1>
+        <p>Music folders, update schedules, and appearance.</p>
+      </header>
+      <div className="settings-layout">
+        <nav className="settings-nav" aria-label="Settings sections">
+          {sections.map(([id, title]) => (
+            <button
+              key={id}
+              type="button"
+              aria-current={(state.setup || 'setup') === id ? 'location' : undefined}
+              onClick={() => {
+                dispatch({ type: 'config-options', setup: id });
+                sectionRefs.current[id]?.scrollIntoView({ block: 'start' });
+              }}
+            >
+              {title}
+            </button>
+          ))}
+        </nav>
+        <div className="settings-content">
+          {sections.map(([id, title, description]) => (
+            <section
+              key={id}
+              id={`settings-${id}`}
+              className="settings-card"
+              aria-labelledby={`settings-${id}-title`}
+              ref={(element) => {
+                sectionRefs.current[id] = element;
+              }}
+            >
+              <header>
+                <h2 id={`settings-${id}-title`}>{title}</h2>
+                <p>{description}</p>
+              </header>
+              {id === 'setup' &&
+                (rootsError ? (
+                  <div className="settings-error" role="alert">
+                    <p>{rootsError}</p>
+                    <button type="button" onClick={() => setReload((value) => value + 1)}>
+                      Retry loading folders
+                    </button>
+                  </div>
+                ) : rootDirs === null ? (
+                  <p role="status">Loading music folders…</p>
+                ) : (
+                  <NativeDragDropFolderInput rootDirs={rootDirs} setRootDirs={setRootDirs} />
+                ))}
+              {id === 'schedule' && <ScheduleForm />}
+              {id === 'preferences' && <MainPreferences />}
+            </section>
+          ))}
         </div>
-      )}
-      {state.setup === 'schedule' && (
-        <div className={`update-container ${state.mainTheme}`}>
-          {/* <div className="update-roots" id="schedule-updates" onClick={handleUpdates}>
-            <GiTreeRoots /> Schedule Updates
-          </div> */}
-          <ScheduleForm />
-        </div>
-      )}
-      {state.setup === 'preferences' && (
-        <div className={`update-container ${state.mainTheme}`}>
-          <MainPreferences />
-        </div>
-      )}
-    </>
+      </div>
+    </main>
   );
 };
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { editableColumns } from './EditableColumns';
 import { openChildWindow } from '../ChildWindows/openChildWindow';
-import { useTheme } from '../../ThemeContext';
+import { useTheme } from '../../editorThemeContext';
 import useIpcEvent from '../../hooks/useIpcEvent';
 import './styles/EditForm.css';
 import '../../themes.css';

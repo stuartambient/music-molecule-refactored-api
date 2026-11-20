@@ -1,7 +1,8 @@
-import { useReducer, useRef, useCallback, useEffect } from 'react';
+import { useReducer, useRef, useCallback, useEffect, useLayoutEffect } from 'react';
 import { MainAudioContext } from './mainAudioContext';
 import usePlayback from './hooks/usePlayback';
 import audioPlayerReducer from './audioPlayerReducer';
+import { mainThemes, normalizeMainTheme } from '../../shared/themePreferences';
 
 export const AudioPlayerProvider = ({ children }) => {
   const audioRef = useRef(null);
@@ -70,14 +71,20 @@ export const AudioPlayerProvider = ({ children }) => {
     seeking: false,
     flashDiv: '',
     setup: '',
-    mainTheme: /* window.initialMainTheme */ ''
+    mainTheme: normalizeMainTheme(window.initialMainTheme)
   };
 
   const [state, dispatch] = useReducer(audioPlayerReducer, initialState);
   usePlayback(state, dispatch);
 
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove(...mainThemes);
+    root.classList.add(normalizeMainTheme(state.mainTheme));
+  }, [state.mainTheme]);
+
   useEffect(() => {
-    const startTheme = window.initialMainTheme || 'basic';
+    const startTheme = normalizeMainTheme(window.initialMainTheme);
     console.log('startTheme: ', startTheme);
     dispatch({ type: 'set-main-theme', mainTheme: startTheme });
   }, []);

@@ -98,9 +98,12 @@ function tagEdits(value) {
   );
 }
 function preferences(value, role) {
-  if (!keys(value, role === 'editor' ? ['theme', 'grids'] : ['mainTheme', 'schedule']))
+  if (
+    !keys(value, role === 'editor' ? ['theme', 'editorTheme', 'grids'] : ['mainTheme', 'schedule'])
+  )
     return false;
   if ('theme' in value && !oneOf('light', 'dark')(value.theme)) return false;
+  if ('editorTheme' in value && !oneOf('follow', 'light', 'dark')(value.editorTheme)) return false;
   if (
     'mainTheme' in value &&
     !oneOf(

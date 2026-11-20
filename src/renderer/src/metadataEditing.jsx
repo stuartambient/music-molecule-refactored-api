@@ -5,6 +5,7 @@ import MetadataEditingApp from './components/ChildWindows/metadataEditingWindow/
 import { AudioProvider } from './components/table/AudioProvider';
 import { ThemeProvider } from './ThemeContext';
 import './themes.css';
+import './appstyles/mainThemes.css';
 
 ReactDOM.createRoot(document.getElementById('metadata-editing')).render(
   <React.StrictMode>

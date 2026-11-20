@@ -1,13 +1,7 @@
 /* eslint-disable no-case-declarations */
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { AgGridReact } from 'ag-grid-react'; // the AG Grid React Component
-import {
-  colorSchemeLightWarm,
-  colorSchemeDarkBlue,
-  AllCommunityModule,
-  ValidationModule,
-  ModuleRegistry
-} from 'ag-grid-community';
+import { AllCommunityModule, ValidationModule, ModuleRegistry } from 'ag-grid-community';
 
 // Register all Community features
 ModuleRegistry.registerModules([AllCommunityModule, ValidationModule]);
@@ -26,7 +20,7 @@ import PlayButtonRenderer from './PlayButtonRenderer';
 import RescanButtonRenderer from './RescanButtonRenderer';
 import { debounce } from './helper';
 import './styles/AGGrid.css';
-import { useTheme } from '../../ThemeContext';
+import { useTheme } from '../../editorThemeContext';
 
 const AGGrid = () => {
   /* const [originalData, setOriginalData] = useState(null); */
@@ -42,7 +36,6 @@ const AGGrid = () => {
   const [hiddenColumns, setHiddenColumns] = useState([]);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
   const [viewUpdate, setViewUpdate] = useState(false);
-  const [themeScheme, setThemeScheme] = useState(colorSchemeDarkBlue);
 
   const [tempFolder, setTempFolder] = useState(null);
   const [tagReport, setTagReport] = useState({ result: '', passed: [], failed: [] });
@@ -100,10 +93,6 @@ const AGGrid = () => {
     []
   );
 
-  useEffect(() => {
-    theme === 'dark' ? setThemeScheme(colorSchemeDarkBlue) : setThemeScheme(colorSchemeLightWarm);
-  }, [theme]);
-
   const insertData = (data) => {
     setRowData(data);
   };
@@ -153,10 +142,33 @@ const AGGrid = () => {
   }, [tagReport, viewUpdate]); */
 
   const myTheme = useMemo(() => {
-    return themeQuartz
-      .withParams({ spacing: 12, fontSize: 16, headerFontWeight: 600 })
-      .withPart(themeScheme);
-  }, [themeScheme]);
+    return themeQuartz.withParams({
+      spacing: 12,
+      fontSize: 16,
+      headerFontWeight: 600,
+      browserColorScheme: theme,
+      backgroundColor: 'var(--ui-surface)',
+      foregroundColor: 'var(--ui-text)',
+      headerBackgroundColor: 'var(--ui-raised)',
+      headerTextColor: 'var(--ui-text)',
+      oddRowBackgroundColor: 'var(--ui-raised)',
+      borderColor: 'var(--ui-border)',
+      accentColor: 'var(--ui-accent)',
+      checkboxUncheckedBorderColor: 'var(--ui-border)',
+      checkboxCheckedBackgroundColor: 'var(--ui-accent)',
+      checkboxCheckedBorderColor: 'var(--ui-accent)',
+      checkboxCheckedShapeColor: 'var(--ui-on-accent)',
+      checkboxIndeterminateBackgroundColor: 'var(--ui-accent)',
+      checkboxIndeterminateBorderColor: 'var(--ui-accent)',
+      checkboxIndeterminateShapeColor: 'var(--ui-on-accent)',
+      rowHoverColor: 'var(--ui-hover)',
+      selectedRowBackgroundColor: 'var(--ui-selection)',
+      rangeSelectionBorderColor: 'var(--ui-focus)',
+      inputBackgroundColor: 'var(--ui-input)',
+      inputTextColor: 'var(--ui-text)',
+      inputBorder: { color: 'var(--ui-border)' }
+    });
+  }, [theme]);
 
   const resetAudio = () => {
     const event = new Event('resetAudio');
@@ -627,11 +639,6 @@ const AGGrid = () => {
         return handleRedoLastEdit();
       case 'deselect-all':
         return deselectAll();
-      case 'theme':
-        theme === 'dark'
-          ? setThemeScheme(colorSchemeDarkBlue)
-          : setThemeScheme(colorSchemeLightWarm);
-        break;
       default:
         return;
     }

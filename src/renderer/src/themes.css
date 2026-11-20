@@ -1,68 +1,164 @@
-:root {
-  --accent: #3b82f6;
-  --accent-contrast: #ffffff;
-
-  --surface: #ffffff;
-  --text: #111111;
-  --muted: #f3f4f6;
-  --border: rgba(0, 0, 0, 0.12);
-  --overlay: rgba(0, 0, 0, 0.5);
-
-  --btn-bg: #f3f3f3;
-  --btn-text: #111111;
-  --btn-border: rgba(0, 0, 0, 0.15);
-  --hover: rgba(0, 0, 0, 0.04);
+/* Explicit overrides live on the document, so portal menus inherit the same palette. */
+:root[data-editor-theme='light'] {
+  --ui-color-scheme: light;
+  --ui-surface: #ffffff;
+  --ui-raised: #edf1f5;
+  --ui-text: #172126;
+  --ui-muted: #52616b;
+  --ui-border: #7b8b98;
+  --ui-accent: #0759ad;
+  --ui-on-accent: #ffffff;
+  --ui-action: #0759ad;
+  --ui-on-action: #ffffff;
+  --ui-hover: #dce9f5;
+  --ui-selection: #bfdcf6;
+  --ui-on-selection: #172126;
+  --ui-input: #ffffff;
+  --ui-focus: #0759ad;
+  --ui-danger: #841429;
+  --ui-danger-bg: #fbe9ed;
+  --ui-warning: #694600;
+  --ui-warning-bg: #fff2c5;
+  --ui-scrim: #00000080;
+}
+:root[data-editor-theme='dark'] {
+  --ui-color-scheme: dark;
+  --ui-surface: #101214;
+  --ui-raised: #20262d;
+  --ui-text: #f2f2f2;
+  --ui-muted: #b1bbc8;
+  --ui-border: #758392;
+  --ui-accent: #26b0ff;
+  --ui-on-accent: #07131e;
+  --ui-action: #0064d3;
+  --ui-on-action: #ffffff;
+  --ui-hover: #293c50;
+  --ui-selection: #174d73;
+  --ui-on-selection: #ffffff;
+  --ui-input: #171c22;
+  --ui-focus: #ff80bf;
+  --ui-danger: #ff9aa9;
+  --ui-danger-bg: #4a1722;
+  --ui-warning: #ffe08a;
+  --ui-warning-bg: #493600;
+  --ui-scrim: #000000a6;
 }
 
-.light {
-  --background-color: #ffffff;
-  --text-color: #000000;
-  --slider-color: black;
-
-  --surface: #ffffff;
-  --text: #111111;
-  --muted: #f5f7fa;
-  --border: rgba(0, 0, 0, 0.12);
-  --overlay: rgba(0, 0, 0, 0.5);
-
-  --btn-bg: #f3f3f3;
-  --btn-text: #111111;
-  --btn-border: rgba(0, 0, 0, 0.15);
-
-  --accent: #3b82f6;
-  --accent-contrast: #ffffff;
-  --hover: rgba(0, 0, 0, 0.06);
+:root[data-theme-surface='editor'] {
+  color-scheme: var(--ui-color-scheme);
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  --background-color: var(--ui-surface);
+  --text-color: var(--ui-text);
+  --slider-color: var(--ui-accent);
+  --surface: var(--ui-surface);
+  --text: var(--ui-text);
+  --muted: var(--ui-raised);
+  --border: var(--ui-border);
+  --overlay: var(--ui-scrim);
+  --accent: var(--ui-action);
+  --accent-contrast: var(--ui-on-action);
+  --btn-bg: var(--ui-raised);
+  --btn-text: var(--ui-text);
+  --btn-border: var(--ui-border);
+  --hover: var(--ui-hover);
+  --ag-error-color: var(--ui-danger);
+  --ag-error-hover-color: var(--ui-danger);
+  --ag-error-text-color: var(--ui-danger);
 }
 
-.dark {
-  --background-color: #1f2836;
-  --text-color: #ffffff;
-  --slider-color: white;
-
-  --surface: #1f1f1f;
-  --text: #eaeaea;
-  --muted: #242933;
-  --border: rgba(255, 255, 255, 0.12);
-  --overlay: rgba(0, 0, 0, 0.6);
-
-  --btn-bg: #2a2a2a;
-  --btn-text: #eaeaea;
-  --btn-border: rgba(255, 255, 255, 0.14);
-
-  --accent: #2563eb;
-  --accent-contrast: #ffffff;
-  --hover: rgba(255, 255, 255, 0.06);
+:root[data-theme-surface='editor'] :is(body, #metadata-editing, .gridWrapper) {
+  background: var(--ui-surface);
+  color: var(--ui-text);
 }
-
+:root[data-theme-surface='editor'] #metadata-editing {
+  grid-template-rows: 2.2em auto minmax(0, 1fr);
+}
 .column-panel,
 .hamburger-container,
 .modal-content,
 .edit-form,
 .centralControlContainer {
-  background-color: var(--background-color);
-  color: var(--text-color);
+  background: var(--ui-surface);
+  color: var(--ui-text);
 }
-
+:root[data-theme-surface='editor'] .column-panel {
+  min-width: 0;
+  background: var(--ui-raised);
+}
+:root[data-theme-surface='editor'] .column-panel fieldset {
+  box-sizing: border-box;
+  margin-left: 0;
+  gap: 0.5rem;
+}
+:root[data-theme-surface='editor'] :is(.panel-button, .edit-form form button) {
+  background: var(--ui-action);
+  background-image: none;
+  color: var(--ui-on-action);
+  border: 1px solid var(--ui-border);
+  box-shadow: none;
+  animation: none;
+}
+:root[data-theme-surface='editor'] :is(.panel-button, .edit-form form button):hover {
+  background: var(--ui-hover);
+  color: var(--ui-text);
+  opacity: 1;
+  filter: none;
+}
+:root[data-theme-surface='editor'] .panel-button.active {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 2px;
+}
+:root[data-theme-surface='editor'] :is(button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 2px;
+}
+:root[data-theme-surface='editor']
+  :is(.edit-form input, .edit-form textarea, .editor-theme-choice select) {
+  background: var(--ui-input);
+  color: var(--ui-text);
+  border: 1px solid var(--ui-border);
+  border-radius: 0.25rem;
+  padding: 0.35rem;
+}
+:root[data-theme-surface='editor'] .edit-form input::placeholder {
+  color: var(--ui-muted);
+}
+.editor-theme-choice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+:root[data-theme-surface='editor'] input[type='checkbox'] {
+  accent-color: var(--ui-accent);
+}
+:root[data-theme-surface='editor'] :is(.playButton, .audioCtrl, .hamburger-btn) {
+  color: var(--ui-text);
+}
+:root[data-theme-surface='editor'] :is(.playButton, .audioCtrl, .hamburger-btn):hover {
+  color: var(--ui-accent);
+}
+:root[data-theme-surface='editor'] .slider-container {
+  background: var(--ui-border);
+}
+:root[data-theme-surface='editor'] .slider-track {
+  background: var(--ui-accent);
+}
+:root[data-theme-surface='editor'] .edit-form::-webkit-scrollbar {
+  background: var(--ui-raised);
+}
+:root[data-theme-surface='editor'] .edit-form::-webkit-scrollbar-thumb {
+  background: var(--ui-border);
+}
+:root[data-theme-surface='editor'] .row-failed {
+  background: var(--ui-danger-bg) !important;
+  color: var(--ui-danger) !important;
+}
+:root[data-theme-surface='editor'] .row-warnings {
+  background: var(--ui-warning-bg) !important;
+  color: var(--ui-warning) !important;
+}
 .status-tag-loader::after {
-  background: var(--slider-color);
+  background: var(--ui-accent);
 }

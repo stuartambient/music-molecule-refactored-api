@@ -54,52 +54,18 @@ export const getPreferencesSync = () => {
   return {}; // default preferences
 };
 
-let writeInProgress = false;
-let pendingPreferences = null;
-
-export const savePreferences = async (newPreferences) => {
-  console.log('new preferences, ', newPreferences);
-  /*   try {
-    let currentPreferences = {};
-    if (await fs.stat(preferencesPath)) {
-      const data = await fs.readFile(preferencesPath, 'utf-8');
-      currentPreferences = JSON.parse(data);
-    }
-    const updatedPreferences = { ...currentPreferences, ...newPreferences };
-    await fs.writeFile(preferencesPath, JSON.stringify(updatedPreferences, null, 2));
+// Each caller resolves only after its own patch is persisted. Concurrent theme and grid
+// updates must not replace each other or broadcast preferences before they reach disk.
+let pendingWrites = Promise.resolve();
+export const savePreferences = (newPreferences) => {
+  const write = pendingWrites.then(async () => {
+    const currentPreferences = await readPreferencesSafe();
+    await writePreferencesAtomic({ ...currentPreferences, ...newPreferences });
     return true;
-  } catch (err) {
-     console.error('Error writing preferences:', err); 
-  } */
-
-  pendingPreferences = newPreferences;
-
-  // If a write is already happening, just record the latest request
-  if (writeInProgress) {
-    return true;
-  }
-
-  writeInProgress = true;
-
-  try {
-    while (pendingPreferences) {
-      const next = pendingPreferences;
-      pendingPreferences = null;
-
-      const currentPreferences = await readPreferencesSafe();
-
-      const updatedPreferences = {
-        ...currentPreferences,
-        ...next
-      };
-
-      await writePreferencesAtomic(updatedPreferences);
-    }
-
-    return true;
-  } catch (err) {
-    console.error('Error writing preferences:', err);
-  } finally {
-    writeInProgress = false;
-  }
+  });
+  pendingWrites = write.catch(() => {});
+  return write.catch((error) => {
+    console.error('Error writing preferences:', error);
+    return false;
+  });
 };

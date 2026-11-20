@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useTheme } from '../ThemeContext';
+import { useTheme } from '../editorThemeContext';
 import '../themes.css';
 import '../style/Modal.css';
 

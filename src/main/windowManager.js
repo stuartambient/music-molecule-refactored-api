@@ -2,7 +2,7 @@ import { BrowserWindow, screen } from 'electron';
 import { is } from '@electron-toolkit/utils';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { mainWindow, theme } from './index.js';
+import { mainWindow, theme, mainTheme, editorTheme } from './index.js';
 import { childWindowBounds } from './childWindowBounds.js';
 import { guardedIpc, registerWindowAccess, rendererEntryUrl } from './ipcAccess.js';
 
@@ -87,6 +87,8 @@ function createOrUpdateChildWindow(name, type, config, data, opener) {
       preload: path.join(preloadDirectory, `${config.preload}.js`),
       additionalArguments: [
         `--theme=${theme}`,
+        `--mainTheme=${mainTheme}`,
+        `--editorTheme=${editorTheme}`,
         `--window-role=${config.role || (config.preload === 'metadataEditing' ? 'editor' : 'cover')}`
       ],
       sandbox: true,
@@ -101,6 +103,7 @@ function createOrUpdateChildWindow(name, type, config, data, opener) {
     rendererEntryUrl(config.preload)
   );
   const entry = {
+    preload: config.preload,
     window,
     readyToShow: false,
     rendererReady: false,
@@ -154,4 +157,18 @@ function getWindowNames() {
   return [...windows.keys()].filter((name) => getWindow(name));
 }
 
-export { createOrUpdateChildWindow, sendToChild, getWindowNames, getWindow };
+function broadcastThemePreferences(preferences) {
+  for (const entry of windows.values()) {
+    if (entry.preload === 'metadataEditing' && !entry.closing && !entry.window.isDestroyed()) {
+      entry.window.webContents.send('theme-preferences-updated', preferences);
+    }
+  }
+}
+
+export {
+  createOrUpdateChildWindow,
+  sendToChild,
+  getWindowNames,
+  getWindow,
+  broadcastThemePreferences
+};

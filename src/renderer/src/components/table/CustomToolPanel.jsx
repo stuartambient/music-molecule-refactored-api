@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Modal from '../Modal';
 import TableAudioControls from './TableAudioControls';
 import TagUpdateState from './TagUpdateStatus';
-import { useTheme } from '../../ThemeContext';
+import { useTheme } from '../../editorThemeContext';
 import { GiHamburgerMenu } from 'react-icons/gi';
 import './styles/CustomToolPanel.css';
 import '../../themes.css';
@@ -31,7 +31,7 @@ const CustomToolPanel = ({
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
-  const { toggleTheme, theme } = useTheme();
+  const { theme, editorTheme, setEditorTheme, themeError } = useTheme();
 
   const fields = [
     /* { name: 'audiotrack', label: 'audiotrack', defaultChecked: true }, */
@@ -130,9 +130,15 @@ const CustomToolPanel = ({
           <button className="panel-button" onClick={openModal}>
             Column Preferences
           </button>
-          <button id="theme" className="panel-button" onClick={toggleTheme}>
-            Theme
-          </button>
+          <label className="editor-theme-choice">
+            Editor theme
+            <select value={editorTheme} onChange={(event) => setEditorTheme(event.target.value)}>
+              <option value="follow">Follow main theme</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </label>
+          {themeError && <span role="alert">{themeError}</span>}
           <TagUpdateState
             setUndos={setUndos}
             undos={undos}

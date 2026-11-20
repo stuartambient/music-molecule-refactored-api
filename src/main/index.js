@@ -21,8 +21,10 @@ import {
   createOrUpdateChildWindow,
   sendToChild,
   getWindowNames,
-  getWindow
+  getWindow,
+  broadcastThemePreferences
 } from './windowManager.js';
+import { normalizeMainTheme, normalizeEditorTheme } from '../shared/themePreferences.js';
 import mime from 'mime-types';
 import { File } from 'node-taglib-sharp';
 import createUpdateTagsWorker from './updateTagsWorker?nodeWorker';
@@ -183,13 +185,15 @@ async function backupDatabase() {
 
 export let theme;
 export let mainTheme;
+export let editorTheme;
 /* export let mainTheme; */
 
 const getTheme = () => {
   console.log('getTheme');
   const preferences = getPreferencesSync();
   theme = preferences?.theme || 'light';
-  mainTheme = preferences?.mainTheme || 'basic';
+  mainTheme = normalizeMainTheme(preferences?.mainTheme);
+  editorTheme = normalizeEditorTheme(preferences?.editorTheme);
   global.currentTheme = mainTheme;
 };
 
@@ -1341,8 +1345,8 @@ guardedIpc.on('show-context-menu', (event, id, type, path = undefined) => {
   if (type === 'menu') {
     template.push(
       {
-        label: `Schedule Updates`,
-        click: () => event.sender.send('hamburger-menu-command', 'schedule-updates')
+        label: 'Settings…',
+        click: () => event.sender.send('hamburger-menu-command', 'settings')
       },
       {
         label: 'Update Files',
@@ -1359,14 +1363,6 @@ guardedIpc.on('show-context-menu', (event, id, type, path = undefined) => {
       {
         label: 'Update Meta',
         click: () => event.sender.send('hamburger-menu-command', 'update-meta')
-      },
-      {
-        label: 'Setup / Modify',
-        click: () => event.sender.send('hamburger-menu-command', 'setup / modify')
-      },
-      {
-        label: 'Theme Preferences',
-        click: () => event.sender.send('hamburger-menu-command', 'theme-preferences')
       }
     );
   }
@@ -1555,22 +1551,22 @@ guardedIpc.handle('save-preferences', async (event, preferences) => {
   console.log('---------> save-preferences', preferences);
   try {
     const saveResults = await savePreferences(preferences);
+    if (!saveResults) throw new Error('Preferences could not be saved.');
     if (preferences.schedule) {
       getCurrentSchedule();
-    } else if (preferences.theme) {
+    }
+    if (preferences.theme || preferences.mainTheme || preferences.editorTheme) {
       getTheme();
-    } else if (preferences.mainTheme) {
-      /* mainTheme = preferences.mainTheme; */
-      event.sender.send('main-theme-updated');
-      getTheme();
-      global.currentTheme = `.${mainTheme}`;
-      /* mainWindow.webContents.navigationHistory.goBack(); */
-      /* console.log('content: ', mainWindow.webContents.navigationHistory); */
+      if (preferences.mainTheme && mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('main-theme-updated');
+      }
+      broadcastThemePreferences({ mainTheme, editorTheme });
     }
 
     return saveResults;
   } catch (error) {
     console.error(error);
+    return false;
   }
 });
 

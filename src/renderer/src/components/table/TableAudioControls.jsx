@@ -1,4 +1,4 @@
-import { useTheme } from '../../ThemeContext';
+import { useTheme } from '../../editorThemeContext';
 import { useAudio } from './audioContext';
 import CustomSlider from './CustomSlider';
 import { PiStopBold } from 'react-icons/pi';

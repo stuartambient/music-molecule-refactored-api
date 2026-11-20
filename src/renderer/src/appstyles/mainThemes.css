@@ -1,0 +1,255 @@
+@import './root.css';
+@import './theme-1.css';
+@import './theme-2.css';
+@import './theme-3.css';
+@import './theme-4.css';
+@import './theme-5.css';
+@import './theme-6.css';
+
+/* Shared roles. Basic keeps its dark, blue and pink identity. */
+:root,
+.basic {
+  --ui-color-scheme: dark;
+  --ui-surface: #101214;
+  --ui-raised: #20262d;
+  --ui-text: #f2f2f2;
+  --ui-muted: #b1bbc8;
+  --ui-border: #758392;
+  --ui-accent: #26b0ff;
+  --ui-on-accent: #07131e;
+  --ui-action: #0064d3;
+  --ui-on-action: #ffffff;
+  --ui-hover: #293c50;
+  --ui-selection: #174d73;
+  --ui-on-selection: #ffffff;
+  --ui-input: #171c22;
+  --ui-focus: #ff80bf;
+  --ui-danger: #ff9aa9;
+  --ui-danger-bg: #4a1722;
+  --ui-warning: #ffe08a;
+  --ui-warning-bg: #493600;
+  --ui-scrim: #000000a6;
+}
+
+.theme-1 {
+  --ui-color-scheme: light;
+  --ui-surface: #fefefe;
+  --ui-raised: #e8eeee;
+  --ui-text: #172126;
+  --ui-muted: #52616b;
+  --ui-border: #7b8b8b;
+  --ui-accent: #006b6b;
+  --ui-on-accent: #ffffff;
+  --ui-action: #006b6b;
+  --ui-on-action: #ffffff;
+  --ui-hover: #d7e9e7;
+  --ui-selection: #b9dad6;
+  --ui-on-selection: #142a2a;
+  --ui-input: #ffffff;
+  --ui-focus: #8f3b17;
+  --ui-danger: #841429;
+  --ui-danger-bg: #fbe9ed;
+  --ui-warning: #694600;
+  --ui-warning-bg: #fff2c5;
+  --ui-scrim: #00000080;
+}
+
+/* Existing presets can also supply the editor palette. Their main styles stay intact. */
+.theme-2,
+.theme-3,
+.theme-4,
+.theme-5,
+.theme-6 {
+  --ui-surface: var(--background-1);
+  --ui-raised: var(--background-2);
+  --ui-text: var(--text-secondary);
+  --ui-muted: var(--non-active-icons);
+  --ui-border: var(--control-track);
+  --ui-accent: var(--accent-primary);
+  --ui-on-accent: var(--text-inverse);
+  --ui-action: var(--active-icons);
+  --ui-on-action: var(--text-inverse);
+  --ui-hover: color-mix(in srgb, var(--background-1), var(--accent-primary) 14%);
+  --ui-selection: color-mix(in srgb, var(--background-1), var(--accent-primary) 24%);
+  --ui-on-selection: var(--text-secondary);
+  --ui-input: var(--background-1);
+  --ui-focus: var(--accent-secondary);
+}
+
+/* Bridge the migrated themes to existing component names. Each foreground has
+   an explicit matching background rather than relying on Basic's old fallbacks. */
+.basic,
+.theme-1 {
+  --active: var(--ui-selection);
+  --active-color: var(--ui-on-selection);
+  --active-border: var(--ui-focus);
+  --active-album: var(--ui-selection);
+  --active-album-color: var(--ui-on-selection);
+  --active-controls: var(--ui-action);
+  --active-controls-font: var(--ui-on-action);
+  --album-cover-tools: var(--ui-raised);
+  --album-cover-tools-extra-icons-bkgd: var(--ui-raised);
+  --album-cover-tools-extra-icons-bkgd-hover: var(--ui-hover);
+  --album-cover-tools-extra-icons-icon: var(--ui-accent);
+  --album-cover-tools-extra-icons-icon-hover: var(--ui-focus);
+  --bar: var(--ui-accent);
+  --bar-outline-background: var(--ui-raised);
+  --borders: var(--ui-border);
+  --button-hover: var(--ui-hover);
+  --button-on: var(--ui-accent);
+  --container-home-background: var(--ui-surface);
+  --control-on: var(--ui-focus);
+  --controls-background: transparent;
+  --controls-blink: var(--ui-focus);
+  --controls-blink-hover: var(--ui-accent);
+  --controls-button-hover: var(--ui-hover);
+  --controls-button-icon-hover: var(--ui-accent);
+  --controls-icon: var(--ui-text);
+  --cover-tools-range-thumb: var(--ui-accent);
+  --cover-tools-range-thumb-hover: var(--ui-focus);
+  --cover-tools-range-track: var(--ui-border);
+  --cover-tools-search-button: var(--ui-accent);
+  --cover-tools-search-button-hover: var(--ui-focus);
+  --covers-loading: var(--ui-accent);
+  --covers-scrollbar: var(--ui-raised);
+  --covers-scrollbar-thumb: var(--ui-border);
+  --covers-scrollbar-buttons: var(--ui-accent);
+  --form-background: var(--ui-surface);
+  --form-label: var(--ui-raised);
+  --form-radio-checked: var(--ui-accent);
+  --form-color: var(--ui-text);
+  --form-button-background: var(--ui-action);
+  --form-button-color: var(--ui-on-action);
+  --form-title: var(--ui-text);
+  --highlight: var(--ui-focus);
+  --item-background: var(--ui-surface);
+  --item-hover: var(--ui-hover);
+  --item-hover-color: var(--ui-text);
+  --item-menu: var(--ui-raised);
+  --item-menu-color: var(--ui-text);
+  --item-menu-hover: var(--ui-hover);
+  --item-albumtrack-background: var(--ui-raised);
+  --item-albumtracks-hover: var(--ui-focus);
+  --likedBtn: var(--ui-focus);
+  --list-background: var(--ui-surface);
+  --list-font-color: var(--ui-text);
+  --list-noresults-color: var(--ui-muted);
+  --list-scroll-active: var(--ui-accent);
+  --list-scroll-inactive: var(--ui-muted);
+  --main-nav-background: var(--ui-raised);
+  --main-nav-font-color: var(--ui-text);
+  --main-nav-active: var(--ui-selection);
+  --main-nav-active-color: var(--ui-on-selection);
+  --main-nav-hover-color: var(--ui-focus);
+  --main-nav-hover-menu: var(--ui-hover);
+  --main-nav-hover-menu-color: var(--ui-text);
+  --minimode-control-icons: var(--ui-text);
+  --overlay: var(--ui-scrim);
+  --overlay-color: #ffffff;
+  --overlay-menu: #ffffff;
+  --overlay-hover: #8fd3ff;
+  --overlay-play-stop-button: #ffffff;
+  --overlay-play-stop-button-hover: #8fd3ff;
+  --player-background: var(--ui-surface);
+  --player-font-color: var(--ui-text);
+  --player-font-c: var(--ui-muted);
+  --root-highlight: var(--ui-selection);
+  --root-highlight-color: var(--ui-on-selection);
+  --sort-icon-active: var(--ui-accent);
+  --sort-icon-inactive: var(--ui-muted);
+  --sort-icon-inactive-hover: var(--ui-focus);
+  --status-loader-background: var(--ui-raised);
+  --status-loader-bar: var(--ui-accent);
+  --tab-background-active: var(--ui-action);
+  --tab-background-inactive: transparent;
+  --tab-font-active: var(--ui-on-action);
+  --tab-font-inactive: var(--ui-text);
+  --tab-font-inactive-hover: var(--ui-focus);
+  --tags-nav-background: var(--ui-raised);
+  --tags-nav-color: var(--ui-text);
+  --tags-results-background: var(--ui-surface);
+  --tags-results-color: var(--ui-text);
+  --tags-nav-menu-background-hover: var(--ui-hover);
+  --tags-nav-menu-color-hover: var(--ui-text);
+  --tags-nav-selected: var(--ui-selection);
+  --tags-nav-selected-color: var(--ui-on-selection);
+  --tags-list-header-background: var(--ui-raised);
+  --tags-list-header-color: var(--ui-text);
+  --tags-list-header-controls-background: var(--ui-raised);
+  --tags-list-header-text-color: var(--ui-text);
+  --tags-list-header-input: var(--ui-text);
+  --tags-list-header-icon: var(--ui-accent);
+  --tags-list-header-icon-hover: var(--ui-focus);
+  --tags-root-hover: var(--ui-hover);
+  --tags-root-hover-color: var(--ui-text);
+  --tags-row-even: var(--ui-surface);
+  --tags-row-even-color: var(--ui-text);
+  --tags-row-odd: var(--ui-raised);
+  --tags-row-odd-color: var(--ui-text);
+  --schedule-form-background: var(--ui-surface);
+  --schedule-form-color: var(--ui-text);
+  --setup-form-background: var(--ui-surface);
+  --setup-form-color: var(--ui-text);
+  --themes-form-background: var(--ui-surface);
+  --themes-form-color: var(--ui-text);
+  --text-input-background: var(--ui-input);
+  --text-input-color: var(--ui-text);
+  --update-container-background: var(--ui-surface);
+}
+
+/* Artwork can have any color, so mini-mode controls need their own stable backing. */
+:root.basic,
+:root.theme-1 {
+  color-scheme: var(--ui-color-scheme);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+:is(.basic, .theme-1) .main-nav ul li svg:hover {
+  fill: var(--ui-focus);
+  color: var(--ui-focus);
+}
+:is(.basic, .theme-1) .controls .btn:hover svg {
+  animation: none;
+  opacity: 1;
+  fill: var(--ui-focus);
+}
+:is(.basic, .theme-1) .radio-option {
+  background: var(--ui-raised);
+  color: var(--ui-text);
+}
+:is(.basic, .theme-1) .radio-option:hover {
+  background: var(--ui-hover);
+}
+:is(.basic, .theme-1) .media-menu .form .formelements {
+  background: var(--ui-input);
+}
+:is(.basic, .theme-1) .media-menu .form .textsearch {
+  background: var(--ui-input);
+  color: var(--ui-text);
+  border: 1px solid var(--ui-border);
+}
+:is(.basic, .theme-1) .media-menu .form .icon {
+  background: transparent;
+  color: var(--ui-accent);
+}
+:is(.basic, .theme-1) .roots-form button {
+  background: var(--ui-action);
+  color: var(--ui-on-action);
+}
+:is(.basic, .theme-1) .roots-form button:hover {
+  background: var(--ui-hover);
+  color: var(--ui-text);
+}
+:is(.basic, .theme-1) :is(.controls--minimalmode, .media-menu--minimal) {
+  background: var(--ui-raised);
+  color: var(--ui-text);
+}
+:is(.basic, .theme-1) :is(button, input, select, a, [tabindex]):focus-visible {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 2px;
+}
+:is(.basic, .theme-1) .item.active a {
+  color: var(--ui-on-selection);
+}
+:is(.basic, .theme-1) .item:hover a {
+  color: var(--ui-text);
+}

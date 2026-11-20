@@ -1,4 +1,4 @@
-import { useTheme } from '../../ThemeContext';
+import { useTheme } from '../../editorThemeContext';
 import './styles/StatusTagLoader.css';
 import '../../themes.css';
 

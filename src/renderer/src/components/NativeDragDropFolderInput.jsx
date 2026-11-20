@@ -3,118 +3,123 @@ import '../style/NativeDragDropFolderInput.css';
 
 function NativeDragDropFolderInput({ rootDirs, setRootDirs }) {
   const [folders, setFolders] = useState([]);
-  const [rootChanges, setRootChanges] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [picking, setPicking] = useState(false);
+  const [error, setError] = useState('');
+  const [saved, setSaved] = useState(false);
+  const edited = () => {
+    setSaved(false);
+    setError('');
+  };
 
-  const handleRootsUpdate = (e) => {
-    console.log(e.target.id);
-
-    const sendRoots = async (roots) => {
-      const sentRoots = await window.ipcApi.updateRoots(roots);
-      if (sentRoots) {
-        setRootChanges(sentRoots);
+  const pickFolders = async () => {
+    setPicking(true);
+    setError('');
+    try {
+      const paths = await window.ipcApi.pickFolder();
+      if (paths?.length) {
+        setFolders((current) => [
+          ...new Set([...current, ...paths.filter((path) => !rootDirs.includes(path))])
+        ]);
+        setSaved(false);
       }
-    };
-
-    if (e.target.id === 'roots-update' || e.currentTarget.id === 'roots-update') {
-      sendRoots([...rootDirs, ...folders]);
+    } catch {
+      setError('Could not open the folder picker. Please try again.');
+    } finally {
+      setPicking(false);
     }
   };
 
-  const handleOpenFolder = (e) => {
-    /* window.api.openAlbumFolder(e.target.id); */
-    const folder = e.currentTarget.id;
-    window.ipcApi.openAlbumFolder(folder);
+  const saveFolders = async (event) => {
+    event.preventDefault();
+    if (saving || picking) return;
+    const roots = [...new Set([...rootDirs, ...folders])];
+    setSaving(true);
+    setError('');
+    setSaved(false);
+    try {
+      const result = await window.ipcApi.updateRoots(roots);
+      if (!Array.isArray(result)) throw new Error('Save failed');
+      setRootDirs(roots);
+      setFolders([]);
+      setSaved(true);
+    } catch {
+      setError('Could not save the music folders. Your edits are still here; please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const removeFolder = (index) => {
-    setFolders((prevFolders) => prevFolders.filter((_, i) => i !== index));
-  };
-
-  const removeFormerFolder = (folder) => {
-    console.log('folder: ', folder);
-    setRootDirs((prevRootDirs) => prevRootDirs.filter((dir) => dir !== folder));
-  };
+  const folderList = (items, pending) => (
+    <ul className="folder-list">
+      {items.map((folder) => (
+        <li key={folder} className="folder-list--item">
+          <button
+            className="folder-path"
+            type="button"
+            onClick={() => window.ipcApi.openAlbumFolder(folder)}
+            title={folder}
+          >
+            {folder}
+          </button>
+          <button
+            className="settings-secondary remove-button"
+            type="button"
+            aria-label={`Remove ${folder}`}
+            onClick={() => {
+              if (pending) setFolders((current) => current.filter((path) => path !== folder));
+              else setRootDirs((current) => current.filter((path) => path !== folder));
+              edited();
+            }}
+          >
+            Remove
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
 
   return (
-    <div className="roots-form">
-      <form className="setup-form">
-        <h3>Select Folders</h3>
-        <button
-          type="button"
-          onClick={async () => {
-            const paths = await window.ipcApi.pickFolder();
-            if (paths?.length) {
-              const updated = paths.filter((p) => !rootDirs.includes(p) && !folders.includes(p));
-              setFolders((prev) => [...prev, ...updated]);
-            }
-          }}
-          style={{
-            border: '2px dashed #ccc',
-            padding: '20px',
-            textAlign: 'center',
-            cursor: 'pointer',
-            marginBottom: '20px',
-            width: '100%'
-          }}
-        >
-          Browse for Folders…
-        </button>
-
-        <ul className="folder-list">
-          {folders.map((folder, index) => (
-            <li key={index} className="folder-list--item">
-              <span onClick={handleOpenFolder} className="item-name" id={folder}>
-                <u>{folder}</u>
-              </span>
-              <button className="remove-button" onClick={() => removeFolder(index)}>
-                Remove
-              </button>
-            </li>
-          ))}
-        </ul>
-
-        <ul className="folder-list">
-          {rootDirs.length > 0 ? (
-            <li className="folder-list--item title">Current folders:</li>
-          ) : (
-            <li className="folder-list--item title">No roots folders saved</li>
-          )}
-          {rootDirs.map((dir) => (
-            <li key={dir} className="folder-list--item">
-              <span onClick={handleOpenFolder} className="item-name" id={dir}>
-                <u>{dir}</u>
-              </span>
-              <button className="remove-button" onClick={() => removeFormerFolder(dir)}>
-                Remove
-              </button>
-            </li>
-          ))}
-        </ul>
-
-        <button
-          className="roots-update"
-          id="roots-update"
-          type="button"
-          onClick={handleRootsUpdate}
-        >
-          <span className="text">Update</span>
-        </button>
-
-        {rootChanges.length > 0 && (
-          <ul className="folder-list results-panel">
-            {rootChanges.map((item, i) => (
-              <li key={i}>
-                {Object.entries(item).map(([key, val]) => (
-                  <div key={key}>
-                    {key}: {typeof val === 'object' ? JSON.stringify(val) : String(val)}
-                  </div>
-                ))}
-              </li>
-            ))}
-          </ul>
+    <form
+      className="setup-form"
+      onSubmit={saveFolders}
+      aria-label="Music folders"
+      aria-busy={saving || picking}
+    >
+      <fieldset disabled={saving || picking}>
+        <legend>Library folders</legend>
+        {rootDirs.length ? (
+          folderList(rootDirs, false)
+        ) : (
+          <p className="settings-help">No music folders saved yet.</p>
         )}
-      </form>
-    </div>
+        {folders.length > 0 && (
+          <div className="pending-folders">
+            <h3>Folders to add</h3>
+            {folderList(folders, true)}
+          </div>
+        )}
+        <p className="settings-help">
+          Removing a folder from this list does not delete its files. Save to apply your changes.
+        </p>
+        <div className="settings-actions">
+          <button type="button" className="settings-secondary" onClick={pickFolders}>
+            Browse for folders…
+          </button>
+          <button type="submit">{saving ? 'Saving…' : 'Save music folders'}</button>
+        </div>
+      </fieldset>
+      {saved && (
+        <p className="settings-result" role="status">
+          Music folders saved.
+        </p>
+      )}
+      {error && (
+        <p className="settings-error" role="alert">
+          {error}
+        </p>
+      )}
+    </form>
   );
 }
 

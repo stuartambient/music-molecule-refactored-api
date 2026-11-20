@@ -128,45 +128,9 @@ const MainNav = ({ onClick }) => {
           window.ipcApi.updateMeta();
           break;
         }
-        case 'setup / modify': {
-          dispatch({
-            type: 'set-page',
-            home: false,
-            update: true,
-            player: false,
-            library: false,
-            tagEditor: false,
-            minimalmode: false,
-            miniModePlaylist: false
-          });
-          dispatch({
-            type: 'config-options',
-            setup: 'setup'
-          });
-          setTimeout(() => setUpdateOption(null));
-          break;
-        }
-        case 'schedule-updates': {
-          dispatch({
-            type: 'set-page',
-            home: false,
-            update: true,
-            player: false,
-            library: false,
-            tagEditor: false,
-            minimalmode: false,
-            miniModePlaylist: false
-          });
-          dispatch({
-            type: 'config-options',
-            setup: 'schedule'
-          });
-          setTimeout(() => setUpdateOption(null));
-          return;
-        }
-        case 'update-all': {
-          return;
-        }
+        case 'settings':
+        case 'setup / modify':
+        case 'schedule-updates':
         case 'theme-preferences': {
           dispatch({
             type: 'set-page',
@@ -180,11 +144,18 @@ const MainNav = ({ onClick }) => {
           });
           dispatch({
             type: 'config-options',
-            setup: 'preferences'
+            setup:
+              updateOption === 'schedule-updates'
+                ? 'schedule'
+                : updateOption === 'theme-preferences'
+                  ? 'preferences'
+                  : 'setup'
           });
-          setTimeout(() => setUpdateOption(null));
+          setUpdateOption(null);
           return;
         }
+        case 'update-all':
+          return;
         default:
           return;
       }
@@ -259,7 +230,8 @@ const MainNav = ({ onClick }) => {
               <span>Tags</span>
             </li>
             {!updateOption ||
-            updateOption === 'setup-update' ||
+            updateOption === 'settings' ||
+            updateOption === 'setup / modify' ||
             updateOption === 'schedule-updates' ||
             updateOption === 'theme-preferences' ? null : (
               <li className="status-loader-container">

@@ -1,221 +1,167 @@
 import { useState, useEffect } from 'react';
-import { MdArrowBack } from 'react-icons/md';
 import '../style/ScheduleForm.css';
+
+const emptySchedule = () => ({
+  Monday: '',
+  Tuesday: '',
+  Wednesday: '',
+  Thursday: '',
+  Friday: '',
+  Saturday: '',
+  Sunday: ''
+});
 
 const ScheduleForm = () => {
   const [runEveryDay, setRunEveryDay] = useState(false);
   const [everyDayTime, setEveryDayTime] = useState('');
-  const [currentSchedule, setCurrentSchedule] = useState(null);
-  const [scheduleLoaded, setScheduleLoaded] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [schedulingResults, setSchedulingResults] = useState(false);
-  const [schedule, setSchedule] = useState({
-    Monday: '',
-    Tuesday: '',
-    Wednesday: '',
-    Thursday: '',
-    Friday: '',
-    Saturday: '',
-    Sunday: ''
-  });
+  const [schedule, setSchedule] = useState(emptySchedule);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState('');
+  const [error, setError] = useState('');
+  const [saved, setSaved] = useState(false);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
-    const loadPreferences = async () => {
-      const preferences = await window.ipcApi.getPreferences();
-      setCurrentSchedule(preferences.schedule || null);
-      setScheduleLoaded(true);
-    };
-    loadPreferences();
-  }, []);
-
-  useEffect(() => {
-    if (scheduleLoaded && currentSchedule) {
-      if (typeof currentSchedule === 'string' && currentSchedule.startsWith('everyday@')) {
-        // Set "Run Every Day" mode and extract time
-        setRunEveryDay(true);
-        setEveryDayTime(currentSchedule.split('@')[1]);
-      } else if (typeof currentSchedule === 'object') {
-        // Set custom schedule per day
-        setRunEveryDay(false);
-        setSchedule(currentSchedule);
-      }
-    }
-  }, [currentSchedule, scheduleLoaded]);
-
-  const handleScheduleReload = () => {
-    setSchedulingResults(false);
-  };
-
-  const handleClearAll = () => {
-    setRunEveryDay(false); // uncheck Run Every Day
-    setEveryDayTime(''); // clear the everyday time
-    setSchedule({
-      // reset all days
-      Monday: '',
-      Tuesday: '',
-      Wednesday: '',
-      Thursday: '',
-      Friday: '',
-      Saturday: '',
-      Sunday: ''
-    });
-  };
-
-  const handleToggleEveryDay = () => {
-    setRunEveryDay(!runEveryDay);
-    if (!runEveryDay) {
-      setSchedule({
-        Monday: '',
-        Tuesday: '',
-        Wednesday: '',
-        Thursday: '',
-        Friday: '',
-        Saturday: '',
-        Sunday: ''
+    let current = true;
+    setLoading(true);
+    setLoadError('');
+    window.ipcApi
+      .getPreferences()
+      .then((preferences) => {
+        if (!preferences || typeof preferences !== 'object') throw new Error('Invalid preferences');
+        if (!current) return;
+        const value = preferences.schedule;
+        if (typeof value === 'string' && value.startsWith('everyday@')) {
+          setRunEveryDay(true);
+          setEveryDayTime(value.slice(9));
+        } else {
+          setRunEveryDay(false);
+          const next = emptySchedule();
+          for (const day of Object.keys(next)) next[day] = value?.[day] || '';
+          setSchedule(next);
+        }
+      })
+      .catch(() => {
+        if (current)
+          setLoadError('Could not load the saved schedule. Try again before changing it.');
+      })
+      .finally(() => {
+        if (current) setLoading(false);
       });
-    } else {
-      setEveryDayTime('');
-    }
-  };
+    return () => {
+      current = false;
+    };
+  }, [reload]);
 
-  const handleTimeChange = (day, time) => {
-    setSchedule((prevSchedule) => ({
-      ...prevSchedule,
-      [day]: time
-    }));
+  const edited = () => {
+    setSaved(false);
+    setError('');
   };
-
-  const saveSchedule = async (type, newSchedule) => {
-    console.log('new schedule: ', newSchedule);
-    const dataToSave = type === 'every-day' ? `everyday@${newSchedule}` : newSchedule;
-    const scheduleResults = await window.ipcApi.savePreferences({
-      schedule: dataToSave
-    });
-    if (scheduleResults) {
-      setIsSubmitting(false);
-      setScheduleLoaded(false);
-      setSchedulingResults(true);
-    }
+  const clearAll = () => {
+    setRunEveryDay(false);
+    setEveryDayTime('');
+    setSchedule(emptySchedule());
+    edited();
   };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    console.log('handleSubmit: ', e);
-    if (runEveryDay) {
-      saveSchedule('every-day', everyDayTime);
-    } else {
-      console.log('schedule: ', schedule);
-      saveSchedule('custom', schedule);
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (loading || loadError || saving) return;
+    setSaving(true);
+    setError('');
+    setSaved(false);
+    try {
+      const value = runEveryDay ? `everyday@${everyDayTime}` : schedule;
+      if (!(await window.ipcApi.savePreferences({ schedule: value })))
+        throw new Error('Save failed');
+      setSaved(true);
+    } catch {
+      setError('Could not save the schedule. Your edits are still here; please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
-    <div className="roots-form">
-      {schedulingResults && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexDirection: 'column'
-          }}
-        >
-          <h3>Schedule Updated</h3>
-          <p className="back-icon" onClick={handleScheduleReload}>
-            <MdArrowBack />
-          </p>
+    <form
+      className="schedule-form"
+      onSubmit={handleSubmit}
+      aria-label="Update schedule"
+      aria-busy={loading || saving}
+    >
+      {loading && <p role="status">Loading schedule…</p>}
+      {loadError && (
+        <div className="settings-error" role="alert">
+          <p>{loadError}</p>
+          <button type="button" onClick={() => setReload((value) => value + 1)}>
+            Retry loading schedule
+          </button>
         </div>
       )}
-      {!schedulingResults && (
-        <form onSubmit={handleSubmit} className="schedule-form">
-          <h3 style={{ textAlign: 'center' }}>Schedule Operations</h3>
-
-          <div style={{ marginBottom: '15px' }}>
-            <label>
-              <input type="checkbox" checked={runEveryDay} onChange={handleToggleEveryDay} />
-              <span style={{ marginLeft: '8px' }}>Run Every Day</span>
-            </label>
-          </div>
-
-          {runEveryDay ? (
-            <div style={{ marginBottom: '15px' }}>
-              <label>
-                Time:
+      <fieldset disabled={loading || saving || !!loadError}>
+        <legend>Automatic updates</legend>
+        <label className="schedule-everyday">
+          <input
+            type="checkbox"
+            checked={runEveryDay}
+            onChange={(event) => {
+              setRunEveryDay(event.target.checked);
+              edited();
+            }}
+          />
+          Run every day
+        </label>
+        {runEveryDay ? (
+          <label className="schedule-time">
+            Time
+            <input
+              type="time"
+              required
+              value={everyDayTime}
+              onChange={(event) => {
+                setEveryDayTime(event.target.value);
+                edited();
+              }}
+            />
+          </label>
+        ) : (
+          <div className="schedule-days">
+            {Object.keys(schedule).map((day) => (
+              <label key={day} className="schedule-time">
+                {day}
                 <input
                   type="time"
-                  value={everyDayTime}
-                  onChange={(e) => setEveryDayTime(e.target.value)}
-                  style={{
-                    marginLeft: '10px',
-                    padding: '5px',
-                    borderRadius: '4px',
-                    border: '1px solid #ccc'
+                  value={schedule[day]}
+                  onChange={(event) => {
+                    setSchedule((current) => ({ ...current, [day]: event.target.value }));
+                    edited();
                   }}
-                  required
                 />
               </label>
-            </div>
-          ) : (
-            <div>
-              {Object.keys(schedule).map((day) => (
-                <div key={day} style={{ marginBottom: '10px' }}>
-                  <label>
-                    <input
-                      type="time"
-                      value={schedule[day]}
-                      onChange={(e) => handleTimeChange(day, e.target.value)}
-                      style={{
-                        marginRight: '10px',
-                        padding: '5px',
-                        borderRadius: '4px',
-                        border: '1px solid #ccc'
-                      }}
-                    />
-                    {day}
-                  </label>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={handleClearAll}
-            style={{
-              display: 'block',
-              width: '100%',
-              padding: '10px',
-              marginTop: '10px',
-              backgroundColor: 'var(--background-1)',
-              color: 'var(--text-dark)',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Clear All
+            ))}
+          </div>
+        )}
+        <p className="settings-help">
+          Leave a day blank to skip it. Clear all times and save to turn automatic updates off.
+        </p>
+        <div className="settings-actions">
+          <button type="button" className="settings-secondary" onClick={clearAll}>
+            Clear all
           </button>
-
-          <button
-            type="submit"
-            style={{
-              display: 'block',
-              width: '100%',
-              padding: '10px',
-              marginTop: '15px',
-              backgroundColor: 'var(--form-button-background)',
-              color: 'var(--form-button-color)',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Save Schedule
-          </button>
-        </form>
+          <button type="submit">{saving ? 'Saving…' : 'Save schedule'}</button>
+        </div>
+      </fieldset>
+      {saved && (
+        <p className="settings-result" role="status">
+          Schedule saved.
+        </p>
       )}
-    </div>
+      {error && (
+        <p className="settings-error" role="alert">
+          {error}
+        </p>
+      )}
+    </form>
   );
 };
 

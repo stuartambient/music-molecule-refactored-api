@@ -84,6 +84,7 @@ export const ipcContracts = {
     [
       'context-menu-command',
       'for-submit-form',
+      'theme-preferences-updated',
       'form-menu-command',
       'rescanned-track',
       'reset-table',
