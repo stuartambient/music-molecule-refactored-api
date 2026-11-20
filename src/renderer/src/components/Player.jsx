@@ -45,6 +45,17 @@ const Player = ({ children, onExpandArtwork }) => {
           : { backgroundImage: 'none' }
       }
     >
+      {state.minimalmode && state.cover && state.cover !== 'not available' && (
+        <button
+          type="button"
+          className="artwork-expand artwork-expand--mini"
+          aria-label="Expand album artwork"
+          title="Expand album artwork"
+          onClick={onExpandArtwork}
+        >
+          <FiMaximize2 aria-hidden="true" />
+        </button>
+      )}
       {/*       {!state.minimalmode && !state.home && (
         <div className="title">
           <p className={state.title.length > 35 ? 'title-transform' : 'title-text'}>

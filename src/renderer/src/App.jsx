@@ -205,8 +205,8 @@ function App() {
         if (state.library && !state.minimalmode) {
           return dispatch({
             type: 'enter-mini-from-fullplaylist',
-            miniModePlaylist: (state.miniModePlaylist = true),
-            minimalmode: (state.minimalmode = true)
+            miniModePlaylist: true,
+            minimalmode: true
           });
         }
 
@@ -323,8 +323,8 @@ function App() {
         if (state.library && !state.minimalmode) {
           return dispatch({
             type: 'enter-mini-from-fullplaylist',
-            miniModePlaylist: (state.miniModePlaylist = true),
-            minimalmode: (state.minimalmode = true)
+            miniModePlaylist: true,
+            minimalmode: true
           });
         }
 

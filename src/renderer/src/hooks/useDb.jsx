@@ -87,10 +87,9 @@ const useTracks = (
         await window.ipcApi.setShuffledTracksArray();
       }
 
+      if (!isSubscribed) return;
+
       const shuffledTracks = await window.ipcApi.getShuffledTracks(tracksPageNumber);
-      //await new Promise((resolve) => setTimeout(resolve, 0)); // allow state to flush
-      //console.log('isSubscribed: ', isSubBoolean(), 'state.tracks.length: ', state.tracks.length);
-      isSubscribed = isSubBoolean();
       if (shuffledTracks && isSubscribed) {
         if (tracksPageNumber === 0) {
           dispatch({
@@ -151,6 +150,7 @@ const useAlbums = (albumsPageNumber, albumsSearchTerm, sortType, resetKey, dispa
 
   useEffect(() => {
     let isSubscribed = true;
+    let resultTimer;
 
     const loadAlbums = async () => {
       try {
@@ -163,7 +163,8 @@ const useAlbums = (albumsPageNumber, albumsSearchTerm, sortType, resetKey, dispa
         );
 
         if (albumRequest && isSubscribed) {
-          setTimeout(() => {
+          resultTimer = setTimeout(() => {
+            if (!isSubscribed) return;
             dispatch({
               type: 'albums-playlist',
               albums: albumRequest
@@ -175,12 +176,16 @@ const useAlbums = (albumsPageNumber, albumsSearchTerm, sortType, resetKey, dispa
       } catch (error) {
         if (isSubscribed) {
           setAlbumsError(true);
+          setAlbumsLoading(false);
         }
       }
     };
 
     loadAlbums();
-    return () => (isSubscribed = false);
+    return () => {
+      isSubscribed = false;
+      clearTimeout(resultTimer);
+    };
   }, [albumsPageNumber, albumsSearchTerm, sortType, resetKey, dispatch]);
 
   return { albumsLoading, hasMoreAlbums, albumsError };
@@ -275,6 +280,7 @@ const useAllAlbumsCovers = (
 
   useEffect(() => {
     let isSubscribed = true;
+    let resultTimer;
 
     const loadCovers = async () => {
       try {
@@ -289,7 +295,8 @@ const useAllAlbumsCovers = (
         );
 
         if (coversRequest && isSubscribed) {
-          setTimeout(() => {
+          resultTimer = setTimeout(() => {
+            if (!isSubscribed) return;
             dispatch({
               type: 'set-covers',
               covers: coversRequest
@@ -314,6 +321,7 @@ const useAllAlbumsCovers = (
 
     return () => {
       isSubscribed = false;
+      clearTimeout(resultTimer);
     };
   }, [
     coversPageNumber,
@@ -397,7 +405,7 @@ const useDistinctDirectories = (setDirectories) => {
     let subscribed = true;
     const getDistinctDirectories = async () => {
       const myDirectories = await window.ipcApi.distinctDirectories();
-      if (myDirectories) {
+      if (myDirectories && subscribed) {
         setDirectories(myDirectories);
       }
     };

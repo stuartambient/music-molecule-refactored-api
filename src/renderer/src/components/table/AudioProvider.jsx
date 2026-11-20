@@ -2,7 +2,8 @@ import { useRef, useState, useEffect } from 'react';
 import { AudioContext } from './audioContext';
 
 export const AudioProvider = ({ children }) => {
-  const audioRef = useRef(new Audio());
+  const audioRef = useRef(null);
+  if (!audioRef.current) audioRef.current = new Audio();
   const [currentTrack, setCurrentTrack] = useState(null);
   const [volume, setVolume] = useState(1);
 
@@ -30,12 +31,15 @@ export const AudioProvider = ({ children }) => {
   };
 
   useEffect(() => {
+    const audio = audioRef.current;
     const handleResetAudio = () => stopTrack();
     window.addEventListener('resetAudio', handleResetAudio);
 
     return () => {
       window.removeEventListener('resetAudio', handleResetAudio);
-      handleResetAudio();
+      audio.pause();
+      audio.removeAttribute('src');
+      audio.load();
     };
   }, []);
 

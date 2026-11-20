@@ -105,6 +105,29 @@ test('artwork temporarily allows the solo player to maximize then restores its f
   assert.equal(window.bounds.width, 300);
   assert.equal(window.bounds.height, 500);
 });
+for (const mode of ['mini', 'mini-expanded']) {
+  test(`artwork restores ${mode} position, fixed size, and always-on-top setting`, () => {
+    const window = new Window();
+    const view = createWindowPresentation(() => window);
+    view.setMode(mode);
+    window.setBounds({ ...window.bounds, x: 800, y: 130 });
+    const bounds = { ...window.bounds };
+    const minimum = [...window.minimum];
+    assert.equal(window.pinned, true);
+    assert.equal(view.setArtwork(true), true);
+    assert.equal(window.maximized, true);
+    assert.equal(window.pinned, false);
+    assert.equal(window.resizable, true);
+    assert.equal(view.setArtwork(false), false);
+    assert.deepEqual(window.bounds, bounds);
+    assert.deepEqual(window.minimum, minimum);
+    assert.equal(window.maximized, false);
+    assert.equal(window.resizable, false);
+    assert.equal(window.maximizable, false);
+    assert.equal(window.pinned, true);
+  });
+}
+
 test('repeating a mode does not reset the user’s resized window', () => {
   const window = new Window(),
     view = createWindowPresentation(() => window);
