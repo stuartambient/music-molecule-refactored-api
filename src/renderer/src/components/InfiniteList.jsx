@@ -225,18 +225,10 @@ const InfiniteList = () => {
   };
 
   const handleSortClick = (e) => {
-    if (state.tracksShuffle || state.playlistShuffle) return;
-    /* console.log(e.currentTarget.id); */
     if (state.listType === 'files') {
-      dispatch({
-        type: 'tracks-pagenumber',
-        tracksPageNumber: 0
-      });
-      dispatch({
-        type: 'reset-tracks',
-        tracks: []
-      });
+      dispatch({ type: 'sort-tracks' });
       setFilesSortType(e.currentTarget.id);
+      setResetKey(getKey());
     } else if (state.listType === 'albums') {
       dispatch({
         type: 'albums-pagenumber',

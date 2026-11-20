@@ -92,8 +92,12 @@ const audioPlayerReducer = (state, action) => {
         ...state,
         playbackTrack: null,
         playbackQueue: [],
+        playbackRequest: state.playbackRequest + 1,
         playbackError: null,
         pendingAdvance: null,
+        delay: false,
+        seeking: false,
+        isLiked: false,
         newtrack: '',
         activeList: '',
         active: '',
@@ -217,6 +221,20 @@ const audioPlayerReducer = (state, action) => {
       return {
         ...state,
         albums: [...state.albums, ...action.albums]
+      };
+    }
+    case 'sort-tracks': {
+      const next =
+        state.activeList === 'tracklistActive'
+          ? audioPlayerReducer(state, { type: 'reset', pause: true })
+          : state;
+      return {
+        ...next,
+        tracksShuffle: false,
+        tracksPageNumber: 0,
+        tracks: [],
+        tracksHasMore: false,
+        pendingAdvance: null
       };
     }
     case 'reset-tracks': {

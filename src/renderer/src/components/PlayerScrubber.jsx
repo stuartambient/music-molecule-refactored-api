@@ -18,6 +18,11 @@ const PlayerScrubber = ({ cTime, setCTime }) => {
   }, [state.duration, cTime]); */
 
   useEffect(() => {
+    if (!state.duration) {
+      setProgbarInc(0);
+      setIsDragging(false);
+      return;
+    }
     const outlineWidth = seekbarOutline.current.clientWidth;
 
     if (outlineWidth && state.duration && cTime) {

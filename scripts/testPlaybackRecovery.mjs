@@ -162,6 +162,89 @@ test('library playback keeps its sequence when a search replaces visible rows', 
   assert.equal(reducer(changed, { type: 'advance-track', direction: 1 }).active, 'b');
 });
 
+test('resetting library playback clears progress and ignores events from the old order', () => {
+  const playing = {
+    ...select({ ...initial(), tracks: [a, b, c] }, b, 1, 'tracklistActive'),
+    duration: '03:00',
+    delay: true,
+    seeking: true,
+    pendingAdvance: { play: true }
+  };
+  const reset = reducer(playing, { type: 'reset', pause: true });
+  assert.equal(reset.playbackTrack, null);
+  assert.deepEqual(reset.playbackQueue, []);
+  assert.equal(reset.active, '');
+  assert.equal(reset.activeList, '');
+  assert.equal(reset.newtrack, '');
+  assert.equal(reset.nextTrack, '');
+  assert.equal(reset.prevTrack, '');
+  assert.equal(reset.duration, '');
+  assert.equal(reset.delay, false);
+  assert.equal(reset.seeking, false);
+  assert.equal(reset.isLiked, false);
+  assert.equal(reset.pendingAdvance, null);
+  assert.equal(reset.pause, true);
+  for (const action of [
+    { type: 'duration', duration: '03:00' },
+    { type: 'set-cover', cover: 'old artwork' },
+    { type: 'set-delay', delay: true },
+    { type: 'advance-track', direction: 1, ended: true, play: true }
+  ]) {
+    assert.equal(reducer(reset, { ...action, request: playing.playbackRequest }), reset);
+  }
+
+  const reordered = reducer(reset, { type: 'add-tracks', tracks: [c, b, a] });
+  assert.equal(reordered.playbackTrack, null);
+  assert.equal(reducer(reordered, { type: 'pauseplay' }), reordered);
+  const selected = reducer(reordered, {
+    type: 'select-track',
+    track: c,
+    index: 0,
+    list: 'tracklistActive'
+  });
+  assert.equal(selected.active, 'c');
+  assert.equal(selected.pause, true);
+  assert.equal(reducer(selected, { type: 'pauseplay' }).pause, false);
+});
+
+test('sorting resets active Tracks playback with either shuffle flag enabled or disabled', () => {
+  for (const tracksShuffle of [false, true]) {
+    for (const playlistShuffle of [false, true]) {
+      for (const pause of [false, true]) {
+        const playing = {
+          ...select({ ...initial(), tracks: [a, b, c] }, b, 1, 'tracklistActive'),
+          tracksShuffle,
+          playlistShuffle,
+          tracksPageNumber: 3,
+          pause,
+          pendingAdvance: { play: true }
+        };
+        const sorted = reducer(playing, { type: 'sort-tracks' });
+        assert.equal(sorted.playbackTrack, null);
+        assert.equal(sorted.active, '');
+        assert.equal(sorted.newtrack, '');
+        assert.equal(sorted.pause, true);
+        assert.equal(sorted.tracksShuffle, false);
+        assert.equal(sorted.playlistShuffle, playlistShuffle);
+        assert.equal(sorted.tracksPageNumber, 0);
+        assert.deepEqual(sorted.tracks, []);
+        assert.equal(sorted.pendingAdvance, null);
+        const reloaded = reducer(sorted, { type: 'add-tracks', tracks: [c, b, a] });
+        assert.equal(reloaded.playbackTrack, null);
+        assert.equal(reloaded.pause, true);
+      }
+    }
+  }
+});
+
+test('sorting Tracks preserves playback from another list', () => {
+  const playing = select(initial(), b, 1);
+  const sorted = reducer(playing, { type: 'sort-tracks' });
+  assert.equal(sorted.playbackTrack, b);
+  assert.equal(sorted.playbackRequest, playing.playbackRequest);
+  assert.equal(sorted.pause, false);
+});
+
 test('advancement fetches the next library page without scrolling and resumes when it arrives', () => {
   let state = select({ ...initial(), tracks: [a], tracksHasMore: true }, a, 0, 'tracklistActive');
   state = reducer(state, { type: 'advance-track', direction: 1, ended: true, play: true });

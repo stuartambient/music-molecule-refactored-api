@@ -170,6 +170,9 @@ function App() {
         break;
       case 'shuffle':
         if (state.listType === 'files') {
+          if (state.activeList === 'tracklistActive') {
+            dispatch({ type: 'reset', pause: true });
+          }
           dispatch({
             type: 'tracks-shuffle',
             tracksShuffle: !state.tracksShuffle
@@ -177,10 +180,6 @@ function App() {
           dispatch({
             type: 'tracks-pagenumber',
             tracksPageNumber: 0
-          });
-          dispatch({
-            type: 'reset',
-            pause: !!state.pause
           });
           dispatch({
             type: 'reset-tracks',
