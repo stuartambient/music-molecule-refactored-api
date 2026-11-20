@@ -14,12 +14,12 @@ function RepairScreen({ reason }) {
   useEffect(() => {
     let active = true;
     window.ipcApi
-      .invoke('db-repair')
+      .dbRepair()
       .then((result) => {
         if (!active) return;
         if (result.fixed) {
           setMessage('Catalog repaired. Opening Music Molecule…');
-          window.ipcApi.send('recovery-complete');
+          window.ipcApi.recoveryComplete();
         } else {
           setMessage(result.error || 'Unable to repair the catalog. Restore a backup to continue.');
           setBusy(false);
@@ -40,10 +40,10 @@ function RepairScreen({ reason }) {
     setBusy(true);
     setMessage('Looking for a healthy catalog backup…');
     try {
-      const result = await window.ipcApi.invoke('db-restore');
+      const result = await window.ipcApi.dbRestore();
       if (result.restored) {
         setMessage('Catalog restored. Opening Music Molecule…');
-        window.ipcApi.send('recovery-complete');
+        window.ipcApi.recoveryComplete();
       } else {
         setMessage(result.error || 'The catalog could not be restored.');
         setBusy(false);
@@ -74,7 +74,7 @@ export function StartupGuard({ children }) {
   useEffect(() => {
     let active = true;
     window.ipcApi
-      .invoke('db-check')
+      .dbCheck()
       .then((result) => {
         if (active) setStatus(result);
       })

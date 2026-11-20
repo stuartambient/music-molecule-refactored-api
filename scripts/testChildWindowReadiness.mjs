@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import { registerHooks } from 'node:module';
 import { test } from 'node:test';
+import { pathToFileURL } from 'node:url';
 
 const ipcMain = new EventEmitter();
 const mainMessages = [];
@@ -32,6 +33,7 @@ class FakeWindow extends EventEmitter {
     this.messages = [];
     this.webContents = new EventEmitter();
     this.webContents.mainFrame = {};
+    this.webContents.isDestroyed = () => this.destroyed;
     this.webContents.setWindowOpenHandler = (handler) => {
       this.openWindowHandler = handler;
     };
@@ -43,6 +45,7 @@ class FakeWindow extends EventEmitter {
   removeMenu() {}
   loadFile(file) {
     this.file = file;
+    this.webContents.mainFrame.url = pathToFileURL(file).href;
     this.webContents.emit('did-start-navigation', {
       url: file,
       isSameDocument: false,
@@ -232,7 +235,7 @@ test('child readiness is owned by each window', async (suite) => {
         isSameDocument: false,
         isMainFrame: true
       });
-      grid.webContents.mainFrame = {};
+      grid.webContents.mainFrame = { url: pathToFileURL(grid.file).href };
       sendToChild('grid', data('after-reload'));
       ready(grid, oldFrame);
       assert.deepEqual(payloads(grid), [data('grid')]);

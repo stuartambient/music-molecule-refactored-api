@@ -2,7 +2,7 @@ import {
   app,
   shell,
   BrowserWindow,
-  ipcMain,
+
   /* Notification, */
   Menu,
   dialog,
@@ -38,6 +38,14 @@ import { initializeCatalog, repairCatalog } from './catalogStartup.js';
 import { createStartupWindow } from './startupWindow.js';
 import { availableMusicTracks, createMusicAvailabilityCheck } from './musicAvailability.js';
 import { createWindowPresentation } from './windowPresentation.js';
+import {
+  guardedIpc,
+  registerWindowAccess,
+  rendererEntryUrl,
+  configureIpcCatalog,
+  grantArtworkAccess
+} from './ipcAccess.js';
+import { childDefinitions } from './childWindowDefinitions.js';
 import { runUpdateWorker } from './updateWorkerDelivery.js';
 import { createCoverDownloads } from './coverDownloads.js';
 import { downloadCoverFile } from './coverDownloader.js';
@@ -74,6 +82,7 @@ import {
   albumsByTopFolder
 } from './stats';
 
+configureIpcCatalog(getDB);
 protocol.registerSchemesAsPrivileged([
   {
     scheme: 'streaming',
@@ -360,7 +369,7 @@ export function createRecoveryWindow() {
     backgroundColor: 'rgba(0, 0, 0, 0.85)',
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
-      additionalArguments: [`--mainTheme=${mainTheme}`],
+      additionalArguments: [`--mainTheme=${mainTheme}`, '--window-role=recovery'],
       sandbox: true,
       webSecurity: true,
       contextIsolation: true,
@@ -368,6 +377,7 @@ export function createRecoveryWindow() {
     }
   });
 
+  registerWindowAccess(recWindow, 'recovery', rendererEntryUrl('index'));
   showWhenReady(recWindow);
 
   // Load the same app URL — StartupGuard handles rendering the right UI
@@ -380,6 +390,29 @@ export function createRecoveryWindow() {
   return recWindow;
 }
 
+guardedIpc.on('window-action', (event, action) => {
+  console.log('window action: ', action);
+  switch (action) {
+    case 'close':
+      mainWindow.close();
+      break;
+    case 'minimize':
+      mainWindow.minimize();
+      break;
+    case 'maximize':
+      if (!mainWindow.isMaximizable()) break;
+      if (mainWindow.isMaximized()) {
+        mainWindow.unmaximize();
+      } else {
+        mainWindow.setMaximumSize(4000, 4000);
+        mainWindow.maximize();
+      }
+      break;
+    default:
+      console.warn('Unknown window action:', action);
+  }
+});
+
 function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
@@ -391,7 +424,7 @@ function createWindow() {
     ...(process.platform === 'linux' ? { icon: path.join(__dirname, '../../build/icon.png') } : {}),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
-      additionalArguments: [`--mainTheme=${mainTheme}`],
+      additionalArguments: [`--mainTheme=${mainTheme}`, '--window-role=main'],
       sandbox: true,
       webSecurity: true,
       contextIsolation: true,
@@ -401,6 +434,7 @@ function createWindow() {
     }
   });
 
+  registerWindowAccess(mainWindow, 'main', rendererEntryUrl('index'));
   showWhenReady(mainWindow);
   // The independent editor and cover-search windows belong to this app session.
   mainWindow.once('closed', () => app.quit());
@@ -408,29 +442,6 @@ function createWindow() {
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url);
     return { action: 'deny' };
-  });
-
-  ipcMain.on('window-action', (event, action) => {
-    console.log('window action: ', action);
-    switch (action) {
-      case 'close':
-        mainWindow.close();
-        break;
-      case 'minimize':
-        mainWindow.minimize();
-        break;
-      case 'maximize':
-        if (!mainWindow.isMaximizable()) break;
-        if (mainWindow.isMaximized()) {
-          mainWindow.unmaximize();
-        } else {
-          mainWindow.setMaximumSize(4000, 4000);
-          mainWindow.maximize();
-        }
-        break;
-      default:
-        console.warn('Unknown window action:', action);
-    }
   });
 
   // HMR for renderer base on electron-vite cli.
@@ -471,144 +482,147 @@ function startNormalApp() {
   getCurrentSchedule().catch((error) => console.error('Unable to load update schedule:', error));
 }
 
-app.whenReady().then(async () => {
-  startupWindow = await createStartupWindow();
-  console.log('is music-molecule handled?', await protocol.isProtocolHandled('streaming'));
-  console.log('is app handled?', await protocol.isProtocolHandled('cover'));
+app
+  .whenReady()
+  .then(async () => {
+    startupWindow = await createStartupWindow();
+    console.log('is music-molecule handled?', await protocol.isProtocolHandled('streaming'));
+    console.log('is app handled?', await protocol.isProtocolHandled('cover'));
 
-  protocol.registerStreamProtocol('streaming', async (request, cb) => {
-    try {
-      // A fresh request token makes retries re-read the source instead of a cached failure.
-      const uri = decodeURIComponent(request.url.split('?')[0]);
-      const filePath = uri.replace('streaming://', '');
-      const path = capitalizeDriveLetter(filePath);
+    protocol.registerStreamProtocol('streaming', async (request, cb) => {
+      try {
+        // A fresh request token makes retries re-read the source instead of a cached failure.
+        const uri = decodeURIComponent(request.url.split('?')[0]);
+        const filePath = uri.replace('streaming://', '');
+        const path = capitalizeDriveLetter(filePath);
 
-      if (!fs.existsSync(path)) {
-        console.error('File not found:', path);
-        return cb({
-          statusCode: 404,
-          headers: { 'Content-Type': 'text/plain' },
-          data: 'File not found'
-        });
-      }
-
-      const fileSize = fs.statSync(path).size;
-      const range = request.headers.Range;
-
-      if (range) {
-        const parts = range.replace(/bytes=/, '').split('-');
-        const start = parseInt(parts[0], 10);
-        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-
-        if (start >= fileSize || end >= fileSize) {
-          console.error('Invalid range request:', range);
+        if (!fs.existsSync(path)) {
+          console.error('File not found:', path);
           return cb({
-            statusCode: 416,
-            headers: { 'Content-Range': `bytes */${fileSize}`, 'Content-Type': 'text/plain' },
-            data: 'Requested range not satisfiable'
+            statusCode: 404,
+            headers: { 'Content-Type': 'text/plain' },
+            data: 'File not found'
           });
         }
 
-        const chunksize = end - start + 1;
+        const fileSize = fs.statSync(path).size;
+        const range = request.headers.Range;
 
-        const headers = {
-          'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-          'Accept-Ranges': 'bytes',
-          'Content-Length': String(chunksize),
-          'Content-Type': 'audio/mpeg'
-        };
+        if (range) {
+          const parts = range.replace(/bytes=/, '').split('-');
+          const start = parseInt(parts[0], 10);
+          const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
 
-        cb({
-          statusCode: 206,
-          headers,
-          data: fs.createReadStream(path, { start, end }).on('error', (err) => {
-            console.error('Stream error:', err);
-            cb({
-              statusCode: 200,
-              headers: { 'Content-Type': 'text/plain', 'X-Stream-Error': 'true' },
-              data: 'Stream failed due to an error.'
+          if (start >= fileSize || end >= fileSize) {
+            console.error('Invalid range request:', range);
+            return cb({
+              statusCode: 416,
+              headers: { 'Content-Range': `bytes */${fileSize}`, 'Content-Type': 'text/plain' },
+              data: 'Requested range not satisfiable'
             });
-          })
-        });
-      } else {
-        console.log('No range header provided');
+          }
+
+          const chunksize = end - start + 1;
+
+          const headers = {
+            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+            'Accept-Ranges': 'bytes',
+            'Content-Length': String(chunksize),
+            'Content-Type': 'audio/mpeg'
+          };
+
+          cb({
+            statusCode: 206,
+            headers,
+            data: fs.createReadStream(path, { start, end }).on('error', (err) => {
+              console.error('Stream error:', err);
+              cb({
+                statusCode: 200,
+                headers: { 'Content-Type': 'text/plain', 'X-Stream-Error': 'true' },
+                data: 'Stream failed due to an error.'
+              });
+            })
+          });
+        } else {
+          console.log('No range header provided');
+          cb({
+            statusCode: 200,
+            headers: { 'Content-Length': String(fileSize), 'Content-Type': 'audio/mpeg' },
+            data: fs.createReadStream(path).on('error', (err) => {
+              console.error('Stream error:', err);
+              cb({
+                statusCode: 500,
+                headers: { 'Content-Type': 'text/plain', 'X-Stream-Error': 'true' },
+                data: 'Stream failed due to an error.'
+              });
+            })
+          });
+        }
+      } catch (err) {
+        console.error('Error processing streaming request:', err);
         cb({
-          statusCode: 200,
-          headers: { 'Content-Length': String(fileSize), 'Content-Type': 'audio/mpeg' },
-          data: fs.createReadStream(path).on('error', (err) => {
-            console.error('Stream error:', err);
-            cb({
-              statusCode: 500,
-              headers: { 'Content-Type': 'text/plain', 'X-Stream-Error': 'true' },
-              data: 'Stream failed due to an error.'
-            });
-          })
+          statusCode: 500,
+          headers: { 'Content-Type': 'text/plain', 'X-Stream-Error': 'true' },
+          data: 'Internal Server Error'
         });
       }
-    } catch (err) {
-      console.error('Error processing streaming request:', err);
-      cb({
-        statusCode: 500,
-        headers: { 'Content-Type': 'text/plain', 'X-Stream-Error': 'true' },
-        data: 'Internal Server Error'
-      });
-    }
-  });
+    });
 
-  protocol.handle('cover', async (request) => {
-    try {
-      let url = decodeURI(request.url.substring(8));
-      // Handle Windows drive-letter paths explicitly
-      if (/^[a-zA-Z]:/.test(url)) {
-        // Already an absolute path, no further changes needed
-      } else if (/^[a-zA-Z]\//.test(url)) {
-        // Convert "I/music/..." to "I:/music/..."
-        url = `${url[0]}:/${url.slice(2)}`;
-      } else {
-        throw new Error('Invalid or relative path received');
+    protocol.handle('cover', async (request) => {
+      try {
+        let url = decodeURI(request.url.substring(8));
+        // Handle Windows drive-letter paths explicitly
+        if (/^[a-zA-Z]:/.test(url)) {
+          // Already an absolute path, no further changes needed
+        } else if (/^[a-zA-Z]\//.test(url)) {
+          // Convert "I/music/..." to "I:/music/..."
+          url = `${url[0]}:/${url.slice(2)}`;
+        } else {
+          throw new Error('Invalid or relative path received');
+        }
+        const filePath = path.normalize(url);
+
+        await fs.promises.access(filePath);
+
+        // Determine the MIME type based on the file extension
+        const mimeType = mime.lookup(filePath) || 'application/octet-stream';
+
+        // Read the file content
+        const fileContent = await fs.promises.readFile(filePath);
+
+        // Return the file content as a response with the appropriate MIME type
+        return new Response(fileContent, { headers: { 'Content-Type': mimeType } });
+      } catch (err) {
+        console.error('Error accessing file:', err.message);
+        throw new Error('FILE_NOT_FOUND');
       }
-      const filePath = path.normalize(url);
+    });
 
-      await fs.promises.access(filePath);
+    ensurePreferencesFile();
+    getTheme();
+    electronApp.setAppUserModelId('com.electron.app');
+    app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window));
 
-      // Determine the MIME type based on the file extension
-      const mimeType = mime.lookup(filePath) || 'application/octet-stream';
-
-      // Read the file content
-      const fileContent = await fs.promises.readFile(filePath);
-
-      // Return the file content as a response with the appropriate MIME type
-      return new Response(fileContent, { headers: { 'Content-Type': mimeType } });
-    } catch (err) {
-      console.error('Error accessing file:', err.message);
-      throw new Error('FILE_NOT_FOUND');
-    }
-  });
-
-  ensurePreferencesFile();
-  getTheme();
-  electronApp.setAppUserModelId('com.electron.app');
-  app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window));
-
-  databaseStatus = initializeCatalog();
-  if (databaseStatus.ok) startNormalApp();
-  else createRecoveryWindow();
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length) return;
-    if (databaseStatus.ok) createWindow();
+    databaseStatus = initializeCatalog();
+    if (databaseStatus.ok) startNormalApp();
     else createRecoveryWindow();
-  });
-}).catch((error) => {
-  if (startupWindow && !startupWindow.isDestroyed()) startupWindow.destroy();
-  if (error.name === 'StartupCancelled') {
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length) return;
+      if (databaseStatus.ok) createWindow();
+      else createRecoveryWindow();
+    });
+  })
+  .catch((error) => {
+    if (startupWindow && !startupWindow.isDestroyed()) startupWindow.destroy();
+    if (error.name === 'StartupCancelled') {
+      app.quit();
+      return;
+    }
+    console.error('Application startup failed:', error);
+    dialog.showErrorBox('Music Molecule could not start', error.message);
     app.quit();
-    return;
-  }
-  console.error('Application startup failed:', error);
-  dialog.showErrorBox('Music Molecule could not start', error.message);
-  app.quit();
-});
+  });
 
 // Quit when all windows are closed, except on macOS
 app.on('window-all-closed', () => {
@@ -617,7 +631,7 @@ app.on('window-all-closed', () => {
   }
 });
 
-ipcMain.handle('artwork-view', (event, enabled) => {
+guardedIpc.handle('artwork-view', (event, enabled) => {
   if (event.sender !== mainWindow?.webContents) return false;
   return windowPresentation.setArtwork(enabled === true);
 });
@@ -629,12 +643,12 @@ function completeRecovery(event) {
   else event.sender.send('recovery-error', databaseStatus.error);
 }
 
-ipcMain.on('recovery-complete', completeRecovery);
-ipcMain.on('app-restart', completeRecovery);
+guardedIpc.on('recovery-complete', completeRecovery);
+guardedIpc.on('app-restart', completeRecovery);
 
-ipcMain.handle('db-check', () => databaseStatus);
+guardedIpc.handle('db-check', () => databaseStatus);
 
-ipcMain.handle('db-repair', (event) => {
+guardedIpc.handle('db-repair', (event) => {
   if (event.sender !== recWindow?.webContents) {
     return { fixed: false, error: 'Database repair is available from the recovery window.' };
   }
@@ -646,22 +660,24 @@ ipcMain.handle('db-repair', (event) => {
   return repairResult;
 });
 
-ipcMain.handle('db-restore', (event) => {
+guardedIpc.handle('db-restore', (event) => {
   if (event.sender !== recWindow?.webContents) {
     return { restored: false, error: 'Database restore is available from the recovery window.' };
   }
   if (!restoreResult) {
-    restoreResult = restoreLatestBackup().finally(() => { restoreResult = null; });
+    restoreResult = restoreLatestBackup().finally(() => {
+      restoreResult = null;
+    });
   }
   return restoreResult;
 });
 
-ipcMain.handle('get-roots', async () => {
+guardedIpc.handle('get-roots', async () => {
   const rootFolders = await getRoots();
   return rootFolders;
 });
 
-ipcMain.handle('update-roots', async (event, roots) => {
+guardedIpc.handle('update-roots', async (event, roots) => {
   try {
     const update = await updateRoots(roots);
     return update;
@@ -670,19 +686,19 @@ ipcMain.handle('update-roots', async (event, roots) => {
   }
 });
 
-ipcMain.handle('pick-folder', async () => {
+guardedIpc.handle('pick-folder', async () => {
   const result = await dialog.showOpenDialog({
     properties: ['openDirectory', 'multiSelections']
   });
   return result.filePaths; // array of absolute folder paths
 });
 
-ipcMain.handle('get-folder-path', (event, folderName) => {
+guardedIpc.handle('get-folder-path', (event, folderName) => {
   /*  console.log('folderName: ', folderName); */
   return path.resolve(folderName);
 });
 
-/* ipcMain.handle('select-folder', async () => {
+/* guardedIpc.handle('select-folder', async () => {
   const result = await dialog.showOpenDialog({
     properties: ['openDirectory']
   });
@@ -694,7 +710,7 @@ ipcMain.handle('get-folder-path', (event, folderName) => {
   }
 }); */
 
-ipcMain.handle('update-folders', async () => {
+guardedIpc.handle('update-folders', async () => {
   try {
     const workerPath = paths.db;
     await createUpdateFoldersWorker({ workerData: workerPath })
@@ -733,7 +749,7 @@ function getObjectWithLengths(obj) {
   };
 }
 
-ipcMain.handle('update-files', async () => {
+guardedIpc.handle('update-files', async () => {
   try {
     /* console.log('createUpdateFilesWorker', createUpdateFilesWorker()); */
     const workerPath = paths.db;
@@ -769,15 +785,27 @@ ipcMain.handle('update-files', async () => {
   return;
 });
 
-ipcMain.handle('update-meta', () => {
-  runUpdateWorker(createUpdateMetadataWorker, dbPath, mainWindow?.webContents, 'metadata', 'meta-error');
+guardedIpc.handle('update-meta', () => {
+  runUpdateWorker(
+    createUpdateMetadataWorker,
+    dbPath,
+    mainWindow?.webContents,
+    'metadata',
+    'meta-error'
+  );
 });
 
-ipcMain.handle('update-covers', () => {
-  runUpdateWorker(createUpdateCoversWorker, dbPath, mainWindow?.webContents, 'covers', 'covers-error');
+guardedIpc.handle('update-covers', () => {
+  runUpdateWorker(
+    createUpdateCoversWorker,
+    dbPath,
+    mainWindow?.webContents,
+    'covers',
+    'covers-error'
+  );
 });
 
-ipcMain.handle('get-tracks', async (event, ...args) => {
+guardedIpc.handle('get-tracks', async (event, ...args) => {
   if (args[1] === '') {
     const alltracks = await allTracksByScroll(args[0], args[2]);
     return alltracks;
@@ -787,7 +815,7 @@ ipcMain.handle('get-tracks', async (event, ...args) => {
   }
 });
 
-ipcMain.handle('get-albums', async (event, ...args) => {
+guardedIpc.handle('get-albums', async (event, ...args) => {
   if (args[1] === '') {
     const allAlbums = await allAlbumsByScroll(args[0], args[2]);
     return allAlbums;
@@ -797,23 +825,23 @@ ipcMain.handle('get-albums', async (event, ...args) => {
   }
 });
 
-/* ipcMain.handle('get-album', async (_, args) => {
+/* guardedIpc.handle('get-album', async (_, args) => {
   const album = getAlbum(args);
   return album;
 });
  */
-ipcMain.handle('get-album-tracks', async (event, args) => {
+guardedIpc.handle('get-album-tracks', async (event, args) => {
   //console.log('get-album-tracks');
   const allAlbumTracks = await filesByAlbum(args);
   //console.log('album-tracks: ', allAlbumTracks);
   return allAlbumTracks;
 });
 
-ipcMain.handle('check-track-availability', async (_event, file) => {
+guardedIpc.handle('check-track-availability', async (_event, file) => {
   return createMusicAvailabilityCheck()(file);
 });
 
-ipcMain.handle('prepare-music-tracks', async (_event, request) => {
+guardedIpc.handle('prepare-music-tracks', async (_event, request) => {
   const tracks = request.album !== undefined ? filesByAlbum(request.album) : request.tracks;
   const result = await availableMusicTracks(tracks);
   return request.inspect ? { ...result, catalogTracks: tracks } : result;
@@ -842,7 +870,7 @@ const getRoot = (currentDir) => {
   return allPaths;
 };
 
-ipcMain.handle('get-cover', async (event, arg) => {
+guardedIpc.handle('get-cover', async (event, arg) => {
   const trackDirectory = path.dirname(arg);
   const trackRoot = getRoot(trackDirectory);
 
@@ -867,11 +895,11 @@ ipcMain.handle('get-cover', async (event, arg) => {
   return 0;
 });
 
-ipcMain.on('screen-mode', (event, ...args) => {
+guardedIpc.on('screen-mode', (event, ...args) => {
   if (event.sender === mainWindow?.webContents) windowPresentation.setMode(args[0]);
 });
 
-ipcMain.handle('update-like', async (event, ...args) => {
+guardedIpc.handle('update-like', async (event, ...args) => {
   try {
     const likeBtn = await likeTrack(args[0]);
     if (likeBtn[1] === 0) {
@@ -884,12 +912,12 @@ ipcMain.handle('update-like', async (event, ...args) => {
   }
 });
 
-ipcMain.handle('is-liked', async (event, arg) => {
+guardedIpc.handle('is-liked', async (event, arg) => {
   const checkIsLiked = await isLiked(arg);
   return checkIsLiked;
 });
 
-ipcMain.handle('total-tracks-stat', async () => {
+guardedIpc.handle('total-tracks-stat', async () => {
   const totals = await totalTracks();
   const totalCounts = {
     albums: totals.albumsInfo['COUNT(*)'],
@@ -898,7 +926,7 @@ ipcMain.handle('total-tracks-stat', async () => {
   return totalCounts;
 });
 
-ipcMain.handle('artists-by-num-tracks', async () => {
+guardedIpc.handle('artists-by-num-tracks', async () => {
   const artistList = await topHundredArtists();
   return artistList; /* .slice(1); */
 });
@@ -909,7 +937,7 @@ function openWindowAndSendData(queryResults, listType) {
   }
 }
 
-ipcMain.handle('get-tracks-by-category', async (event, obj) => {
+guardedIpc.handle('get-tracks-by-category', async (event, obj) => {
   const { listType, value } = obj;
   /*  console.log('-----> ', listType, value); */
   try {
@@ -947,7 +975,7 @@ ipcMain.handle('get-tracks-by-category', async (event, obj) => {
   }
 });
 
-ipcMain.handle('distinct-directories', async () => {
+guardedIpc.handle('distinct-directories', async () => {
   try {
     const dirs = await distinctDirectories();
     return dirs;
@@ -956,7 +984,7 @@ ipcMain.handle('distinct-directories', async () => {
   }
 });
 
-/* ipcMain.handle('get-tracks-by-root', async (event, root, listType) => {
+/* guardedIpc.handle('get-tracks-by-root', async (event, root, listType) => {
   try {
     const rootTracks = await allTracksByRoot(root);
     await openWindowAndSendData(rootTracks, listType);
@@ -965,7 +993,7 @@ ipcMain.handle('distinct-directories', async () => {
   }
 }); */
 
-ipcMain.handle('check-for-open-table', async (event, name) => {
+guardedIpc.handle('check-for-open-table', async (event, name) => {
   const names = await getWindowNames();
   if (names.includes(name)) {
     return true;
@@ -973,28 +1001,28 @@ ipcMain.handle('check-for-open-table', async (event, name) => {
   return false;
 });
 
-ipcMain.on('clear-table', () => {
+guardedIpc.on('clear-table', () => {
   const targetWindow = getWindow('table-data');
   /* targetWindow.webContents.send('clear-table', 'clear'); */
   targetWindow?.webContents.send('reset-table');
 });
 
-ipcMain.handle('get-albums-by-root', async (event, dirs) => {
+guardedIpc.handle('get-albums-by-root', async (event, dirs) => {
   const results = await albumsByTopFolder(dirs);
   return results;
 });
 
-ipcMain.handle('genres-stat', async () => {
+guardedIpc.handle('genres-stat', async () => {
   const genres = await genresWithCount();
   return genres;
 });
 
-/* ipcMain.handle('folders-stat', async (event, dirs) => {
+/* guardedIpc.handle('folders-stat', async (event, dirs) => {
   const folders = await foldersWithCount(dirs);
   return folders;
 }); */
 
-ipcMain.handle('open-playlist', async () => {
+guardedIpc.handle('open-playlist', async () => {
   const open = await dialog.showOpenDialog(mainWindow, {
     defaultPath: playlistsFolder,
     properties: ['openFile'],
@@ -1024,7 +1052,7 @@ ipcMain.handle('open-playlist', async () => {
   return result;
 });
 
-ipcMain.handle('save-playlist', async (_, args) => {
+guardedIpc.handle('save-playlist', async (_, args) => {
   try {
     const save = await dialog.showSaveDialog(mainWindow, {
       defaultPath: playlistsFolder,
@@ -1051,7 +1079,7 @@ ipcMain.handle('save-playlist', async (_, args) => {
   }
 });
 
-/* ipcMain.handle('get-playlists', async () => {
+/* guardedIpc.handle('get-playlists', async () => {
   const playlistsStats = [];
   const playlists = await fs.promises.readdir(playlistsFolder);
   for await (const pl of playlists) {
@@ -1063,11 +1091,11 @@ ipcMain.handle('save-playlist', async (_, args) => {
   return playlists;
 }); */
 
-/* ipcMain.handle('get-temp-path', async () => {
+/* guardedIpc.handle('get-temp-path', async () => {
   return app.getPath('temp');
 }); */
 
-/* ipcMain.handle('homepage-playlists', async (_m, ...args) => {
+/* guardedIpc.handle('homepage-playlists', async (_m, ...args) => {
   const [type, value] = args;
   switch (type) {
     case 'edit':
@@ -1084,7 +1112,7 @@ ipcMain.handle('save-playlist', async (_, args) => {
   }
 }); */
 
-ipcMain.handle('get-covers', async (_, ...args) => {
+guardedIpc.handle('get-covers', async (_, ...args) => {
   //console.log('get-covers: ', args);
   let albums;
 
@@ -1105,13 +1133,13 @@ const shuffle = (array) => {
   return shuffledArray;
 };
 
-ipcMain.handle('set-shuffled-tracks-array', async () => {
+guardedIpc.handle('set-shuffled-tracks-array', async () => {
   shuffled = [];
   const primaryKeysArray = getAllPkeys();
   shuffled = shuffle(primaryKeysArray);
 });
 
-ipcMain.handle('get-shuffled-tracks', async (_, args) => {
+guardedIpc.handle('get-shuffled-tracks', async (_, args) => {
   console.log('get shuffled tracks', args);
   const offset = args;
   const limit = 200;
@@ -1127,28 +1155,27 @@ ipcMain.handle('get-shuffled-tracks', async (_, args) => {
   }
 });
 
-ipcMain.handle('update-tags', async (event, arr) => {
+guardedIpc.handle('update-tags', async (event, arr) => {
   /* console.log('update tags handler: ', arr); */
   const senderWebContents = event.sender;
-  const senderWindow = BrowserWindow.fromWebContents(senderWebContents);
-  const targetWindow = BrowserWindow.fromId(senderWindow.id);
-  /*   console.log(
-    `Request received from window ID: ${senderWindow.id}, Title: ${senderWindow.getTitle()}`
-  ); */
-  targetWindow.webContents.send('updated-tags', { status: 'starting' });
+  const sendToEditor = (value) => {
+    if (!senderWebContents.isDestroyed()) senderWebContents.send('updated-tags', value);
+  };
+  sendToEditor({ status: 'starting' });
   try {
-    const workerPath = paths.db;
+    const workerPath = dbPath;
     await createUpdateTagsWorker({ workerData: { workerPath: workerPath, data: arr, logDir } })
       .on('message', (message) => {
         /* console.log('message: ', message); */
         /*  console.log('update tags: ', message); */
         /* console.log('message: ', message); */
-        targetWindow.webContents.send('updated-tags', message);
-        mainWindow.webContents.send('updated-tags', 'updated-tags');
+        sendToEditor(message);
+        if (mainWindow && !mainWindow.isDestroyed())
+          mainWindow.webContents.send('updated-tags', 'updated-tags');
       })
       .on('error', (err) => {
         console.error('Tags worker error: ', err);
-        targetWindow.webContents.send('updated-tags', 'error processing');
+        sendToEditor({ status: 'error', error: err.message });
       })
       .on('exit', (code) => {
         if (code !== 0) {
@@ -1162,7 +1189,7 @@ ipcMain.handle('update-tags', async (event, arr) => {
   }
 });
 
-ipcMain.handle('rescan-track-error', (event, track, id) => {
+guardedIpc.handle('rescan-track-error', (event, track, id) => {
   const sender = event.sender;
   const sendResult = (result) => {
     if (!sender.isDestroyed()) sender.send('rescanned-track', result);
@@ -1199,7 +1226,7 @@ ipcMain.handle('rescan-track-error', (event, track, id) => {
   });
 });
 
-ipcMain.on('show-context-menu', (event, id, type, path = undefined) => {
+guardedIpc.on('show-context-menu', (event, id, type, path = undefined) => {
   const context = { id, type, path };
   const template = [];
   console.log('show-context-menu for cover: ', id, type);
@@ -1349,7 +1376,7 @@ ipcMain.on('show-context-menu', (event, id, type, path = undefined) => {
   menu.popup(BrowserWindow.fromWebContents(event.sender));
 });
 
-ipcMain.handle('show-album-cover-menu', (event, path, folder) => {
+guardedIpc.handle('show-album-cover-menu', (event, path, folder) => {
   console.log('show-album-cover-menu');
   const template = [
     {
@@ -1381,7 +1408,7 @@ ipcMain.handle('show-album-cover-menu', (event, path, folder) => {
   menu.popup(BrowserWindow.fromWebContents(event.sender));
 });
 
-ipcMain.handle('show-text-input-menu', (event) => {
+guardedIpc.handle('show-text-input-menu', (event) => {
   try {
     const targetWindow = BrowserWindow.fromWebContents(event.sender);
 
@@ -1406,18 +1433,20 @@ ipcMain.handle('show-text-input-menu', (event) => {
   }
 });
 
-ipcMain.handle('show-child', async (event, args) => {
+guardedIpc.handle('show-child', async (event, args) => {
   console.log('show-child: ', 'hit');
-  const { name, type, winConfig, data } = args;
+  const { name, data } = args;
+  const winConfig = { ...childDefinitions[name], show: false, resizable: true };
   const opener = BrowserWindow.fromWebContents(event.sender);
-  await createOrUpdateChildWindow(name, type, winConfig, data, opener);
+  await createOrUpdateChildWindow(name, data.listType, winConfig, data, opener);
 });
 
 const coverDownloads = createCoverDownloads({
   dialog,
   downloadFile: downloadCoverFile,
   getEditor: () => getWindow('table-data'),
-  temporaryDirectory: () => app.getPath('temp')
+  temporaryDirectory: () => app.getPath('temp'),
+  onStaged: grantArtworkAccess
 });
 
 function coverRequestAllowed(event, name) {
@@ -1425,19 +1454,19 @@ function coverRequestAllowed(event, name) {
   return window?.webContents === event.sender && event.senderFrame === event.sender.mainFrame;
 }
 
-ipcMain.handle('download-file', (event, fileUrl, folder) =>
+guardedIpc.handle('download-file', (event, fileUrl, folder) =>
   coverRequestAllowed(event, 'cover-search-alt')
     ? coverDownloads.save(event.sender, fileUrl, folder)
     : { status: 'error', message: 'This window cannot request a cover download.' }
 );
 
-ipcMain.handle('download-tag-image', (event, fileUrl, filePath, delayDownload = true) =>
+guardedIpc.handle('download-tag-image', (event, fileUrl, filePath, delayDownload = true) =>
   coverRequestAllowed(event, 'cover-search-alt-tags')
     ? coverDownloads.stage(event.sender, fileUrl, filePath, delayDownload)
     : { status: 'error', message: 'This window cannot request tag artwork.' }
 );
 
-ipcMain.handle('select-image-from-folder', async (event, arr, delayDownload = false) => {
+guardedIpc.handle('select-image-from-folder', async (event, arr, delayDownload = false) => {
   let tempFile;
   /* const filePath = arr; */
   const startFolder = Array.isArray(arr) ? path.dirname(arr[0]) : path.dirname(arr);
@@ -1456,6 +1485,7 @@ ipcMain.handle('select-image-from-folder', async (event, arr, delayDownload = fa
     }
 
     tempFile = result.filePaths[0].replace(/\\/g, '/');
+    grantArtworkAccess(event.sender, tempFile);
 
     if (delayDownload) {
       console.log('delayDownload------> :', delayDownload);
@@ -1486,7 +1516,7 @@ ipcMain.handle('select-image-from-folder', async (event, arr, delayDownload = fa
   }
 });
 
-/* ipcMain.handle('refresh-cover', async (event, ...args) => {
+/* guardedIpc.handle('refresh-cover', async (event, ...args) => {
   const [file, filepath] = args;
   const imgurl = url.pathToFileURL(file).href;
    const imageobj = { img: imgurl.href }; 
@@ -1494,24 +1524,25 @@ ipcMain.handle('select-image-from-folder', async (event, arr, delayDownload = fa
   BrowserWindow.fromId(mainWindow.id).webContents.send('refresh-home-cover', filepath, imgurl);
 }); */
 
-ipcMain.on('open-album-folder', async (_, path) => {
+guardedIpc.on('open-album-folder', async (_, path) => {
   console.log('path: ', path);
   /* console.log('open-album-folder'); */
   try {
-    const properPath = path.replaceAll('/', '\\');
-    return shell.openPath(properPath);
+    if (!(await fs.promises.stat(path)).isDirectory())
+      throw new Error('The selected location is not a folder.');
+    return shell.openPath(path);
   } catch (error) {
     console.error(error.message);
   }
 });
 
-ipcMain.handle('get-preferences-sync', () => {
+guardedIpc.handle('get-preferences-sync', () => {
   /* console.log('sync-called'); */
   const prefs = getPreferencesSync();
   return prefs;
 });
 
-ipcMain.handle('get-preferences', async () => {
+guardedIpc.handle('get-preferences', async () => {
   try {
     const prefs = await getPreferences();
     return prefs;
@@ -1520,7 +1551,7 @@ ipcMain.handle('get-preferences', async () => {
   }
 });
 
-ipcMain.handle('save-preferences', async (event, preferences) => {
+guardedIpc.handle('save-preferences', async (event, preferences) => {
   console.log('---------> save-preferences', preferences);
   try {
     const saveResults = await savePreferences(preferences);
@@ -1543,7 +1574,7 @@ ipcMain.handle('save-preferences', async (event, preferences) => {
   }
 });
 
-/* ipcMain.handle('send-track-notification', async (event, track) => {
+/* guardedIpc.handle('send-track-notification', async (event, track) => {
   console.log('track-----> : ', track);
   new Notification({ title: track.title || 'Now Playing', body: `Artist: ${track.artist}` }); 
   new Notification({ title: track.title, body: track.body, icon: track.icon }).show();

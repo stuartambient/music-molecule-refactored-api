@@ -18,6 +18,10 @@
   -webkit-app-region: no-drag;
 }
 
+.playback-error * {
+  -webkit-app-region: no-drag;
+}
+
 .playback-error p {
   margin: 0.5rem 0;
 }

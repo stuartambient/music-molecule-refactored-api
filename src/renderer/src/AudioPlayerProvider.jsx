@@ -98,7 +98,7 @@ export const AudioPlayerProvider = ({ children }) => {
 
   useEffect(() => {
     const checkTable = async () => {
-      const isPopulated = await window.ipcApi.invoke('get-roots');
+      const isPopulated = await window.ipcApi.getRoots();
       /* console.log('isPopulated: ', isPopulated.length, 'type: ', Array.isArray(isPopulated)); */
       if (isPopulated.length === 0) {
         setInitialPage('update');

@@ -30,7 +30,7 @@ function App() {
   const openArtwork = useCallback(async () => {
     setArtworkExpanded(true);
     try {
-      const opened = await window.ipcApi.invoke('artwork-view', true);
+      const opened = await window.ipcApi.artworkView(true);
       if (!opened) setArtworkExpanded(false);
     } catch (error) {
       setArtworkExpanded(false);
@@ -39,7 +39,7 @@ function App() {
   }, []);
   const closeArtwork = useCallback(async () => {
     try {
-      await window.ipcApi.invoke('artwork-view', false);
+      await window.ipcApi.artworkView(false);
     } catch (error) {
       console.error('Unable to restore the previous window:', error);
     } finally {
@@ -48,7 +48,7 @@ function App() {
   }, []);
 
   const handleThemeUpdate = useCallback(async () => {
-    const preferences = await window.ipcApi.invoke('get-preferences');
+    const preferences = await window.ipcApi.getPreferences();
 
     if (preferences.mainTheme && preferences.mainTheme !== state.mainTheme) {
       console.log('not equal');
@@ -118,13 +118,13 @@ function App() {
     let subscribed = true;
     const changeScreenMode = () => {
       if (state.minimalmode && state.player) {
-        window.ipcApi.send('screen-mode', state.miniModePlaylist ? 'mini-expanded' : 'mini');
+        window.ipcApi.screenMode(state.miniModePlaylist ? 'mini-expanded' : 'mini');
       } else if (!state.minimalmode && state.player && state.library) {
-        window.ipcApi.send('screen-mode', 'player-library');
+        window.ipcApi.screenMode('player-library');
       } else if (state.player && !state.library) {
-        window.ipcApi.send('screen-mode', 'player');
+        window.ipcApi.screenMode('player');
       } else if (!state.player) {
-        window.ipcApi.send('screen-mode', 'default');
+        window.ipcApi.screenMode('default');
       }
     };
     if (subscribed) {
@@ -136,7 +136,7 @@ function App() {
   const handleUpdateLike = async (id) => {
     if (!id) return;
     /* await window.api.updateLike(id); */
-    await window.ipcApi.invoke('update-like', id);
+    await window.ipcApi.updateLike(id);
   };
 
   const handlePlayerControls = (e) => {
@@ -225,11 +225,11 @@ function App() {
   };
 
   const handleWindowAction = (action) => {
-    window.ipcApi.send('window-action', action);
+    window.ipcApi.windowAction(action);
   };
 
   const handleMenu = () => {
-    window.ipcApi.send('show-context-menu', 1, 'menu');
+    window.ipcApi.showContextMenu(1, 'menu');
   };
 
   const handleMainNav = async (e) => {
@@ -372,8 +372,6 @@ function App() {
 
   return (
     <div className={containerClassNames}>
-      <PlaybackError />
-      <MusicNotice />
       {state.player && !state.library && !state.minimalmode ? null : (
         <MainNav onClick={handleMainNav} />
       )}
@@ -398,6 +396,9 @@ function App() {
         <InfiniteList />
       ) : null}
       {artworkExpanded && <ArtworkView onExit={closeArtwork} onControl={handlePlayerControls} />}
+      {/* Keep non-draggable notices after the window's draggable surfaces. */}
+      <PlaybackError />
+      <MusicNotice />
     </div>
   );
 }

@@ -1,3 +1,33 @@
+.playlist {
+  position: relative;
+  height: 100%;
+}
+
+.playlist-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--list-background);
+  color: var(--list-font-color);
+  text-align: center;
+  -webkit-app-region: no-drag;
+}
+
+.playlist-loading .spinner-5 {
+  width: 40px;
+  background: currentColor;
+}
+
+.playlist-loading-detail {
+  font-size: 0.85em;
+}
+
 .results {
   grid-column: 2 / 3;
   grid-row: 3 / 4;

@@ -28,6 +28,29 @@ const developmentCsp = {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Sandboxed preloads cannot require local shared chunks. Keep each entry's imports separate.
+function isolatedPreloadImports() {
+  const entries = new Set(
+    ['index', 'metadataEditing', 'coverSearchAlt'].map((name) =>
+      resolve(__dirname, `src/preload/${name}.js`).replaceAll('\\', '/')
+    )
+  );
+  return {
+    name: 'isolated-sandbox-preloads',
+    enforce: 'pre',
+    async resolveId(source, importer) {
+      if (!importer || !source.startsWith('.')) return null;
+      const [file, query] = importer.split('?sandboxEntry=');
+      const entry =
+        query || (entries.has(file.replaceAll('\\', '/')) ? encodeURIComponent(file) : null);
+      if (!entry) return null;
+      const resolved = await this.resolve(source, file, { skipSelf: true });
+      if (!resolved || resolved.external) return resolved;
+      return { ...resolved, id: `${resolved.id}?sandboxEntry=${entry}` };
+    }
+  };
+}
+
 export default defineConfig({
   main: {
     plugins: [
@@ -53,7 +76,7 @@ export default defineConfig({
     }
   },
   preload: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [externalizeDepsPlugin(), isolatedPreloadImports()],
     build: {
       rollupOptions: {
         input: {

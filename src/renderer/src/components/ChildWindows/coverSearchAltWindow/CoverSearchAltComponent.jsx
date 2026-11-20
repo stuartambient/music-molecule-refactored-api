@@ -121,10 +121,9 @@ const CoverSearchAltApp = () => {
     try {
       let result;
       if (listType === 'cover-search-alt')
-        result = await window.coverSearchApi.invoke('download-file', selectedImage, savePath);
+        result = await window.coverSearchApi.downloadFile(selectedImage, savePath);
       else if (listType === 'cover-search-alt-tags')
-        result = await window.coverSearchApi.invoke(
-          'download-tag-image',
+        result = await window.coverSearchApi.downloadTagImage(
           selectedImage,
           savePath,
           delayDownload
@@ -190,7 +189,7 @@ const CoverSearchAltApp = () => {
   useIpcEvent('send-to-child', handleSearchParams, 'coverSearchApi');
 
   useEffect(() => {
-    window.coverSearchApi.send('child-ready');
+    window.coverSearchApi.childReady();
   }, []);
 
   useEffect(() => {
@@ -221,7 +220,7 @@ const CoverSearchAltApp = () => {
   const handleContextMenu = (event) => {
     event.preventDefault();
 
-    window.coverSearchApi.send('show-context-menu', listType, 'cover');
+    window.coverSearchApi.showContextMenu(listType, 'cover');
   };
 
   useEffect(() => {

@@ -153,7 +153,7 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
         if (!contextMenu) return;
         const path = contextMenu.getAttribute('fullpath');
         const folder = contextMenu.getAttribute('album');
-        window.ipcApi.invoke('show-album-cover-menu', path, folder);
+        window.ipcApi.showAlbumCoverMenu(path, folder);
       }
     };
 
@@ -198,26 +198,12 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
       title = album;
     }
 
-    return openChildWindow(
-      'cover-search-alt',
-      'cover-search-alt',
-      {
-        width: 1400,
-        height: 600,
-        show: false,
-        resizable: true,
-        preload: 'coverSearchAlt',
-        sandbox: true,
-        webSecurity: true,
-        contextIsolation: true
-      },
-      { artist, title, path }
-    );
+    return openChildWindow('cover-search-alt', 'cover-search-alt', { artist, title, path });
   };
 
   useEffect(() => {
     const sendOpenFolder = async () => {
-      return await window.ipcApi.send('open-album-folder', openFolder);
+      return await window.ipcApi.openAlbumFolder(openFolder);
     };
     if (openFolder) {
       sendOpenFolder();

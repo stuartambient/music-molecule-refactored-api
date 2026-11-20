@@ -6,24 +6,14 @@ import useIpcEvent from '../hooks/useIpcEvent';
 
 const initTable = /* async */ (type, data = null) => {
   const name = 'table-data';
-  const config = {
-    width: 1200,
-    height: 550,
-    show: false,
-    resizable: true,
-    preload: 'metadataEditing',
-    sandbox: true,
-    webSecurity: true,
-    contextIsolation: true
-  };
-  return openChildWindow(name, type, config, data);
+  return openChildWindow(name, type, data);
 };
 
 const tableStatus = async () => {
   try {
-    const openTable = await window.ipcApi.invoke('check-for-open-table', 'table-data');
+    const openTable = await window.ipcApi.checkForOpenTable('table-data');
     if (openTable) {
-      window.ipcApi.send('clear-table');
+      window.ipcApi.clearTable();
 
       return true;
     }
@@ -86,8 +76,8 @@ const useTrackLoader = (type, value, reset) => {
           await initTable(tableName);
         }
 
-        window.ipcApi.send('clear-table');
-        window.ipcApi.invoke('get-tracks-by-category', { listType: tableName, value });
+        window.ipcApi.clearTable();
+        window.ipcApi.getTracksByCategory({ listType: tableName, value });
         /*    setTimeout(
           () => window.ipcApi.invoke('get-tracks-by-category', { listType: tableName, value }),
           0

@@ -15,7 +15,10 @@ export default function MusicNotice() {
       <p>{notice.message}</p>
       {notice.examples?.length > 0 && (
         <details>
-          <summary>Unavailable entries (up to 5 shown)</summary>
+          <summary>
+            Entry details (showing {notice.examples.length} of{' '}
+            {notice.entryCount ?? notice.examples.length})
+          </summary>
           {notice.examples.map((entry, index) => (
             <p key={index}>
               {entry.path && (

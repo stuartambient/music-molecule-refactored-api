@@ -172,8 +172,8 @@ const List = ({
       }
 
       if (tableName && multiSelects.length > 1) {
-        window.ipcApi.send('clear-table');
-        window.ipcApi.invoke('get-tracks-by-category', {
+        window.ipcApi.clearTable();
+        window.ipcApi.getTracksByCategory({
           listType: tableName,
           value: multiSelects
         });

@@ -111,7 +111,7 @@ const MediaMenu = ({
                     e.target.blur();
                   }
                 }}
-                onContextMenu={async () => await window.ipcApi.invoke('show-text-input-menu')}
+                onContextMenu={async () => await window.ipcApi.showTextInputMenu()}
               />
 
               <button type="submit" className="submitbtn">
@@ -133,7 +133,7 @@ const MediaMenu = ({
                 name="textsearch"
                 id="textsearch"
                 placeholder="   search albums"
-                onContextMenu={async () => await window.ipcApi.invoke('show-text-input-menu')}
+                onContextMenu={async () => await window.ipcApi.showTextInputMenu()}
               />
 
               <button type="submit" className="submitbtn">

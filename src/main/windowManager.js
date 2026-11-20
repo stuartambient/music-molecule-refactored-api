@@ -1,9 +1,10 @@
-import { BrowserWindow, ipcMain, screen } from 'electron';
+import { BrowserWindow, screen } from 'electron';
 import { is } from '@electron-toolkit/utils';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mainWindow, theme } from './index.js';
 import { childWindowBounds } from './childWindowBounds.js';
+import { guardedIpc, registerWindowAccess, rendererEntryUrl } from './ipcAccess.js';
 
 const windows = new Map();
 const preloadDirectory = path.join(path.dirname(fileURLToPath(import.meta.url)), '../preload');
@@ -22,7 +23,7 @@ function deliverPendingData(entry) {
 }
 
 // A ready message releases data only for the top-level renderer that sent it.
-ipcMain.on('child-ready', (event) => {
+guardedIpc.on('child-ready', (event) => {
   const entry = [...windows.values()].find(({ window }) => window.webContents === event.sender);
   if (
     !entry ||
@@ -74,6 +75,8 @@ function createOrUpdateChildWindow(name, type, config, data, opener) {
         )
       : { width: config.width, height: config.height };
 
+  if (!['metadataEditing', 'coverSearchAlt'].includes(config.preload))
+    throw new Error('Unknown child preload.');
   const window = new BrowserWindow({
     ...bounds,
     show: config.show,
@@ -82,13 +85,21 @@ function createOrUpdateChildWindow(name, type, config, data, opener) {
     resizable: config.resizable,
     webPreferences: {
       preload: path.join(preloadDirectory, `${config.preload}.js`),
-      additionalArguments: [`--theme=${theme}`],
-      sandbox: config.sandbox,
-      webSecurity: config.webSecurity,
-      contextIsolation: config.contextIsolation,
+      additionalArguments: [
+        `--theme=${theme}`,
+        `--window-role=${config.role || (config.preload === 'metadataEditing' ? 'editor' : 'cover')}`
+      ],
+      sandbox: true,
+      webSecurity: true,
+      contextIsolation: true,
       nodeIntegration: false
     }
   });
+  registerWindowAccess(
+    window,
+    config.role || (config.preload === 'metadataEditing' ? 'editor' : 'cover'),
+    rendererEntryUrl(config.preload)
+  );
   const entry = {
     window,
     readyToShow: false,

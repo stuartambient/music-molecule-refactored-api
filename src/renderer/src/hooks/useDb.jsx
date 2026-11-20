@@ -53,8 +53,7 @@ const useTracks = (
       setTracksLoading(true);
       setTracksError(false);
 
-      let trackRequest = await window.ipcApi.invoke(
-        'get-tracks',
+      let trackRequest = await window.ipcApi.getTracks(
         tracksPageNumber,
         tracksSearchTerm,
         sortType
@@ -85,10 +84,10 @@ const useTracks = (
       setTracksLoading(true);
       setTracksError(false);
       if (tracksPageNumber === 0) {
-        await window.ipcApi.invoke('set-shuffled-tracks-array');
+        await window.ipcApi.setShuffledTracksArray();
       }
 
-      const shuffledTracks = await window.ipcApi.invoke('get-shuffled-tracks', tracksPageNumber);
+      const shuffledTracks = await window.ipcApi.getShuffledTracks(tracksPageNumber);
       //await new Promise((resolve) => setTimeout(resolve, 0)); // allow state to flush
       //console.log('isSubscribed: ', isSubBoolean(), 'state.tracks.length: ', state.tracks.length);
       isSubscribed = isSubBoolean();
@@ -157,8 +156,7 @@ const useAlbums = (albumsPageNumber, albumsSearchTerm, sortType, resetKey, dispa
       try {
         setAlbumsLoading(true);
         setAlbumsError(false);
-        const albumRequest = await window.ipcApi.invoke(
-          'get-albums',
+        const albumRequest = await window.ipcApi.getAlbums(
           albumsPageNumber,
           albumsSearchTerm,
           sortType
@@ -229,7 +227,7 @@ const useTopHundredArtistsStat = () => {
   useEffect(() => {
     let subscribed = true;
     const getTopHundredArtists = async () => {
-      const topHundredArtistsRequest = await window.ipcApi.invoke('artists-by-num-tracks');
+      const topHundredArtistsRequest = await window.ipcApi.artistsByNumTracks();
       if (topHundredArtistsRequest && subscribed) {
         console.log('top hundred artist request: ', topHundredArtistsRequest);
         setTopHundredArtists(topHundredArtistsRequest);
@@ -248,7 +246,7 @@ const useGenres = (setGenres) => {
   useEffect(() => {
     let subscribed = true;
     const getGenres = async () => {
-      const genresRequest = await window.ipcApi.invoke('genres-stat');
+      const genresRequest = await window.ipcApi.genresStat();
       if (genresRequest && subscribed) {
         setGenres(genresRequest);
       } else {
@@ -283,8 +281,7 @@ const useAllAlbumsCovers = (
         setCoversLoading(true);
         setCoversError(false);
 
-        const coversRequest = await window.ipcApi.invoke(
-          'get-covers',
+        const coversRequest = await window.ipcApi.getCovers(
           coversPageNumber,
           coversSearchTerm,
           coversDateSort,
@@ -332,10 +329,12 @@ const useAllAlbumsCovers = (
 };
 
 const usePlaylistDialog = (req, playlistTracks, dispatch, setPlaylistReq) => {
+  const [playlistLoading, setPlaylistLoading] = useState(false);
   useEffect(() => {
     let isSubscribed = true;
 
     const openplaylist = async () => {
+      setPlaylistLoading(true);
       try {
         const openpl = await requestMusicTracks(
           'open-playlist',
@@ -358,12 +357,14 @@ const usePlaylistDialog = (req, playlistTracks, dispatch, setPlaylistReq) => {
       } catch (e) {
         console.log(e.message);
         if (isSubscribed) setPlaylistReq('');
+      } finally {
+        if (isSubscribed) setPlaylistLoading(false);
       }
     };
 
     const saveplaylist = async () => {
       try {
-        const savepl = await window.ipcApi.invoke('save-playlist', playlistTracks);
+        const savepl = await window.ipcApi.savePlaylist(playlistTracks);
         if (isSubscribed) {
           if (savepl === 'action cancelled') {
             setPlaylistReq('');
@@ -379,21 +380,23 @@ const usePlaylistDialog = (req, playlistTracks, dispatch, setPlaylistReq) => {
 
     if (req === 'playlist-open') {
       openplaylist();
-    } else if (req === 'playlist-save') {
-      saveplaylist();
+    } else {
+      setPlaylistLoading(false);
+      if (req === 'playlist-save') saveplaylist();
     }
 
     return () => {
       isSubscribed = false; // Cleanup when component unmounts
     };
   }, [req, playlistTracks, dispatch, setPlaylistReq]);
+  return playlistLoading;
 };
 
 const useDistinctDirectories = (setDirectories) => {
   useEffect(() => {
     let subscribed = true;
     const getDistinctDirectories = async () => {
-      const myDirectories = await window.ipcApi.invoke('distinct-directories');
+      const myDirectories = await window.ipcApi.distinctDirectories();
       if (myDirectories) {
         setDirectories(myDirectories);
       }
@@ -413,7 +416,7 @@ const useTotalTracksStat = (setTotalTracks) => {
 
     const getTotalTracks = async () => {
       try {
-        const totalTracksRequest = await window.ipcApi.invoke('total-tracks-stat');
+        const totalTracksRequest = await window.ipcApi.totalTracksStat();
         if (totalTracksRequest && isSubscribed) {
           setTotalTracks(totalTracksRequest);
         }

@@ -17,7 +17,7 @@ export function availabilityNotice(result, title, browsing = false) {
   parts.push(
     'Catalog entries have been kept. Restore the files or reconnect their drive, then try again.'
   );
-  return { title, message: parts.join(' '), examples: result.examples };
+  return { title, message: parts.join(' '), examples: result.examples, entryCount: skipped };
 }
 
 export async function requestMusicTracks(
@@ -34,7 +34,12 @@ export async function requestMusicTracks(
     notice: { id, title, message: 'Checking music files…', busy: true }
   });
   try {
-    const result = await window.ipcApi.invoke(channel, ...args);
+    const operations = {
+      'prepare-music-tracks': (...values) => window.ipcApi.prepareMusicTracks(...values),
+      'open-playlist': () => window.ipcApi.openPlaylist()
+    };
+    if (!Object.hasOwn(operations, channel)) throw new Error('Unknown music request.');
+    const result = await operations[channel](...args);
     if (!isCurrent()) {
       dispatch({ type: 'music-notice-result', id, notice: null });
       return null;

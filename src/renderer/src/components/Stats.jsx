@@ -97,7 +97,7 @@ const Stats = () => {
 
   const addRoot = (item) => {
     const rootItems = async (item) => {
-      const results = await window.ipcApi.invoke('get-albums-by-root', item);
+      const results = await window.ipcApi.getAlbumsByRoot(item);
       setAlbumsByRoot((prevItems) => [...prevItems, ...results]);
     };
     if (!reqDirectories.includes(item)) {

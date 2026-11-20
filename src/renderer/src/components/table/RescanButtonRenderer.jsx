@@ -11,7 +11,7 @@ const RescanButtonRenderer = ({ data }) => {
     setPending(true);
     setError('');
     try {
-      await window.tagEditApi.invoke('rescan-track-error', data.audiotrack, data.track_id);
+      await window.tagEditApi.rescanTrackError(data.audiotrack, data.track_id);
     } catch (failure) {
       setError(failure.message);
     } finally {

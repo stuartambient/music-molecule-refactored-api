@@ -33,7 +33,7 @@ function EditForm({
   useEffect(() => {
     if (imageFolder) {
       const delayDownload = true;
-      window.tagEditApi.invoke('select-image-from-folder', imageFolder, delayDownload);
+      window.tagEditApi.selectImageFromFolder(imageFolder, delayDownload);
     }
   }, [imageFolder]);
 
@@ -44,7 +44,7 @@ function EditForm({
   const handleMenu = (col) => {
     console.log('col: ', col.target.id);
     if (col.target.id !== 'picture-location') {
-      return window.tagEditApi.send('show-context-menu', {}, 'tag-context-menu');
+      return window.tagEditApi.showContextMenu({}, 'tag-context-menu');
     } else {
       const selectedNode = nodesSelected[0];
       const album = selectedNode.data.album ? selectedNode.data.album : '';
@@ -55,7 +55,7 @@ function EditForm({
           : '';
       const path = selectedNode.data.audiotrack;
       console.log('album: ', album, 'artist: ', artist, 'path: ', path);
-      window.tagEditApi.send('show-context-menu', { artist, album, path }, 'form-picture');
+      window.tagEditApi.showContextMenu({ artist, album, path }, 'form-picture');
     }
   };
 
@@ -82,21 +82,7 @@ function EditForm({
 
   const formSearchOnline = (params) => {
     console.log('params: ', params);
-    return openChildWindow(
-      'cover-search-alt-tags',
-      'cover-search-alt-tags',
-      {
-        width: 700,
-        height: 600,
-        show: false,
-        resizable: true,
-        preload: 'coverSearchAlt',
-        sandbox: true,
-        webSecurity: true,
-        contextIsolation: true
-      },
-      params
-    );
+    return openChildWindow('cover-search-alt-tags', 'cover-search-alt-tags', params);
   };
 
   const handleFormMenu = (option) => {

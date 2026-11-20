@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Virtuoso } from 'react-virtuoso';
 import MediaMenu from './MediaMenu';
 import Item from './Item';
+import Loader from './Loader';
 import { useTracks, useAlbums, useAlbumTracks, usePlaylistDialog } from '../hooks/useDb';
 import '../style/InfiniteList.css';
 
@@ -87,7 +88,12 @@ const InfiniteList = () => {
     }
   }, [dispatch, state.flashDiv]);
 
-  usePlaylistDialog(playlistReq, state.playlistTracks, dispatch, setPlaylistReq);
+  const playlistLoading = usePlaylistDialog(
+    playlistReq,
+    state.playlistTracks,
+    dispatch,
+    setPlaylistReq
+  );
 
   const albumsTracks = albumTracks.map((track, index) => (
     <li key={track.track_id} className="albumtrack">
@@ -313,7 +319,7 @@ const InfiniteList = () => {
         {state.listType === 'albums' && !state.albums.length && !albumsLoading ? (
           <div className="noresults">No results</div>
         ) : null}
-        {state.listType === 'playlist' && !state.playlistTracks.length ? (
+        {state.listType === 'playlist' && !state.playlistTracks.length && !playlistLoading ? (
           <div className="noresults">No current playlist</div>
         ) : null}
         <>
@@ -423,7 +429,19 @@ const InfiniteList = () => {
           </div>
         </>
         <>
-          <div className={state.listType === 'playlist' ? 'playlist' : 'playlist-list-hidden'}>
+          <div
+            className={state.listType === 'playlist' ? 'playlist' : 'playlist-list-hidden'}
+            aria-busy={playlistLoading}
+          >
+            {playlistLoading && (
+              <div className="playlist-loading" role="status">
+                <span aria-hidden="true">
+                  <Loader />
+                </span>
+                <span>Loading playlist…</span>
+                <span className="playlist-loading-detail">Checking music files</span>
+              </div>
+            )}
             <Virtuoso
               ref={playlistRef}
               data={state.playlistTracks}

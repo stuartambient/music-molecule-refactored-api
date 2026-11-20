@@ -21,7 +21,7 @@ const ScheduleForm = () => {
 
   useEffect(() => {
     const loadPreferences = async () => {
-      const preferences = await window.ipcApi.invoke('get-preferences');
+      const preferences = await window.ipcApi.getPreferences();
       setCurrentSchedule(preferences.schedule || null);
       setScheduleLoaded(true);
     };
@@ -88,7 +88,7 @@ const ScheduleForm = () => {
   const saveSchedule = async (type, newSchedule) => {
     console.log('new schedule: ', newSchedule);
     const dataToSave = type === 'every-day' ? `everyday@${newSchedule}` : newSchedule;
-    const scheduleResults = await window.ipcApi.invoke('save-preferences', {
+    const scheduleResults = await window.ipcApi.savePreferences({
       schedule: dataToSave
     });
     if (scheduleResults) {

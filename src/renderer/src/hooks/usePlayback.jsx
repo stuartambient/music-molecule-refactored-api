@@ -19,7 +19,7 @@ export default function usePlayback(state, dispatch) {
     const session = createAvailablePlayback(
       audio,
       source,
-      () => window.ipcApi.invoke('check-track-availability', track.audiotrack),
+      () => window.ipcApi.checkTrackAvailability(track.audiotrack),
       {
         onAvailable: () => loadCover(),
         onMetadata: (element) => {
@@ -41,7 +41,7 @@ export default function usePlayback(state, dispatch) {
     // Artwork and like lookups cannot delay source loading or restart playback.
     function loadCover() {
       window.ipcApi
-        .invoke('get-cover', track.audiotrack)
+        .getCover(track.audiotrack)
         .then((picture) => {
           if (session.isCurrent()) {
             dispatch({
@@ -55,7 +55,7 @@ export default function usePlayback(state, dispatch) {
     }
 
     window.ipcApi
-      .invoke('is-liked', track.track_id)
+      .isLiked(track.track_id)
       .then((liked) => {
         if (session.isCurrent())
           dispatch({ type: 'update-like', request, isLiked: liked?.like === 1 });

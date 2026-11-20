@@ -3,7 +3,13 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import { validateCoverDownloadUrl } from './coverDownloader.js';
 
-export function createCoverDownloads({ dialog, downloadFile, getEditor, temporaryDirectory }) {
+export function createCoverDownloads({
+  dialog,
+  downloadFile,
+  getEditor,
+  temporaryDirectory,
+  onStaged = () => {}
+}) {
   const notify = (sender, result) => {
     if (!sender.isDestroyed())
       sender.send(
@@ -60,6 +66,7 @@ export function createCoverDownloads({ dialog, downloadFile, getEditor, temporar
           throw new Error('The download did not complete.');
         if (editor.isDestroyed())
           throw new Error('The tag editor closed before the download finished.');
+        onStaged(editor.webContents, saved);
         editor.webContents.send('for-submit-form', {
           tempFile: saved.replaceAll('\\', '/'),
           filePath

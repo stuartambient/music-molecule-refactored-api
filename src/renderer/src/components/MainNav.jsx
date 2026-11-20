@@ -113,19 +113,19 @@ const MainNav = ({ onClick }) => {
     const runUpdates = () => {
       switch (updateOption) {
         case 'update-folders': {
-          window.ipcApi.invoke('update-folders');
+          window.ipcApi.updateFolders();
           break;
         }
         case 'update-files': {
-          window.ipcApi.invoke('update-files');
+          window.ipcApi.updateFiles();
           break;
         }
         case 'update-covers': {
-          window.ipcApi.invoke('update-covers');
+          window.ipcApi.updateCovers();
           break;
         }
         case 'update-meta': {
-          window.ipcApi.invoke('update-meta');
+          window.ipcApi.updateMeta();
           break;
         }
         case 'setup / modify': {

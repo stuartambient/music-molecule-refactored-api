@@ -73,7 +73,7 @@ async function handleContextMenuCommand(command, item, state, dispatch) {
       dispatch({ type: 'remove-track', id: item.id });
       break;
     case 'open-album-folder':
-      window.ipcApi.send('open-album-folder', item.path);
+      window.ipcApi.openAlbumFolder(item.path);
       break;
     default:
       console.warn('Unknown command:', command);

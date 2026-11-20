@@ -9,7 +9,7 @@ function NativeDragDropFolderInput({ rootDirs, setRootDirs }) {
     console.log(e.target.id);
 
     const sendRoots = async (roots) => {
-      const sentRoots = await window.ipcApi.invoke('update-roots', roots);
+      const sentRoots = await window.ipcApi.updateRoots(roots);
       if (sentRoots) {
         setRootChanges(sentRoots);
       }
@@ -23,7 +23,7 @@ function NativeDragDropFolderInput({ rootDirs, setRootDirs }) {
   const handleOpenFolder = (e) => {
     /* window.api.openAlbumFolder(e.target.id); */
     const folder = e.currentTarget.id;
-    window.ipcApi.send('open-album-folder', folder);
+    window.ipcApi.openAlbumFolder(folder);
   };
 
   const removeFolder = (index) => {
@@ -42,7 +42,7 @@ function NativeDragDropFolderInput({ rootDirs, setRootDirs }) {
         <button
           type="button"
           onClick={async () => {
-            const paths = await window.ipcApi.invoke('pick-folder');
+            const paths = await window.ipcApi.pickFolder();
             if (paths?.length) {
               const updated = paths.filter((p) => !rootDirs.includes(p) && !folders.includes(p));
               setFolders((prev) => [...prev, ...updated]);

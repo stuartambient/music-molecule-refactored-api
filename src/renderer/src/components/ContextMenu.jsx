@@ -11,7 +11,7 @@ const ContextMenu = ({ fromlisttype, id, fullpath = undefined }) => {
     const id = divRef.current.id;
     const type = divRef.current.dataset.type;
     const path = divRef.current.dataset.path;
-    window.ipcApi.send('show-context-menu', id, type, path);
+    window.ipcApi.showContextMenu(id, type, path);
   };
 
   return (

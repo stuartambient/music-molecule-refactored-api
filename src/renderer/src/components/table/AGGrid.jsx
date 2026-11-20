@@ -66,7 +66,7 @@ const AGGrid = () => {
     const isErrorVisible = errorCol.isVisible();
     params.columnApi.setColumnVisible('rescan', isErrorVisible); */
 
-    window.tagEditApi.invoke('save-preferences', {
+    window.tagEditApi.savePreferences({
       grids: {
         tagEdit: {
           columns: state
@@ -123,7 +123,7 @@ const AGGrid = () => {
 
   // Register the data subscription before notifying main that this renderer is ready.
   useEffect(() => {
-    window.tagEditApi.send('child-ready');
+    window.tagEditApi.childReady();
   }, []);
 
   /*   useEffect(() => {
@@ -178,7 +178,7 @@ const AGGrid = () => {
 
     e.preventDefault();
 
-    window.tagEditApi.send('show-context-menu', {}, 'tag-context-menu');
+    window.tagEditApi.showContextMenu({}, 'tag-context-menu');
   }
 
   useEffect(() => {
@@ -205,7 +205,7 @@ const AGGrid = () => {
     console.log('hiddenCols: ', hiddenCols); */
     setGridReady(true);
 
-    const prefs = await window.tagEditApi.invoke('get-preferences-sync');
+    const prefs = await window.tagEditApi.getPreferencesSync();
 
     const state = prefs?.grids?.tagEdit?.columns;
 
@@ -308,21 +308,12 @@ const AGGrid = () => {
         return;
       }
 
-      openChildWindow(
-        'cover-search-alt-tags',
-        'cover-search-alt-tags',
-        {
-          width: 700,
-          height: 600,
-          show: false,
-          resizable: true,
-          preload: 'coverSearchAlt',
-          sandbox: true,
-          webSecurity: true,
-          contextIsolation: true
-        },
-        { artist, title, path, type }
-      );
+      openChildWindow('cover-search-alt-tags', 'cover-search-alt-tags', {
+        artist,
+        title,
+        path,
+        type
+      });
     },
     'tagEditApi'
   );
@@ -382,7 +373,7 @@ const AGGrid = () => {
 
   useEffect(() => {
     if (tempFolder) {
-      window.tagEditApi.invoke('select-image-from-folder', tempFolder, true);
+      window.tagEditApi.selectImageFromFolder(tempFolder, true);
     }
   }, [tempFolder]);
 
@@ -606,7 +597,7 @@ const AGGrid = () => {
   };
 
   const updateTags = async (arr) => {
-    await window.tagEditApi.invoke('update-tags', arr);
+    await window.tagEditApi.updateTags(arr);
   };
 
   const handleGridMenu = (e) => {
@@ -673,7 +664,7 @@ const AGGrid = () => {
     const allowedColumns = ['pictures', 'picture-location'];
     /* console.log('column: ', params.column.getColId()); */
     if (!allowedColumns.includes(params.column.getColId())) {
-      return window.tagEditApi.send('show-context-menu', {}, 'tag-context-menu');
+      return window.tagEditApi.showContextMenu({}, 'tag-context-menu');
     }
     setPendingPictureEdit({ track_id: params.data.track_id, newValue: null });
     const album = params.data.album ? params.data.album : '';
@@ -683,7 +674,7 @@ const AGGrid = () => {
         ? params.data.performers
         : '';
     const path = params.data.audiotrack;
-    window.tagEditApi.send('show-context-menu', { artist, album, path }, 'picture');
+    window.tagEditApi.showContextMenu({ artist, album, path }, 'picture');
   }, []);
 
   /*   const onColumnVisible = useCallback(() => {

@@ -188,16 +188,37 @@ test('cancelled and failed M3U requests retain the current playlist and display 
   const dispatch = (action) => {
     state = reducer(state, action);
   };
-  globalThis.window = { ipcApi: { invoke: async () => 'action cancelled' } };
+  globalThis.window = { ipcApi: { openPlaylist: async () => 'action cancelled' } };
   assert.equal(await requestMusicTracks('open-playlist', [], dispatch, 'Open Playlist'), null);
   assert.equal(state.musicNotice, null);
-  window.ipcApi.invoke = async () => {
+  window.ipcApi.openPlaylist = async () => {
     throw new Error('worker failure');
   };
   assert.equal(await requestMusicTracks('open-playlist', [], dispatch, 'Open Playlist'), null);
   assert.match(state.musicNotice.message, /could not be loaded/);
   assert.equal(state.playlistTracks[0].track_id, 'keep');
 });
+test('dismissing a pending notice prevents its late result from reopening it', async () => {
+  let state = {};
+  const dispatch = (action) => {
+    state = reducer(state, action);
+  };
+  const pending = deferred();
+  globalThis.window = { ipcApi: { openPlaylist: () => pending.promise } };
+  const request = requestMusicTracks('open-playlist', [], dispatch, 'Open Playlist');
+  assert.equal(state.musicNotice.busy, true);
+  dispatch({ type: 'dismiss-music-notice' });
+  pending.resolve({
+    tracks: [],
+    unavailableCount: 1,
+    missingCatalogCount: 0,
+    requestedCount: 1,
+    examples: [missing]
+  });
+  await request;
+  assert.equal(state.musicNotice, null);
+});
+
 test('an older batch response cannot erase a newer notice', async () => {
   let state = {};
   const dispatch = (action) => {
@@ -213,7 +234,7 @@ test('an older batch response cannot erase a newer notice', async () => {
     examples: []
   };
   globalThis.window = {
-    ipcApi: { invoke: () => (++calls === 1 ? first.promise : Promise.resolve(empty)) }
+    ipcApi: { prepareMusicTracks: () => (++calls === 1 ? first.promise : Promise.resolve(empty)) }
   };
   const older = requestMusicTracks('prepare-music-tracks', [], dispatch, 'Old');
   await requestMusicTracks('prepare-music-tracks', [], dispatch, 'New');
