@@ -3,10 +3,11 @@ import { createAvailablePlayback } from '../utility/availablePlayback';
 import { convertDuration } from './useTime';
 import { handlePicture } from '../utility/audioUtils';
 
-export default function usePlayback(state, dispatch) {
+export default function usePlayback(state, dispatch, playbackSnapshot) {
   const sessionRef = useRef(null);
   const track = state.playbackTrack;
   const request = state.playbackRequest;
+  const startTime = state.playbackStartTime || 0;
 
   useEffect(() => {
     if (!track) return;
@@ -34,9 +35,13 @@ export default function usePlayback(state, dispatch) {
           dispatch({ type: 'advance-track', direction: 1, play: true, ended: true, request }),
         onSeeking: (seeking) => dispatch({ type: 'seeking', seeking }),
         onVolume: (volume) => dispatch({ type: 'set-volume', volume })
-      }
+      },
+      { startTime }
     );
     sessionRef.current = session;
+    if (playbackSnapshot) {
+      playbackSnapshot.current = () => ({ request, position: session.getPosition() });
+    }
 
     // Artwork and like lookups cannot delay source loading or restart playback.
     function loadCover() {
@@ -65,8 +70,9 @@ export default function usePlayback(state, dispatch) {
     return () => {
       session.dispose();
       sessionRef.current = null;
+      if (playbackSnapshot) playbackSnapshot.current = null;
     };
-  }, [track, request, state.audioRef, dispatch]);
+  }, [track, request, startTime, state.audioRef, dispatch, playbackSnapshot]);
 
   useEffect(() => {
     if (state.pause) sessionRef.current?.pause();

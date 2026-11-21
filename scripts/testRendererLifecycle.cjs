@@ -1,3 +1,4 @@
+/* global process, __filename, __dirname, console */
 // Run with node scripts/testRendererLifecycle.cjs. Uses a hidden, isolated Electron window.
 const { app, BrowserWindow } = require('electron');
 
@@ -15,7 +16,7 @@ if (!process.versions.electron) {
 } else {
   const { buildSync } = require('esbuild');
   const { join } = require('node:path');
-  const { mkdtempSync } = require('node:fs');
+  const { mkdtempSync, writeFileSync } = require('node:fs');
   const { tmpdir } = require('node:os');
   app.setPath('userData', mkdtempSync(join(tmpdir(), 'music-molecule-lifecycle-')));
   app.disableHardwareAcceleration();
@@ -36,7 +37,9 @@ if (!process.versions.electron) {
         logOverride: { 'ignored-bare-import': 'silent' },
         define: { 'process.env.NODE_ENV': '"development"' }
       });
-      await window.loadURL('about:blank');
+      const fixtureHtml = join(app.getPath('userData'), 'lifecycle.html');
+      writeFileSync(fixtureHtml, '<!doctype html><html><body></body></html>');
+      await window.loadFile(fixtureHtml);
       await window.webContents.executeJavaScript(result.outputFiles[0].text);
       const results = await window.webContents.executeJavaScript('window.lifecycleTests');
       results.forEach((result) => console.log(result));

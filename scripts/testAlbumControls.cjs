@@ -74,6 +74,11 @@ if (!process.versions.electron) {
         );
         const screenshot = await window.webContents.capturePage();
         writeFileSync(join(previewPath, `${theme}.png`), screenshot.toPNG());
+        await window.webContents.executeJavaScript(
+          `window.showAlbumPreview(${JSON.stringify(theme)}, true)`
+        );
+        const playingScreenshot = await window.webContents.capturePage();
+        writeFileSync(join(previewPath, `playing-${theme}.png`), playingScreenshot.toPNG());
       }
       console.log('Album control previews saved to out/album-previews.');
       app.exit(0);

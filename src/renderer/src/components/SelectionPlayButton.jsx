@@ -35,7 +35,7 @@ export default function SelectionPlayButton({
   const play = async () => {
     if (loading) return;
     if (!album) {
-      dispatch({ type: 'select-track', track, index, queue, list, play: true });
+      dispatch({ type: 'select-track', track, index, queue, list, play: true, resume: true });
       return;
     }
     if (!selection?.trackId) {
@@ -78,6 +78,7 @@ export default function SelectionPlayButton({
         queue: sequence,
         list,
         albumPath,
+        resume: true,
         play: true
       });
     } finally {

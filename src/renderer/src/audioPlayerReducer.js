@@ -1,7 +1,20 @@
-import { advancePlayback, selectPlaybackTrack } from './utility/playbackState.js';
+import {
+  advancePlayback,
+  selectPlaybackTrack,
+  rememberPlaybackPosition,
+  rememberedPlaybackTime
+} from './utility/playbackState.js';
 import { withoutListSelection } from './utility/listSelection.js';
 
 const audioPlayerReducer = (state, action) => {
+  if (
+    ['select-track', 'advance-track', 'retry-track', 'pauseplay', 'playback-error'].includes(
+      action.type
+    ) &&
+    (action.request === undefined || action.request === state.playbackRequest)
+  ) {
+    state = rememberPlaybackPosition(state, action.playbackSnapshot, action.ended);
+  }
   if (action === 'set-next-track') {
     console.log('action: ', action);
   }
@@ -21,6 +34,7 @@ const audioPlayerReducer = (state, action) => {
         return {
           ...state,
           pendingAdvance: null,
+          playbackStartTime: rememberedPlaybackTime(state),
           playbackError: null,
           playbackRequest: state.playbackRequest + 1,
           pause: false,
@@ -51,6 +65,7 @@ const audioPlayerReducer = (state, action) => {
       return state.playbackTrack
         ? {
             ...state,
+            playbackStartTime: rememberedPlaybackTime(state),
             playbackError: null,
             playbackRequest: state.playbackRequest + 1,
             pause: false,
@@ -107,6 +122,7 @@ const audioPlayerReducer = (state, action) => {
           : {},
         playbackAlbumPath: null,
         playbackTrack: null,
+        playbackStartTime: 0,
         playbackQueue: [],
         playbackRequest: state.playbackRequest + 1,
         playbackError: null,

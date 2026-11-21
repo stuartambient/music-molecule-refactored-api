@@ -361,6 +361,18 @@ div #minus path {
   background: var(--active);
   color: var(--active-color);
 }
+/* Keep the playing row distinct from the selected album, including off hover. */
+.albumtracks .albumtrack.is-current {
+  background: var(--item-albumtrack-background);
+  color: var(--list-font-color);
+  box-shadow: inset 3px 0 0 var(--active-border);
+}
+.albumtrack.is-current .album-track-title {
+  font-weight: 600;
+}
+.albumtrack.is-current .album-track-play svg {
+  color: var(--active-border);
+}
 .album-track-number {
   font-size: 0.8rem;
   white-space: nowrap;

@@ -36,10 +36,18 @@ const PlayerScrubber = ({ cTime, setCTime }) => {
   }, [state.duration, cTime]);
 
   useEffect(() => {
-    state.audioRef.current.ontimeupdate = () => {
-      if (!isDragging) {
-        setCTime(convertCurrentTime(state.audioRef.current));
-      }
+    const audio = state.audioRef.current;
+    const update = () => {
+      if (!isDragging) setCTime(convertCurrentTime(audio));
+    };
+    const clear = () => setCTime('00:00');
+    for (const event of ['timeupdate', 'loadedmetadata', 'seeked'])
+      audio.addEventListener(event, update);
+    audio.addEventListener('emptied', clear);
+    return () => {
+      for (const event of ['timeupdate', 'loadedmetadata', 'seeked'])
+        audio.removeEventListener(event, update);
+      audio.removeEventListener('emptied', clear);
     };
   }, [state.audioRef, isDragging, setCTime]);
 

@@ -25,15 +25,55 @@ export function getAdjacentTrack(state, direction) {
   return queue[index] ? { track: queue[index], index, queue } : null;
 }
 
-export function selectPlaybackTrack(state, { track, index, list, queue, play, albumPath }) {
+// Positions are sampled only at playback boundaries, never on a timer. A loading
+// session has no sample, so its saved position survives an unavailable drive.
+export function rememberPlaybackPosition(state, snapshot, ended = false) {
+  const selection = state.listSelections?.[state.activeList];
+  if (!state.playbackTrack || selection?.trackId !== state.active) return state;
+  if (state.activeList === 'albumTracksActive' && selection.albumPath !== state.playbackAlbumPath)
+    return state;
+  if (
+    !ended &&
+    (snapshot?.request !== state.playbackRequest || !Number.isFinite(snapshot.position))
+  )
+    return state;
+  const position = ended ? 0 : Math.max(0, snapshot.position);
+  if (selection.position === position) return state;
+  return {
+    ...state,
+    listSelections: {
+      ...state.listSelections,
+      [state.activeList]: { ...selection, position }
+    }
+  };
+}
+
+export function rememberedPlaybackTime(state) {
+  const selection = state.listSelections?.[state.activeList];
+  return selection?.trackId === state.active &&
+    (state.activeList !== 'albumTracksActive' || selection.albumPath === state.playbackAlbumPath)
+    ? selection.position || 0
+    : state.playbackStartTime || 0;
+}
+
+export function selectPlaybackTrack(state, { track, index, list, queue, play, albumPath, resume }) {
   if (!track?.track_id || !track.audiotrack) return state;
   const sequence = queue || (list === 'playlistActive' ? state.playlistTracks : state.tracks);
   const position =
     sequence[index]?.track_id === track.track_id
       ? index
       : sequence.findIndex((entry) => entry.track_id === track.track_id);
+  const remembered = state.listSelections?.[list];
+  const returning = resume || list !== state.activeList;
+  const startTime =
+    returning &&
+    remembered?.trackId === track.track_id &&
+    (list !== 'albumTracksActive' || remembered.albumPath === albumPath)
+      ? remembered.position || 0
+      : 0;
   return {
     ...state,
+    playbackStartTime: startTime,
     active: track.track_id,
     activeList: list,
     newtrack: position,
@@ -44,6 +84,7 @@ export function selectPlaybackTrack(state, { track, index, list, queue, play, al
       [list]: {
         trackId: track.track_id,
         index: position,
+        position: startTime,
         ...(list === 'albumTracksActive' ? { albumPath: albumPath || null } : {})
       }
     },

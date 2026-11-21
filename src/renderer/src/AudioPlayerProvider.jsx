@@ -12,6 +12,7 @@ export const AudioPlayerProvider = ({ children }) => {
   const initialState = {
     audioRef,
     playbackTrack: null,
+    playbackStartTime: 0,
     playbackAlbumPath: null,
     listSelections: {},
     playbackQueue: [],
@@ -76,8 +77,20 @@ export const AudioPlayerProvider = ({ children }) => {
     mainTheme: normalizeMainTheme(window.initialMainTheme)
   };
 
-  const [state, dispatch] = useReducer(audioPlayerReducer, initialState);
-  usePlayback(state, dispatch);
+  const [state, send] = useReducer(audioPlayerReducer, initialState);
+  const playbackSnapshot = useRef(null);
+  const dispatch = useCallback((action) => {
+    if (
+      ['select-track', 'advance-track', 'retry-track', 'pauseplay', 'playback-error'].includes(
+        action.type
+      )
+    ) {
+      send({ ...action, playbackSnapshot: playbackSnapshot.current?.() });
+    } else {
+      send(action);
+    }
+  }, []);
+  usePlayback(state, dispatch, playbackSnapshot);
 
   useLayoutEffect(() => {
     const root = document.documentElement;
@@ -89,7 +102,7 @@ export const AudioPlayerProvider = ({ children }) => {
     const startTheme = normalizeMainTheme(window.initialMainTheme);
     console.log('startTheme: ', startTheme);
     dispatch({ type: 'set-main-theme', mainTheme: startTheme });
-  }, []);
+  }, [dispatch]);
 
   const setInitialPage = useCallback(
     (val) => {
@@ -124,7 +137,7 @@ export const AudioPlayerProvider = ({ children }) => {
       }
     };
     checkTable();
-  }, [setInitialPage]);
+  }, [setInitialPage, dispatch]);
 
   return (
     <MainAudioContext.Provider value={{ state, dispatch }}>{children}</MainAudioContext.Provider>

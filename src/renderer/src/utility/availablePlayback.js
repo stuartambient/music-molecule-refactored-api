@@ -1,6 +1,6 @@
 import { createPlaybackSession } from './playbackSession.js';
 
-export function createAvailablePlayback(audio, source, check, callbacks) {
+export function createAvailablePlayback(audio, source, check, callbacks, options) {
   let disposed = false;
   let session;
   let wantsPlayback = false;
@@ -29,7 +29,12 @@ export function createAvailablePlayback(audio, source, check, callbacks) {
         return;
       }
       callbacks.onAvailable?.();
-      session = createPlaybackSession(audio, source, { ...callbacks, onError: reportError });
+      session = createPlaybackSession(
+        audio,
+        source,
+        { ...callbacks, onError: reportError },
+        options
+      );
       if (wantsPlayback) session.play();
     })
     .catch(() => {
@@ -47,6 +52,9 @@ export function createAvailablePlayback(audio, source, check, callbacks) {
     pause() {
       wantsPlayback = false;
       session?.pause();
+    },
+    getPosition() {
+      return session?.getPosition();
     },
     isCurrent() {
       return !disposed;

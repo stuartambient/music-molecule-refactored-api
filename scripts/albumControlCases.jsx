@@ -219,6 +219,21 @@ window.albumTests = (async () => {
       !document.querySelector('#album-b')?.classList.contains('album-playing'),
       'Unrelated album was highlighted'
     );
+    const playingRow = play(tracks[0].title).closest('.albumtrack');
+    const albumElement = document.querySelector('#album-a');
+    const playingStyle = getComputedStyle(playingRow);
+    assert(!albumElement.matches(':hover'), 'Highlight check must run without album hover');
+    assert(
+      playingStyle.backgroundColor !== getComputedStyle(albumElement).backgroundColor &&
+        playingStyle.backgroundColor !== 'rgba(0, 0, 0, 0)',
+      'Playing track blends into the selected album without hover'
+    );
+    assert(playingStyle.boxShadow !== 'none', 'Playing track has no persistent edge marker');
+    assert(
+      play(tracks[0].title).getAttribute('aria-current') === 'true' &&
+        !play(tracks[1].title).closest('.albumtrack').classList.contains('is-current'),
+      'Playing-track marker does not identify the current track uniquely'
+    );
     const request = state.playbackRequest;
     pending = deferred();
     await click(add(tracks[0].title));
@@ -537,23 +552,24 @@ window.albumTests = (async () => {
 })();
 
 let disposePreview;
-window.showAlbumPreview = async (theme) => {
+window.showAlbumPreview = async (theme, playing = false) => {
   if (disposePreview) await disposePreview();
   fixture();
   disposePreview = await mount(theme);
   await expand();
   await click(play(tracks[0].title));
-  await act(async () => {
-    dispatch({ type: 'track-to-playlist', playlistTracks: [tracks[1]] });
-    dispatch({
-      type: 'select-track',
-      track: tracks[1],
-      index: 0,
-      queue: [tracks[1]],
-      list: 'playlistActive',
-      play: true
+  if (!playing)
+    await act(async () => {
+      dispatch({ type: 'track-to-playlist', playlistTracks: [tracks[1]] });
+      dispatch({
+        type: 'select-track',
+        track: tracks[1],
+        index: 0,
+        queue: [tracks[1]],
+        list: 'playlistActive',
+        play: true
+      });
     });
-  });
   await frame();
   await frame();
 };

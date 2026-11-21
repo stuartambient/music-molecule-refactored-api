@@ -1,3 +1,4 @@
+import { testPlaybackPositions } from './playbackPositionCases';
 import React, { act, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AudioProvider } from '../src/renderer/src/components/table/AudioProvider';
@@ -64,7 +65,7 @@ const timers = () => {
 };
 
 window.lifecycleTests = (async () => {
-  const results = [];
+  const results = await testPlaybackPositions();
   {
     const style = document.createElement('style');
     style.textContent = playerStyles;

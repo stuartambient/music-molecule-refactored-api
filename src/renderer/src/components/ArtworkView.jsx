@@ -37,10 +37,10 @@ export default function ArtworkView({ onExit, onControl }) {
       setDuration(Number.isFinite(audio.duration) ? audio.duration : 0);
     };
     update();
-    for (const name of ['timeupdate', 'loadedmetadata', 'emptied', 'durationchange'])
+    for (const name of ['timeupdate', 'loadedmetadata', 'seeked', 'emptied', 'durationchange'])
       audio.addEventListener(name, update);
     return () => {
-      for (const name of ['timeupdate', 'loadedmetadata', 'emptied', 'durationchange'])
+      for (const name of ['timeupdate', 'loadedmetadata', 'seeked', 'emptied', 'durationchange'])
         audio.removeEventListener(name, update);
     };
   }, [audio, state.playbackRequest]);
