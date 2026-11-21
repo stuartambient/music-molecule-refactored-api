@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useAudioPlayer } from '../mainAudioContext';
-import { SiOpensearch } from 'react-icons/si';
+import SearchField from './SearchField';
 import { AiFillDownSquare } from 'react-icons/ai';
 import { GrDocumentMissing } from 'react-icons/gr';
 import { IoIosRefresh } from 'react-icons/io';
@@ -84,26 +84,15 @@ const Home = () => {
       >
         {homepage === 'albums-cover-view' && (
           <>
-            <li className="covers-search-form">
-              <form onSubmit={handleCoversSearchTerm} className="covers-search-form">
-                <input
-                  className={
-                    homepage === 'albums-cover-view'
-                      ? 'search-covers search-active'
-                      : 'search-covers'
-                  }
-                  id="covers-search-term"
-                  name="covers-search-term"
-                  ref={coverSearchRef}
-                  placeholder="search covers"
-                  onContextMenu={async () => await window.ipcApi.showTextInputMenu()}
-                  /*  value={state.coversSearchTerm}
-              onChange={handleCoversSearchTerm} */
-                />
-                <button value="Submit">
-                  <SiOpensearch />
-                </button>
-              </form>
+            <li className="covers-search-container">
+              <SearchField
+                label="Search covers"
+                placeholder="Search covers"
+                id="covers-search-term"
+                name="covers-search-term"
+                inputRef={coverSearchRef}
+                onSubmit={handleCoversSearchTerm}
+              />
             </li>
             <li className="range-slider">
               <input

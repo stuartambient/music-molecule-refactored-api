@@ -1,5 +1,5 @@
 import { useAudioPlayer } from '../mainAudioContext';
-import { GiMagnifyingGlass } from 'react-icons/gi';
+import SearchField from './SearchField';
 import { AiFillDownSquare } from 'react-icons/ai';
 import { LuScrollText } from 'react-icons/lu';
 import '../style/MediaMenu.css';
@@ -97,52 +97,22 @@ const MediaMenu = ({
       {/*   <div className="right-side"> */}
       {!state.tracksShuffle && state.listType === 'files' && (
         <li className="form">
-          <form method="post" onSubmit={handleTextSearch}>
-            <div className="formelements">
-              <input
-                type="text"
-                className="textsearch"
-                name="textsearch"
-                id="textsearch"
-                placeholder="   search tracks"
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') {
-                    e.target.value = '';
-                    e.target.blur();
-                  }
-                }}
-                onContextMenu={async () => await window.ipcApi.showTextInputMenu()}
-              />
-
-              <button type="submit" className="submitbtn">
-                <div className="icon">
-                  <GiMagnifyingGlass />
-                </div>
-              </button>
-            </div>
-          </form>
+          <SearchField
+            label="Search tracks"
+            placeholder="Search tracks"
+            id="textsearch"
+            onSubmit={handleTextSearch}
+          />
         </li>
       )}
       {state.listType === 'albums' && (
         <li className="form">
-          <form method="post" onSubmit={handleTextSearch}>
-            <div className="formelements">
-              <input
-                type="text"
-                className="textsearch"
-                name="textsearch"
-                id="textsearch"
-                placeholder="   search albums"
-                onContextMenu={async () => await window.ipcApi.showTextInputMenu()}
-              />
-
-              <button type="submit" className="submitbtn">
-                <div className="icon">
-                  <GiMagnifyingGlass />
-                </div>
-              </button>
-            </div>
-          </form>
+          <SearchField
+            label="Search albums"
+            placeholder="Search albums"
+            id="textsearch"
+            onSubmit={handleTextSearch}
+          />
         </li>
       )}
       {state.listType === 'playlist' && (

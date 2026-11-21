@@ -1,4 +1,5 @@
 import { advancePlayback, selectPlaybackTrack } from './utility/playbackState.js';
+import { withoutListSelection } from './utility/listSelection.js';
 
 const audioPlayerReducer = (state, action) => {
   if (action === 'set-next-track') {
@@ -33,6 +34,17 @@ const audioPlayerReducer = (state, action) => {
     }
     case 'select-track':
       return selectPlaybackTrack(state, action);
+    case 'select-album': {
+      const previous = state.listSelections?.albumTracksActive;
+      return {
+        ...state,
+        listSelections: {
+          ...state.listSelections,
+          albumTracksActive:
+            previous?.albumPath === action.albumPath ? previous : { albumPath: action.albumPath }
+        }
+      };
+    }
     case 'advance-track':
       return advancePlayback(state, action);
     case 'retry-track':
@@ -90,6 +102,10 @@ const audioPlayerReducer = (state, action) => {
     case 'reset': {
       return {
         ...state,
+        listSelections: action.selectionList
+          ? withoutListSelection(state, action.selectionList)
+          : {},
+        playbackAlbumPath: null,
         playbackTrack: null,
         playbackQueue: [],
         playbackRequest: state.playbackRequest + 1,
@@ -230,6 +246,7 @@ const audioPlayerReducer = (state, action) => {
           : state;
       return {
         ...next,
+        listSelections: withoutListSelection(state, 'tracklistActive'),
         tracksShuffle: false,
         tracksPageNumber: 0,
         tracks: [],
@@ -249,6 +266,8 @@ const audioPlayerReducer = (state, action) => {
     case 'reset-queue': {
       return {
         ...state,
+        listSelections: {},
+        playbackAlbumPath: null,
         playbackTrack: null,
         playbackQueue: [],
         playbackError: null,
@@ -338,6 +357,8 @@ const audioPlayerReducer = (state, action) => {
     case 'stop-this-album': {
       return {
         ...state,
+        listSelections: withoutListSelection(state, 'playlistActive'),
+        playbackAlbumPath: null,
         playbackTrack: null,
         playbackQueue: [],
         playbackError: null,
@@ -389,6 +410,8 @@ const audioPlayerReducer = (state, action) => {
     case 'playlist-clear': {
       return {
         ...state,
+        listSelections: withoutListSelection(state, 'playlistActive'),
+        playbackAlbumPath: null,
         playbackTrack: null,
         playbackQueue: [],
         playbackError: null,

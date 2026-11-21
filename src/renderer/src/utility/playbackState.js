@@ -25,7 +25,7 @@ export function getAdjacentTrack(state, direction) {
   return queue[index] ? { track: queue[index], index, queue } : null;
 }
 
-export function selectPlaybackTrack(state, { track, index, list, queue, play }) {
+export function selectPlaybackTrack(state, { track, index, list, queue, play, albumPath }) {
   if (!track?.track_id || !track.audiotrack) return state;
   const sequence = queue || (list === 'playlistActive' ? state.playlistTracks : state.tracks);
   const position =
@@ -38,6 +38,15 @@ export function selectPlaybackTrack(state, { track, index, list, queue, play }) 
     activeList: list,
     newtrack: position,
     playbackTrack: track,
+    playbackAlbumPath: list === 'albumTracksActive' ? albumPath || null : null,
+    listSelections: {
+      ...state.listSelections,
+      [list]: {
+        trackId: track.track_id,
+        index: position,
+        ...(list === 'albumTracksActive' ? { albumPath: albumPath || null } : {})
+      }
+    },
     playbackQueue: sequence,
     playbackRequest: state.playbackRequest + 1,
     playbackError: null,
@@ -85,6 +94,7 @@ export function advancePlayback(state, action) {
   return selectPlaybackTrack(state, {
     ...next,
     list: state.activeList,
+    albumPath: state.playbackAlbumPath,
     play: action.play ?? (state.playbackError ? true : undefined)
   });
 }

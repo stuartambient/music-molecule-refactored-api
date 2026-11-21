@@ -50,12 +50,15 @@ const tracks = [
     trackCount: 2
   }
 ];
-let state, dispatch, additions, pending;
+let state, dispatch, additions, pending, albumRows, trackRows, playlistRows;
 function fixture() {
+  albumRows = [album, other];
+  trackRows = [];
+  playlistRows = [];
   additions = [];
   pending = null;
   window.ipcApi = {
-    getTracks: async () => [],
+    getTracks: async () => trackRows,
     getAlbums: async () => [],
     prepareMusicTracks: async (request) => {
       if (request.album)
@@ -84,11 +87,11 @@ function Fixture({ theme }) {
     tagEditor: false,
     minimalmode: false,
     miniModePlaylist: false,
-    tracks: [],
-    albums: [album, other],
+    tracks: trackRows,
+    albums: albumRows,
     tracksPageNumber: 0,
     albumsPageNumber: 0,
-    playlistTracks: [],
+    playlistTracks: playlistRows,
     tracksShuffle: false,
     playlistShuffle: false,
     playbackTrack: null,
@@ -167,6 +170,30 @@ window.albumTests = (async () => {
   for (const theme of ['basic', 'theme-1']) {
     fixture();
     const dispose = await mount(theme);
+    const search = document.querySelector('form[aria-label="Search albums"]');
+    const input = search.querySelector('input');
+    const run = search.querySelector('button');
+    const fieldBounds = search.getBoundingClientRect();
+    const inputBounds = input.getBoundingClientRect();
+    const buttonBounds = run.getBoundingClientRect();
+    assert(
+      Math.abs(inputBounds.right - buttonBounds.left) < 1,
+      'Search input and run button do not meet'
+    );
+    assert(
+      buttonBounds.right <= fieldBounds.right && inputBounds.left >= fieldBounds.left,
+      'Search controls extend outside their border'
+    );
+    input.focus();
+    assert(
+      getComputedStyle(input).outlineStyle === 'none',
+      'Search input has a misplaced independent outline'
+    );
+    assert(
+      getComputedStyle(search).outlineStyle === 'solid',
+      'Search field has no shared focus outline'
+    );
+    input.blur();
     await expand();
     assert(
       document.querySelectorAll('.albumtrack').length === 2,
@@ -178,11 +205,11 @@ window.albumTests = (async () => {
       'Album track play action did not select and play'
     );
     assert(
-      document.querySelector('#album-a').classList.contains('album-playing'),
+      document.querySelector('#album-a')?.classList.contains('album-playing'),
       'Playing album was not highlighted'
     );
     assert(
-      !document.querySelector('#album-b').classList.contains('album-playing'),
+      !document.querySelector('#album-b')?.classList.contains('album-playing'),
       'Unrelated album was highlighted'
     );
     const request = state.playbackRequest;
@@ -253,7 +280,7 @@ window.albumTests = (async () => {
       });
     });
     assert(
-      document.querySelector('#album-b').classList.contains('album-playing'),
+      document.querySelector('#album-b')?.classList.contains('album-playing'),
       'Album highlight does not follow playback from another list'
     );
     await act(async () => {
@@ -266,6 +293,174 @@ window.albumTests = (async () => {
     await dispose();
     results.push(
       `PASS: ${theme} album highlighting, single-track ending, manual Next, individual playlist additions, duplicate status, and late/offline responses`
+    );
+  }
+  {
+    fixture();
+    albumRows = [
+      album,
+      other,
+      ...Array.from({ length: 120 }, (_, index) => ({
+        id: `extra-${index}`,
+        foldername: `Album ${index}`,
+        fullpath: `C:/Music/Album ${index}`
+      }))
+    ];
+    const dispose = await mount();
+    await expand();
+    const scroller = document.querySelector('.albums-list');
+    await act(async () => {
+      scroller.scrollTop = 1800;
+      scroller.dispatchEvent(new Event('scroll'));
+      await frame();
+      await frame();
+    });
+    const saved = scroller.scrollTop;
+    assert(saved > 1000, 'Scroll restoration test did not scroll the album list');
+    const tab = (name) =>
+      [...document.querySelectorAll('.tabs .tab')].find((element) => element.textContent === name);
+    await click(tab('tracks'));
+    assert(
+      !document.querySelector('.albums-list'),
+      'Inactive albums list was not saved and unmounted'
+    );
+    await click(tab('albums'));
+    const waitForPosition = async () => {
+      for (let attempt = 0; attempt < 40; attempt++) {
+        await act(async () => {
+          await frame();
+        });
+        if (Math.abs(document.querySelector('.albums-list').scrollTop - saved) < 3) return;
+      }
+      throw new Error(
+        `Albums did not restore their saved position: expected ${saved}, got ${document.querySelector('.albums-list').scrollTop}`
+      );
+    };
+    await waitForPosition();
+    await act(async () => {
+      dispatch({ type: 'library' });
+    });
+    await act(async () => {
+      dispatch({ type: 'library' });
+    });
+    await waitForPosition();
+    const search = document.querySelector('form[aria-label="Search albums"]');
+    await act(async () => {
+      search.querySelector('input').value = 'new search';
+      search.requestSubmit();
+      await frame();
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 550));
+      await frame();
+    });
+    assert(
+      document.querySelector('.albums-list').scrollTop < 3,
+      'A new album search restored the old query’s scroll position'
+    );
+    await dispose();
+    results.push(
+      'PASS: Albums restores measured scroll position across tabs and hidden views, and new searches start at the top'
+    );
+  }
+  {
+    fixture();
+    const elsewhere = {
+      track_id: 'elsewhere',
+      title: 'Another song',
+      audiotrack: other.fullpath + '/01.flac'
+    };
+    trackRows = [tracks[0], tracks[1], elsewhere];
+    playlistRows = [tracks[0], elsewhere];
+    const dispose = await mount();
+    const tab = (name) =>
+      [...document.querySelectorAll('.tabs .tab')].find((element) => element.textContent === name);
+    const switchTo = async (name) => {
+      await click(tab(name));
+      const selector =
+        name === 'albums'
+          ? '#album-a'
+          : name === 'tracks'
+            ? '.files-list .item'
+            : '.playlist-list .item';
+      for (let attempt = 0; attempt < 40; attempt++) {
+        await act(async () => {
+          await frame();
+        });
+        if (document.querySelector(selector)) return;
+      }
+      throw new Error(`Selected ${name} list did not render its rows`);
+    };
+    await switchTo('tracks');
+    await click(document.querySelector('.files-list #one--item-div a.track-details'));
+    await act(async () => {
+      dispatch({ type: 'pauseplay' });
+    });
+    assert(
+      document.querySelector('.files-list #one--item-div').dataset.selected === 'true',
+      'Tracks selection was not highlighted'
+    );
+    await switchTo('albums');
+    await expand();
+    await click(play(tracks[1].title));
+    assert(
+      document.querySelector('#album-a')?.classList.contains('album-selected'),
+      'Album selection was not highlighted'
+    );
+    await switchTo('playlist');
+    await click(document.querySelector('.playlist-list #elsewhere--item-div a.track-details'));
+    const request = state.playbackRequest;
+    assert(
+      state.active === 'elsewhere' && !state.pause,
+      'Playlist selection did not become the playing track'
+    );
+    await switchTo('tracks');
+    assert(
+      document.querySelector('.files-list #one--item-div')?.classList.contains('active'),
+      'Playing from another list erased the Tracks selection'
+    );
+    await switchTo('albums');
+    assert(
+      document.querySelector('#album-a')?.classList.contains('album-selected'),
+      'Playing from Playlist erased the previous album selection'
+    );
+    assert(
+      document.querySelector('#album-b')?.classList.contains('album-playing'),
+      'The actual playing album marker was lost'
+    );
+    assert(
+      document.querySelector('.albumtrack[data-selected="true"] .album-track-title').textContent ===
+        tracks[1].title,
+      'The selected album track was not restored'
+    );
+    await expand();
+    await expand();
+    assert(
+      document.querySelector('.albumtrack[data-selected="true"] .album-track-title').textContent ===
+        tracks[1].title,
+      'Collapsing and reopening the same album erased its track selection'
+    );
+    await switchTo('playlist');
+    assert(
+      document.querySelector('.playlist-list #elsewhere--item-div')?.classList.contains('active'),
+      'Playlist selection was not retained'
+    );
+    assert(
+      state.active === 'elsewhere' && !state.pause && state.playbackRequest === request,
+      'Returning to a list restarted or changed playback'
+    );
+    trackRows = [elsewhere, tracks[1], tracks[0]];
+    await act(async () => {
+      dispatch({ type: 'add-tracks', tracks: trackRows });
+    });
+    await switchTo('tracks');
+    assert(
+      document.querySelector('.files-list #one--item-div')?.classList.contains('active'),
+      'Row reloading lost the selection by track ID'
+    );
+    await dispose();
+    results.push(
+      'PASS: each list restores its own track or album selection after playback elsewhere, without restarting audio'
     );
   }
   return results;

@@ -12,6 +12,8 @@ export const AudioPlayerProvider = ({ children }) => {
   const initialState = {
     audioRef,
     playbackTrack: null,
+    playbackAlbumPath: null,
+    listSelections: {},
     playbackQueue: [],
     playbackRequest: 0,
     playbackError: null,

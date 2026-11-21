@@ -46,7 +46,8 @@ if (!process.versions.electron) {
             'style/InfiniteList.css',
             'style/MediaMenu.css',
             'style/FlashEffect.css',
-            'appstyles/mainThemes.css'
+            'appstyles/mainThemes.css',
+            'style/SearchField.css'
           ]
             .map((file) => `@import './${file}';`)
             .join('\n'),

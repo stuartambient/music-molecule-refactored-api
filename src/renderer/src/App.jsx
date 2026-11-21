@@ -167,7 +167,7 @@ function App() {
       case 'shuffle':
         if (state.listType === 'files') {
           if (state.activeList === 'tracklistActive') {
-            dispatch({ type: 'reset', pause: true });
+            dispatch({ type: 'reset', pause: true, selectionList: 'tracklistActive' });
           }
           dispatch({
             type: 'tracks-shuffle',

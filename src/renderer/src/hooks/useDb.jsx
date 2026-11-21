@@ -1,6 +1,7 @@
 /* import { is } from '@electron-toolkit/utils'; */
 import { useState, useEffect, useCallback } from 'react';
 import { requestMusicTracks } from '../utility/musicRequests';
+import { sortAlbumTracks } from '../utility/albumTrackOrder';
 
 const useTracks = (
   tracksPageNumber,
@@ -209,7 +210,7 @@ const useAlbumTracks = (pattern, dispatch) => {
           true
         );
         if (albumTracksRequest && subscribed) {
-          setAlbumTracks(albumTracksRequest);
+          setAlbumTracks(sortAlbumTracks(albumTracksRequest));
         }
       } catch (err) {
         if (subscribed) {

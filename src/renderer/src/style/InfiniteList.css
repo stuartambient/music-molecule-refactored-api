@@ -329,6 +329,15 @@ div #minus path {
 .item.album-playing .item-albumname a {
   color: var(--item-hover-color);
 }
+.item.album-selected {
+  background: var(--active);
+  color: var(--active-color);
+  outline: 1px solid var(--active-border);
+  outline-offset: -1px;
+}
+.item.album-selected .item-albumname a {
+  color: var(--active-color);
+}
 .albumtracks {
   list-style: none;
   color: var(--list-font-color);
@@ -347,7 +356,8 @@ div #minus path {
   border-radius: 5px;
   color: var(--list-font-color);
 }
-.albumtracks .albumtrack.is-current {
+.albumtracks .albumtrack.is-current,
+.albumtracks .albumtrack.is-selected {
   background: var(--active);
   color: var(--active-color);
 }

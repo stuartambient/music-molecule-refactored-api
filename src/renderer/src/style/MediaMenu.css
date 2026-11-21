@@ -8,7 +8,7 @@
   justify-content: space-around;
   align-items: center; */
   display: grid;
-  grid-template-columns: 40px 60px 200px 1fr;
+  grid-template-columns: 2.25rem 2.5rem minmax(9rem, 14rem) minmax(0, 1fr);
   grid-template-areas: 'sortmenu scrolloption form tabs';
   /* 'sortmenu tabs '; */
   /*  row-gap: 5px; */
@@ -95,9 +95,9 @@
 .media-menu .form {
   grid-area: form;
   display: flex;
-  justify-self: end;
+  min-width: 0;
   align-self: center;
-  margin-right: 20px;
+  margin-right: 0.65rem;
   /* justify-self: center; */
 }
 
@@ -133,56 +133,11 @@
 }
 
 .media-menu--minimal .form {
-  grid-row: 1 / 2;
-  grid-column: 1 / 2;
-  border: none;
-  background: white;
-  margin: 5px 0;
+  grid-area: form;
+  width: min(100%, 18rem);
+  margin: 0;
   justify-self: center;
 }
-
-.media-menu .form .formelements {
-  display: flex;
-  align-items: center;
-}
-
-.media-menu .form .formelements .icon {
-  background: white;
-}
-
-.media-menu li .form .formelements .textsearch {
-  all: unset;
-  border-radius: 10px;
-  text-align: center;
-  background: white;
-  height: 1.5rem;
-  border-radius: 0;
-}
-
-.media-menu .form .formelements .textsearch {
-  border: none;
-}
-
-.media-menu .form .formelements .textsearch:focus {
-  background: var(--text-input-background);
-  color: var(--text-input-color);
-}
-
-.media-menu .form .formelements .submitbtn {
-  background: white;
-}
-
-.media-menu .form .formelements .submitbtn .icon svg {
-  fill: black;
-}
-
-/* .media-menu .right-side {
-  display: grid;
-  grid-template-rows: 70% 30%;
-  grid-template-columns: 70% 30%;
-  width: 75%;
-  row-gap: 8px;
-} */
 
 .media-menu .tabs {
   display: flex;

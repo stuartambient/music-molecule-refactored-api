@@ -3,6 +3,8 @@ import { useAudioPlayer } from '../mainAudioContext';
 import { getPlaybackPosition, getPlaybackQueue } from '../utility/playbackState';
 import { findPlayingAlbum } from '../utility/albumPlayback';
 import AlbumTrackList from './AlbumTrackList';
+import RememberedList from './RememberedList';
+import { selectedTrackIndex } from '../utility/listSelection';
 
 import { v4 as uuidv4 } from 'uuid';
 import { Virtuoso } from 'react-virtuoso';
@@ -26,6 +28,7 @@ const InfiniteList = () => {
   const [filesSortType, setFilesSortType] = useState('DESC');
   const [albumsSortType, setAlbumsSortType] = useState('DESC');
   const [resetKey, setResetKey] = useState('');
+  const [albumsResetKey, setAlbumsResetKey] = useState('');
   const [playlistReq, setPlaylistReq] = useState('');
 
   const { tracksLoading, hasMoreTracks, tracksError } = useTracks(
@@ -41,7 +44,7 @@ const InfiniteList = () => {
     state.albumsPageNumber,
     albumsSearchTerm,
     albumsSortType,
-    resetKey,
+    albumsResetKey,
     dispatch
   );
 
@@ -51,6 +54,8 @@ const InfiniteList = () => {
 
   const fileslistRef = useRef(null);
   const playlistRef = useRef(null);
+  const albumSnapshot = useRef(null);
+  const albumViewKey = JSON.stringify([albumsSearchTerm, albumsSortType, albumsResetKey]);
   const resultsRef = useRef(null);
 
   /*   useEffect(() => {
@@ -96,8 +101,11 @@ const InfiniteList = () => {
     setPlaylistReq
   );
 
-  const albumsTracks = <AlbumTrackList tracks={albumTracks} />;
+  const albumsTracks = <AlbumTrackList tracks={albumTracks} albumPath={albumPattern} />;
   const playingAlbum = findPlayingAlbum(state.albums, state.playbackTrack);
+  const selectedAlbumPath = state.listSelections?.albumTracksActive?.albumPath;
+  const selectedFile = selectedTrackIndex(state, 'tracklistActive', state.tracks);
+  const selectedPlaylistTrack = selectedTrackIndex(state, 'playlistActive', state.playlistTracks);
 
   const playbackPosition = getPlaybackPosition(state, getPlaybackQueue(state));
   const { activeList, listType, listScroll } = state;
@@ -114,13 +122,9 @@ const InfiniteList = () => {
 
   const handleTextSearch = (e) => {
     e.preventDefault();
-    if (e.currentTarget.textsearch.value === '') {
-      setResetKey(getKey());
-    }
-    if (e.currentTarget.textsearch.value === tracksSearchTerm) {
-      setResetKey(getKey());
-    }
+    const term = e.currentTarget.elements.namedItem('textsearch').value;
     if (state.listType === 'files') {
+      if (term === '' || term === tracksSearchTerm) setResetKey(getKey());
       dispatch({
         type: 'reset-tracks',
         tracks: []
@@ -137,15 +141,10 @@ const InfiniteList = () => {
         type: 'set-prev-track',
         prevTrack: ''
       });
-      setTracksSearchTerm(e.currentTarget.textsearch.value);
+      setTracksSearchTerm(term);
     }
     if (state.listType === 'albums') {
-      if (e.currentTarget.textsearch.value === '') {
-        setResetKey(getKey());
-      }
-      if (e.currentTarget.textsearch.value === albumsSearchTerm) {
-        setResetKey(getKey());
-      }
+      setAlbumsResetKey(getKey());
 
       dispatch({
         type: 'reset-albums',
@@ -156,7 +155,7 @@ const InfiniteList = () => {
         albumsPageNumber: 0
       });
 
-      setAlbumsSearchTerm(e.currentTarget.textsearch.value);
+      setAlbumsSearchTerm(term);
     }
   };
 
@@ -197,6 +196,7 @@ const InfiniteList = () => {
       setAlbumTracks([]);
       setAlbumPattern(null);
     } else {
+      dispatch({ type: 'select-album', albumPath: term });
       setShowMore(e.currentTarget.id);
       setAlbumPattern(term);
     }
@@ -217,6 +217,7 @@ const InfiniteList = () => {
         albums: []
       });
       setAlbumsSortType(e.currentTarget.id);
+      setAlbumsResetKey(getKey());
     }
   };
 
@@ -324,15 +325,10 @@ const InfiniteList = () => {
                 return (
                   <Item
                     type="files"
-                    key={getKey()}
+                    key={`${item.track_id}:${index}`}
                     divId={`${item.track_id}--item-div`}
-                    className={
-                      `${state.active}--item-div` === `${item.track_id}--item-div` &&
-                      state.activeList === 'tracklistActive' &&
-                      state.newtrack === index
-                        ? 'item active'
-                        : 'item'
-                    }
+                    className={selectedFile === index ? 'item active' : 'item'}
+                    isSelected={selectedFile === index}
                     href={item.track_id}
                     id={item.track_id}
                     like={item.like}
@@ -354,49 +350,55 @@ const InfiniteList = () => {
         </>
         <>
           <div className={state.listType === 'albums' ? 'albums' : 'albums-list-hidden'}>
-            <Virtuoso
-              data={state.albums}
-              className="albums-list" /*  */
-              style={{ height: `${contSize.height}px` }}
-              /* ref={albumslistRef} */
-              totalCount={state.albums.length}
-              endReached={loadMoreAlbums}
-              components={{
-                Footer: () => {
-                  if (albumsLoading) {
-                    return <div className="item itemloading">Loading...</div>;
+            {state.listType === 'albums' && state.library && (
+              <RememberedList
+                key={albumViewKey}
+                memory={albumSnapshot}
+                memoryKey={albumViewKey}
+                computeItemKey={(_index, album) => album.id}
+                data={state.albums}
+                className="albums-list" /*  */
+                style={{ height: `${contSize.height}px` }}
+                totalCount={state.albums.length}
+                endReached={loadMoreAlbums}
+                components={{
+                  Footer: () => {
+                    if (albumsLoading) {
+                      return <div className="item itemloading">Loading...</div>;
+                    }
+                    if (albumsError) {
+                      return <div className="item trackserror">{albumsError}</div>;
+                    }
+                    if (!hasMoreAlbums) {
+                      return <div className="item hasmoretracks">No more results.</div>;
+                    }
+                    return null;
                   }
-                  if (albumsError) {
-                    return <div className="item trackserror">{albumsError}</div>;
-                  }
-                  if (!hasMoreAlbums) {
-                    return <div className="item hasmoretracks">No more results.</div>;
-                  }
-                  return null;
-                }
-              }}
-              itemContent={(index, item) => {
-                return (
-                  <Item
-                    type="folder"
-                    key={item.id}
-                    id={item.id}
-                    className={playingAlbum === item ? 'item album-playing' : 'item'}
-                    isPlayingAlbum={playingAlbum === item}
-                    href="http://"
-                    val={index}
-                    foldername={item.foldername}
-                    term={item.fullpath}
-                    fullpath={item.fullpath}
-                    handleAlbumTracksRequest={handleAlbumTracksRequest}
-                    showMore={showMore}
-                    albumPattern={albumPattern}
-                    albumTracksLength={albumTracks.length}
-                    albumsTracks={albumsTracks}
-                  />
-                );
-              }}
-            />
+                }}
+                itemContent={(index, item) => {
+                  return (
+                    <Item
+                      type="folder"
+                      key={item.id}
+                      id={item.id}
+                      className={`item${playingAlbum === item ? ' album-playing' : ''}${selectedAlbumPath === item.fullpath ? ' album-selected' : ''}`}
+                      isSelected={selectedAlbumPath === item.fullpath}
+                      isPlayingAlbum={playingAlbum === item}
+                      href="http://"
+                      val={index}
+                      foldername={item.foldername}
+                      term={item.fullpath}
+                      fullpath={item.fullpath}
+                      handleAlbumTracksRequest={handleAlbumTracksRequest}
+                      showMore={showMore}
+                      albumPattern={albumPattern}
+                      albumTracksLength={albumTracks.length}
+                      albumsTracks={albumsTracks}
+                    />
+                  );
+                }}
+              />
+            )}
           </div>
         </>
         <>
@@ -423,15 +425,10 @@ const InfiniteList = () => {
                 return (
                   <Item
                     type="playlist"
-                    key={getKey()}
+                    key={`${item.track_id}:${index}`}
                     divId={`${item.track_id}--item-div`}
-                    className={
-                      `${state.active}--item-div` === `${item.track_id}--item-div` &&
-                      state.activeList === 'playlistActive' &&
-                      state.newtrack === index
-                        ? 'item active'
-                        : 'item'
-                    }
+                    className={selectedPlaylistTrack === index ? 'item active' : 'item'}
+                    isSelected={selectedPlaylistTrack === index}
                     href={item.track_id}
                     id={item.track_id}
                     like={item.like}

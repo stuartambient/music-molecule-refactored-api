@@ -33,7 +33,8 @@ const Item = forwardRef((props, ref) => {
     const newId = props.divId.split('--')[0];
     return (
       <div
-        className={state.flashDiv?.id === newId ? 'item flash-effect' : props.className}
+        className={`${props.className || 'item'}${state.flashDiv?.id === newId ? ' flash-effect' : ''}`}
+        data-selected={props.isSelected || undefined}
         id={props.divId}
         ref={ref}
         /* fromlisttype={props.type} */
@@ -72,6 +73,7 @@ const Item = forwardRef((props, ref) => {
         id={props.id}
         className={`${props.className || 'item'}${state.flashDiv?.id === props.id ? ' flash-effect' : ''}`}
         aria-current={props.isPlayingAlbum ? 'true' : undefined}
+        data-selected={props.isSelected || undefined}
         ref={ref}
         /*  fromlisttype={props.type} */
       >
@@ -79,7 +81,10 @@ const Item = forwardRef((props, ref) => {
           <a
             href={props.href}
             id={props.id}
-            /* val={props.val}  */ onClick={(e) => e.preventDefault()}
+            onClick={(event) => {
+              event.preventDefault();
+              dispatch({ type: 'select-album', albumPath: props.fullpath });
+            }}
           >
             {props.foldername}
           </a>
@@ -103,7 +108,12 @@ const Item = forwardRef((props, ref) => {
   }
   if (props.type === 'playlist') {
     return (
-      <div id={props.divId} className={props.className} ref={ref} /* fromlisttype={props.type} */>
+      <div
+        id={props.divId}
+        className={props.className}
+        data-selected={props.isSelected || undefined}
+        ref={ref} /* fromlisttype={props.type} */
+      >
         <a
           className="track-details"
           href={props.href}

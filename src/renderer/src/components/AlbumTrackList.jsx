@@ -3,8 +3,10 @@ import { GiPlayButton } from 'react-icons/gi';
 import { HiPlusSm, HiCheck } from 'react-icons/hi';
 import { useAudioPlayer } from '../mainAudioContext';
 import { requestMusicTracks } from '../utility/musicRequests';
+import { trackNumber } from '../utility/albumTrackOrder';
+import { selectedTrackIndex } from '../utility/listSelection';
 
-function AlbumTrack({ track, index, tracks }) {
+function AlbumTrack({ track, index, tracks, albumPath }) {
   const { state, dispatch } = useAudioPlayer();
   const [adding, setAdding] = useState(false);
   const mounted = useRef(false);
@@ -16,7 +18,13 @@ function AlbumTrack({ track, index, tracks }) {
   }, []);
   const inPlaylist = state.playlistTracks.some((entry) => entry.track_id === track.track_id);
   const current = state.playbackTrack?.track_id === track.track_id;
+  const selected =
+    state.listSelections?.albumTracksActive?.albumPath === albumPath &&
+    selectedTrackIndex(state, 'albumTracksActive', tracks) === index;
   const title = track.title || track.audiotrack;
+  const disc = trackNumber(track.disc);
+  const number = trackNumber(track.track);
+  const count = trackNumber(track.trackCount);
 
   const addTrack = async () => {
     if (adding || inPlaylist) return;
@@ -38,11 +46,14 @@ function AlbumTrack({ track, index, tracks }) {
   };
 
   return (
-    <li className={`albumtrack${current ? ' is-current' : ''}`}>
+    <li
+      className={`albumtrack${current ? ' is-current' : ''}${selected ? ' is-selected' : ''}`}
+      data-selected={selected || undefined}
+    >
       <span className="album-track-number">
-        {track.disc ? `Disc ${track.disc} · ` : ''}
-        {track.track || index + 1}
-        {track.trackCount ? ` / ${track.trackCount}` : ''}
+        {disc ? `Disc ${disc} · ` : ''}
+        {number || index + 1}
+        {count ? ` / ${count}` : ''}
       </span>
       <button
         type="button"
@@ -57,6 +68,7 @@ function AlbumTrack({ track, index, tracks }) {
             index,
             queue: tracks,
             list: 'albumTracksActive',
+            albumPath,
             play: true
           })
         }
@@ -85,8 +97,14 @@ function AlbumTrack({ track, index, tracks }) {
   );
 }
 
-export default function AlbumTrackList({ tracks }) {
+export default function AlbumTrackList({ tracks, albumPath }) {
   return tracks.map((track, index) => (
-    <AlbumTrack key={track.track_id} track={track} index={index} tracks={tracks} />
+    <AlbumTrack
+      key={track.track_id}
+      track={track}
+      index={index}
+      tracks={tracks}
+      albumPath={albumPath}
+    />
   ));
 }

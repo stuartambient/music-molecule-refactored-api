@@ -219,18 +219,6 @@
 :is(.basic, .theme-1) .radio-option:hover {
   background: var(--ui-hover);
 }
-:is(.basic, .theme-1) .media-menu .form .formelements {
-  background: var(--ui-input);
-}
-:is(.basic, .theme-1) .media-menu .form .textsearch {
-  background: var(--ui-input);
-  color: var(--ui-text);
-  border: 1px solid var(--ui-border);
-}
-:is(.basic, .theme-1) .media-menu .form .icon {
-  background: transparent;
-  color: var(--ui-accent);
-}
 :is(.basic, .theme-1) .roots-form button {
   background: var(--ui-action);
   color: var(--ui-on-action);
