@@ -1,4 +1,5 @@
 import db from './connection';
+import { registerLibrarySearch } from './librarySearch.js';
 
 const createAlbumsTable = `CREATE TABLE IF NOT EXISTS albums ( 
     id PRIMARY KEY, 
@@ -66,11 +67,20 @@ ON "audio-tracks"(audiotrack COLLATE NOCASE);
 const createRootsTable = `CREATE TABLE IF NOT EXISTS roots ( id INTEGER PRIMARY KEY AUTOINCREMENT, root TEXT UNIQUE)`;
 
 const initializeDatabase = () => {
+  registerLibrarySearch(db);
   db.transaction(() => {
     db.exec(createAudioTracks);
     db.exec(createAlbumsTable);
     db.exec(createRootsTable);
     db.exec(createIndexAudioTrack);
+    // Non-unique indexes support the same deterministic ordering in both directions.
+    db.exec(
+      'CREATE INDEX IF NOT EXISTS idx_audio_tracks_birthtime_id ON "audio-tracks"(birthtime, track_id)'
+    );
+    db.exec('CREATE INDEX IF NOT EXISTS idx_albums_birthtime_id ON albums(birthtime, id)');
+    db.exec(
+      'CREATE INDEX IF NOT EXISTS idx_albums_missing_cover_birthtime_id ON albums(birthtime, id) WHERE img IS NULL'
+    );
   })();
 };
 
@@ -113,91 +123,78 @@ const getAllTracks = (rows) => {
   return ids.map((id) => map.get(id)).filter(Boolean);
 };
 
+const sortDirection = (sort) => (sort === 'ASC' ? 'ASC' : 'DESC');
+const escapeLike = (text) => text.replace(/[%_^]/g, '^$&');
+const pageOffset = (page, size) => {
+  if (!Number.isSafeInteger(page) || page < 0 || !Number.isSafeInteger(page * size))
+    throw new RangeError('Invalid library page.');
+  return page * size;
+};
+
 const allTracksByScroll = (offsetNum, sort) => {
-  /*  console.log('allTracksByScroll'); */
-  const query = `SELECT track_id, like, audiotrack, performers, title, album FROM "audio-tracks" ORDER BY birthtime ${sort} LIMIT 200 OFFSET $offset`;
-  const stmt = db.prepare(query);
-  return stmt.all({ offset: offsetNum * 200 });
+  const order = sortDirection(sort);
+  const query = `SELECT track_id, like, audiotrack, performers, title, album FROM "audio-tracks" ORDER BY birthtime ${order}, track_id ${order}, rowid ${order} LIMIT 200 OFFSET ?`;
+  return db.prepare(query).all(pageOffset(offsetNum, 200));
 };
 
 const allTracksBySearchTerm = (offsetNum, text, sort) => {
-  /* console.log('allTracksBySearchTerm'); */
-  const term = `%${text}%`;
-  const query = `SELECT track_id, like, audiotrack, performers, title, album FROM "audio-tracks" WHERE audiotrack LIKE ? ORDER BY birthtime ${sort} LIMIT 200 OFFSET ?`;
-  const params = [term, offsetNum * 200];
-  const stmt = db.prepare(query);
-  return stmt.all(...params);
+  const order = sortDirection(sort);
+  const query = `SELECT track_id, like, audiotrack, performers, title, album FROM "audio-tracks" WHERE library_search(audiotrack, ?) ORDER BY birthtime ${order}, track_id ${order}, rowid ${order} LIMIT 200 OFFSET ?`;
+  return db.prepare(query).all(text, pageOffset(offsetNum, 200));
 };
 
 const allAlbumsByScroll = (offsetNum, sort) => {
-  const query = `SELECT * FROM albums ORDER BY birthtime ${sort} LIMIT 200 OFFSET $offset`;
-
-  try {
-    const stmt = db.prepare(query);
-    return stmt.all({ offset: offsetNum * 200 });
-  } catch (e) {
-    return e.message;
-  }
+  const order = sortDirection(sort);
+  const query = `SELECT * FROM albums ORDER BY birthtime ${order}, id ${order}, rowid ${order} LIMIT 200 OFFSET ?`;
+  return db.prepare(query).all(pageOffset(offsetNum, 200));
 };
 
 const allAlbumsBySearchTerm = (offsetNum, text, sort) => {
-  const term = `%${text}%`;
-
-  const query = `SELECT * FROM albums WHERE fullpath LIKE ? ORDER BY birthtime ${sort} LIMIT 200 OFFSET ?`;
-  const params = [term, offsetNum * 200];
-
-  try {
-    const stmt = db.prepare(query);
-    return stmt.all(...params);
-  } catch (e) {
-    return e.message;
-  }
+  const order = sortDirection(sort);
+  const query = `SELECT * FROM albums WHERE library_search(fullpath, ?) ORDER BY birthtime ${order}, id ${order}, rowid ${order} LIMIT 200 OFFSET ?`;
+  return db.prepare(query).all(text, pageOffset(offsetNum, 200));
 };
 
-const allCoversByScroll = (offsetNum, sort, term = null) => {
-  const order = sort === 'ASC' ? 'ASC' : 'DESC';
-  if (term === '') {
-    const stmt = db.prepare(
-      `SELECT id, foldername, fullpath, img FROM albums ORDER BY birthtime ${order} LIMIT 100 OFFSET ${
-        offsetNum * 100
-      }`
-    );
-    return stmt.all();
-  } else {
-    const searchTerm = `%${term}%`;
-    const stmt = db.prepare(
-      `SELECT id, foldername, fullpath, img FROM albums WHERE fullpath LIKE ? ORDER BY birthtime ${order} LIMIT 100 OFFSET ${
-        offsetNum * 100
-      }`
-    );
-    return stmt.all(searchTerm);
+const allCoversByScroll = (offsetNum, sort, term = '') => {
+  const order = sortDirection(sort);
+  const offset = pageOffset(offsetNum, 100);
+  if (!term) {
+    return db
+      .prepare(
+        `SELECT id, foldername, fullpath, img FROM albums ORDER BY birthtime ${order}, id ${order}, rowid ${order} LIMIT 100 OFFSET ?`
+      )
+      .all(offset);
   }
+  return db
+    .prepare(
+      `SELECT id, foldername, fullpath, img FROM albums WHERE library_search(fullpath, ?) ORDER BY birthtime ${order}, id ${order}, rowid ${order} LIMIT 100 OFFSET ?`
+    )
+    .all(term, offset);
 };
 
 const allMissingCoversByScroll = (offsetNum, sort) => {
-  const order = sort === 'ASC' ? 'ASC' : 'DESC';
-  const stmt = db.prepare(
-    `SELECT id, foldername, fullpath, img FROM albums WHERE img IS NULL ORDER BY birthtime ${order} LIMIT 100 OFFSET ${
-      offsetNum * 100
-    }`
-  );
-  return stmt.all();
+  const order = sortDirection(sort);
+  return db
+    .prepare(
+      `SELECT id, foldername, fullpath, img FROM albums WHERE img IS NULL ORDER BY birthtime ${order}, id ${order}, rowid ${order} LIMIT 100 OFFSET ?`
+    )
+    .all(pageOffset(offsetNum, 100));
 };
 
 const filesByAlbum = (albumPath) => {
-  /*  console.log('filesByAlbum'); */
-  const pathsArray = Array.isArray(albumPath) ? albumPath : [albumPath];
-
-  if (pathsArray.length === 0) {
-    return [];
+  const paths = Array.isArray(albumPath) ? albumPath : [albumPath];
+  const patterns = new Set();
+  for (const folder of paths) {
+    if (typeof folder !== 'string' || !folder.length) continue;
+    // Scans store forward slashes. Also accept existing Windows-style paths,
+    // retaining nested disc folders but excluding similarly named siblings.
+    const directory = folder.replaceAll('\\', '/').replace(/\/+$/, '');
+    patterns.add(`${escapeLike(directory + '/')}%`);
+    patterns.add(`${escapeLike(directory.replaceAll('/', '\\') + '\\')}%`);
   }
-
-  const queryParts = pathsArray.map(() => 'audiotrack LIKE ?').join(' OR ');
-  const query = `SELECT * FROM "audio-tracks" WHERE ${queryParts}`;
-  const params = pathsArray.map((path) => `${path}%`);
-
-  const albumFiles = db.prepare(query).all(...params);
-  return albumFiles;
+  if (!patterns.size) return [];
+  const conditions = [...patterns].map(() => "audiotrack LIKE ? ESCAPE '^'").join(' OR ');
+  return db.prepare(`SELECT * FROM "audio-tracks" WHERE ${conditions}`).all(...patterns);
 };
 
 const likeTrack = (fileId) => {
