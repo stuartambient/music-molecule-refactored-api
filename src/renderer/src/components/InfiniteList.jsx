@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect /* , Profiler */ } from 'react';
 import { useAudioPlayer } from '../mainAudioContext';
 import { getPlaybackPosition, getPlaybackQueue } from '../utility/playbackState';
-import { GiPlayButton } from 'react-icons/gi';
+import { findPlayingAlbum } from '../utility/albumPlayback';
+import AlbumTrackList from './AlbumTrackList';
 
 import { v4 as uuidv4 } from 'uuid';
 import { Virtuoso } from 'react-virtuoso';
@@ -95,31 +96,8 @@ const InfiniteList = () => {
     setPlaylistReq
   );
 
-  const albumsTracks = albumTracks.map((track, index) => (
-    <li key={track.track_id} className="albumtrack">
-      <span>Disc: {track.disc}</span>{' '}
-      <span>
-        Track: {track.track} of {track.trackCount}
-      </span>
-      <a
-        href={track.audiotrack}
-        onClick={(event) => {
-          event.preventDefault();
-          dispatch({
-            type: 'select-track',
-            track,
-            index,
-            queue: albumTracks,
-            list: 'albumTracksActive',
-            play: true
-          });
-        }}
-      >
-        {track.title || track.audiotrack}{' '}
-        <GiPlayButton style={{ fill: 'var(--album-tracks-play)' }} />
-      </a>
-    </li>
-  ));
+  const albumsTracks = <AlbumTrackList tracks={albumTracks} />;
+  const playingAlbum = findPlayingAlbum(state.albums, state.playbackTrack);
 
   const playbackPosition = getPlaybackPosition(state, getPlaybackQueue(state));
   const { activeList, listType, listScroll } = state;
@@ -401,9 +379,10 @@ const InfiniteList = () => {
                 return (
                   <Item
                     type="folder"
-                    key={getKey()}
+                    key={item.id}
                     id={item.id}
-                    className="item"
+                    className={playingAlbum === item ? 'item album-playing' : 'item'}
+                    isPlayingAlbum={playingAlbum === item}
                     href="http://"
                     val={index}
                     foldername={item.foldername}

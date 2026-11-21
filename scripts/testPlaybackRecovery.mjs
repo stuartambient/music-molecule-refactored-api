@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import reducer from '../src/renderer/src/audioPlayerReducer.js';
 import { getAdjacentTrack, getPlaybackQueue } from '../src/renderer/src/utility/playbackState.js';
 import { createPlaybackSession } from '../src/renderer/src/utility/playbackSession.js';
+import { findPlayingAlbum } from '../src/renderer/src/utility/albumPlayback.js';
 import handleTrackSelect from '../src/renderer/src/utility/audioUtils.js';
 
 const track = (id) => ({ track_id: id, audiotrack: id + '.mp3', title: id, like: 1 });
@@ -77,6 +78,65 @@ test('consecutive failures can be skipped one at a time and the final failure ne
   const reset = reducer(state, { type: 'reset', pause: true });
   assert.equal(reset.playbackTrack, null);
   assert.equal(reset.playbackError, null);
+});
+
+test('an album track stops on completion while manual navigation remains available', () => {
+  const playing = reducer(initial(), {
+    type: 'select-track',
+    track: a,
+    index: 0,
+    list: 'albumTracksActive',
+    queue: [a, b, c],
+    play: true
+  });
+  const ended = reducer(playing, {
+    type: 'advance-track',
+    direction: 1,
+    ended: true,
+    play: true,
+    request: playing.playbackRequest
+  });
+  assert.equal(ended.active, 'a');
+  assert.equal(ended.pause, true);
+  assert.equal(ended.playbackRequest, playing.playbackRequest);
+  assert.equal(ended.playbackQueue, playing.playbackQueue);
+  const manual = reducer(playing, { type: 'advance-track', direction: 1 });
+  assert.equal(manual.active, 'b');
+  assert.equal(manual.pause, false);
+  assert.equal(
+    reducer(manual, {
+      type: 'advance-track',
+      direction: 1,
+      ended: true,
+      request: playing.playbackRequest
+    }),
+    manual
+  );
+  const library = select({ ...initial(), tracks: [a, b] }, a, 0, 'tracklistActive');
+  assert.equal(reducer(library, { type: 'advance-track', direction: 1, ended: true }).active, 'b');
+});
+
+test('playing album matching uses folder boundaries and the nearest matching path', () => {
+  const albums = [
+    { id: 'album', fullpath: 'C:\\Music\\Album' },
+    { id: 'other', fullpath: 'C:\\Music\\Album Deluxe' },
+    { id: 'disc', fullpath: 'C:\\Music\\Album\\Disc 2\\' }
+  ];
+  assert.equal(findPlayingAlbum(albums, { audiotrack: 'c:/MUSIC/Album/song.flac' }).id, 'album');
+  assert.equal(
+    findPlayingAlbum(albums, { audiotrack: 'C:/Music/Album Deluxe/song.flac' }).id,
+    'other'
+  );
+  assert.equal(
+    findPlayingAlbum(albums, { audiotrack: 'C:/Music/Album/Disc 2/song.flac' }).id,
+    'disc'
+  );
+  assert.equal(
+    findPlayingAlbum(albums, { audiotrack: 'C:/Music/Album Remastered/song.flac' }),
+    null
+  );
+  assert.equal(findPlayingAlbum(albums, null), null);
+  assert.equal(findPlayingAlbum([], a), null);
 });
 
 test('normal end-of-track advances once and pauses at the end of the queue', () => {

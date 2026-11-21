@@ -321,35 +321,90 @@ div #minus path {
   fill: var(--list-font-color);
 } */
 
+.item.album-playing {
+  background: var(--item-hover);
+  color: var(--item-hover-color);
+  box-shadow: inset 3px 0 0 var(--active-border);
+}
+.item.album-playing .item-albumname a {
+  color: var(--item-hover-color);
+}
 .albumtracks {
-  /* list-style: none; */
-  color: white;
-  padding: 0 1rem;
-  grid-row: 3/4;
-  grid-column: 1/3;
-  /* border: 1px solid red; */
+  list-style: none;
+  color: var(--list-font-color);
+  padding: 0.5rem 0;
+  grid-row: 3 / 4;
+  grid-column: 1 / -1;
+  min-width: 0;
 }
-
-.albumtracks li {
-  font-size: large;
-}
-
 .albumtracks .albumtrack {
-  /* background: var(--color4); */
-  margin-top: 0.2rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+  padding: 0.35rem;
   border-radius: 5px;
+  color: var(--list-font-color);
 }
-
-.albumtracks .albumtrack span {
-  font-size: 0.9rem;
-  background-color: white;
-  color: black;
-  padding-left: 0.2rem;
-  padding-right: 0.2rem;
+.albumtracks .albumtrack.is-current {
+  background: var(--active);
+  color: var(--active-color);
 }
-
-.albumtracks .albumtrack a {
-  margin-left: 0.5rem;
+.album-track-number {
+  font-size: 0.8rem;
+  white-space: nowrap;
+  padding: 0.2rem 0.35rem;
+  background: var(--item-menu);
+  color: var(--item-menu-color);
+  border-radius: 4px;
+}
+.album-track-play {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.35rem;
+  background: transparent;
+  color: inherit;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+.album-track-play svg {
+  flex-shrink: 0;
+}
+.album-track-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.album-add-track {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  font-size: 1.25rem;
+  border: 1px solid var(--borders);
+  border-radius: 4px;
+  background: var(--item-menu);
+  color: var(--item-menu-color);
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+.album-add-track:hover:not(:disabled) {
+  color: var(--item-albumtracks-hover);
+}
+.album-add-track:disabled {
+  cursor: default;
+}
+.albumtracks button:focus-visible {
+  outline: 2px solid var(--active-border);
+  outline-offset: 2px;
 }
 
 .files-list {

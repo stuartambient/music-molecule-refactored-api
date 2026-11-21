@@ -70,7 +70,8 @@ const Item = forwardRef((props, ref) => {
     return (
       <div
         id={props.id}
-        className={state.flashDiv?.id === props.id ? 'item flash-effect' : props.className}
+        className={`${props.className || 'item'}${state.flashDiv?.id === props.id ? ' flash-effect' : ''}`}
+        aria-current={props.isPlayingAlbum ? 'true' : undefined}
         ref={ref}
         /*  fromlisttype={props.type} */
       >

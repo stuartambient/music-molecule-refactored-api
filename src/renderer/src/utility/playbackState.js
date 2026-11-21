@@ -60,6 +60,11 @@ export function selectPlaybackTrack(state, { track, index, list, queue, play }) 
 
 export function advancePlayback(state, action) {
   if (action.request !== undefined && action.request !== state.playbackRequest) return state;
+  // Selecting a track in an expanded album is a single-track audition. Explicit
+  // Next/Previous still work; Playlist and Tracks retain automatic advancement.
+  if (action.ended && state.activeList === 'albumTracksActive') {
+    return { ...state, pause: true, pendingAdvance: null };
+  }
   const next = getAdjacentTrack(state, action.direction);
   if (!next) {
     const canLoadMore =
