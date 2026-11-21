@@ -50,17 +50,19 @@ const tracks = [
     trackCount: 2
   }
 ];
-let state, dispatch, additions, pending, albumRows, trackRows, playlistRows;
+let state, dispatch, additions, pending, albumRows, trackRows, playlistRows, pendingAlbum;
 function fixture() {
   albumRows = [album, other];
   trackRows = [];
   playlistRows = [];
   additions = [];
   pending = null;
+  pendingAlbum = null;
   window.ipcApi = {
     getTracks: async () => trackRows,
     getAlbums: async () => [],
     prepareMusicTracks: async (request) => {
+      if (request.album && pendingAlbum) return pendingAlbum.promise;
       if (request.album)
         return {
           tracks,
@@ -195,6 +197,11 @@ window.albumTests = (async () => {
     );
     input.blur();
     await expand();
+    await click(document.querySelector('#album-a .selection-play'));
+    assert(
+      !state.playbackTrack,
+      'An album with no remembered track automatically started its first track'
+    );
     assert(
       document.querySelectorAll('.albumtrack').length === 2,
       'Expanding an album did not render both tracks'
@@ -280,8 +287,8 @@ window.albumTests = (async () => {
       });
     });
     assert(
-      document.querySelector('#album-b')?.classList.contains('album-playing'),
-      'Album highlight does not follow playback from another list'
+      !document.querySelector('#album-b')?.classList.contains('album-playing'),
+      'Inactive Albums should not show a playback highlight owned by another list'
     );
     await act(async () => {
       dispatch({ type: 'reset', pause: true });
@@ -416,17 +423,19 @@ window.albumTests = (async () => {
     );
     await switchTo('tracks');
     assert(
-      document.querySelector('.files-list #one--item-div')?.classList.contains('active'),
-      'Playing from another list erased the Tracks selection'
+      !document.querySelector('.files-list #one--item-div')?.classList.contains('active') &&
+        document.querySelector('.files-list #one--item-div .selection-play'),
+      'Inactive Tracks selection should use a play indicator instead of a highlight'
     );
     await switchTo('albums');
     assert(
-      document.querySelector('#album-a')?.classList.contains('album-selected'),
-      'Playing from Playlist erased the previous album selection'
+      !document.querySelector('#album-a')?.classList.contains('album-selected') &&
+        document.querySelector('#album-a .selection-play'),
+      'Inactive album selection should use a play indicator instead of a highlight'
     );
     assert(
-      document.querySelector('#album-b')?.classList.contains('album-playing'),
-      'The actual playing album marker was lost'
+      !document.querySelector('#album-b')?.classList.contains('album-playing'),
+      'Inactive Albums should not show an active playback highlight'
     );
     assert(
       document.querySelector('.albumtrack[data-selected="true"] .album-track-title').textContent ===
@@ -455,8 +464,69 @@ window.albumTests = (async () => {
     });
     await switchTo('tracks');
     assert(
-      document.querySelector('.files-list #one--item-div')?.classList.contains('active'),
-      'Row reloading lost the selection by track ID'
+      document.querySelector('.files-list #one--item-div .selection-play'),
+      'Row reloading lost the remembered selection play button'
+    );
+    await click(document.querySelector('.files-list #one--item-div .selection-play'));
+    assert(
+      state.active === 'one' && state.activeList === 'tracklistActive' && !state.pause,
+      'Tracks indicator did not switch playback to its remembered track'
+    );
+    assert(
+      document.querySelector('.files-list #one--item-div').classList.contains('active') &&
+        !document.querySelector('.files-list #one--item-div .selection-play'),
+      'Active Tracks did not regain its highlight'
+    );
+    await switchTo('playlist');
+    await click(document.querySelector('.playlist-list #elsewhere--item-div .selection-play'));
+    assert(
+      state.active === 'elsewhere' && state.activeList === 'playlistActive' && !state.pause,
+      'Playlist indicator did not switch playback'
+    );
+    await switchTo('albums');
+    await click(document.querySelector('#album-a .selection-play'));
+    assert(
+      state.active === 'two' &&
+        state.activeList === 'albumTracksActive' &&
+        state.playbackAlbumPath === album.fullpath &&
+        !state.pause,
+      'Album indicator did not play its remembered track'
+    );
+    assert(
+      document.querySelector('#album-a').classList.contains('album-selected') &&
+        !document.querySelector('#album-a .selection-play'),
+      'Active album did not regain its highlight'
+    );
+    await switchTo('playlist');
+    await click(document.querySelector('.playlist-list #elsewhere--item-div a.track-details'));
+    await switchTo('albums');
+    await expand();
+    assert(
+      !document.querySelector('#album-a .albumtracks'),
+      'Album should be collapsed before testing a fresh load'
+    );
+    pendingAlbum = deferred();
+    await click(document.querySelector('#album-a .selection-play'));
+    await act(async () => {
+      dispatch({
+        type: 'select-track',
+        track: tracks[0],
+        index: 2,
+        queue: trackRows,
+        list: 'tracklistActive',
+        play: true
+      });
+      pendingAlbum.resolve({ ...available(tracks), catalogTracks: tracks });
+    });
+    assert(
+      state.active === 'one' && state.activeList === 'tracklistActive',
+      'A delayed album request replaced a newer playback selection'
+    );
+    pendingAlbum = null;
+    await click(document.querySelector('#album-a .selection-play'));
+    assert(
+      state.active === 'two' && state.activeList === 'albumTracksActive' && !state.pause,
+      'Collapsed album indicator did not reload and play the remembered track'
     );
     await dispose();
     results.push(
@@ -475,6 +545,14 @@ window.showAlbumPreview = async (theme) => {
   await click(play(tracks[0].title));
   await act(async () => {
     dispatch({ type: 'track-to-playlist', playlistTracks: [tracks[1]] });
+    dispatch({
+      type: 'select-track',
+      track: tracks[1],
+      index: 0,
+      queue: [tracks[1]],
+      list: 'playlistActive',
+      play: true
+    });
   });
   await frame();
   await frame();

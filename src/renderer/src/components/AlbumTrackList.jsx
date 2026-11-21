@@ -17,7 +17,8 @@ function AlbumTrack({ track, index, tracks, albumPath }) {
     };
   }, []);
   const inPlaylist = state.playlistTracks.some((entry) => entry.track_id === track.track_id);
-  const current = state.playbackTrack?.track_id === track.track_id;
+  const active = state.activeList === 'albumTracksActive' && state.playbackAlbumPath === albumPath;
+  const current = active && state.playbackTrack?.track_id === track.track_id;
   const selected =
     state.listSelections?.albumTracksActive?.albumPath === albumPath &&
     selectedTrackIndex(state, 'albumTracksActive', tracks) === index;
@@ -47,7 +48,7 @@ function AlbumTrack({ track, index, tracks, albumPath }) {
 
   return (
     <li
-      className={`albumtrack${current ? ' is-current' : ''}${selected ? ' is-selected' : ''}`}
+      className={`albumtrack${current ? ' is-current' : ''}${selected && active ? ' is-selected' : ''}${selected && !active ? ' is-remembered' : ''}`}
       data-selected={selected || undefined}
     >
       <span className="album-track-number">

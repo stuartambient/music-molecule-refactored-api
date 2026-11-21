@@ -327,8 +327,16 @@ const InfiniteList = () => {
                     type="files"
                     key={`${item.track_id}:${index}`}
                     divId={`${item.track_id}--item-div`}
-                    className={selectedFile === index ? 'item active' : 'item'}
+                    className={
+                      selectedFile === index && state.activeList === 'tracklistActive'
+                        ? 'item active'
+                        : 'item'
+                    }
                     isSelected={selectedFile === index}
+                    showSelectionPlay={
+                      selectedFile === index && state.activeList !== 'tracklistActive'
+                    }
+                    track={item}
                     href={item.track_id}
                     id={item.track_id}
                     like={item.like}
@@ -381,9 +389,21 @@ const InfiniteList = () => {
                       type="folder"
                       key={item.id}
                       id={item.id}
-                      className={`item${playingAlbum === item ? ' album-playing' : ''}${selectedAlbumPath === item.fullpath ? ' album-selected' : ''}`}
+                      className={`item${playingAlbum === item && state.activeList === 'albumTracksActive' ? ' album-playing' : ''}${selectedAlbumPath === item.fullpath && state.activeList === 'albumTracksActive' && state.playbackAlbumPath === item.fullpath ? ' album-selected' : ''}`}
                       isSelected={selectedAlbumPath === item.fullpath}
-                      isPlayingAlbum={playingAlbum === item}
+                      showSelectionPlay={
+                        selectedAlbumPath === item.fullpath &&
+                        (state.activeList !== 'albumTracksActive' ||
+                          state.playbackAlbumPath !== item.fullpath)
+                      }
+                      albumQueue={albumPattern === item.fullpath ? albumTracks : undefined}
+                      onOpenAlbum={() => {
+                        setShowMore(item.id);
+                        setAlbumPattern(item.fullpath);
+                      }}
+                      isPlayingAlbum={
+                        playingAlbum === item && state.activeList === 'albumTracksActive'
+                      }
                       href="http://"
                       val={index}
                       foldername={item.foldername}
@@ -427,8 +447,16 @@ const InfiniteList = () => {
                     type="playlist"
                     key={`${item.track_id}:${index}`}
                     divId={`${item.track_id}--item-div`}
-                    className={selectedPlaylistTrack === index ? 'item active' : 'item'}
+                    className={
+                      selectedPlaylistTrack === index && state.activeList === 'playlistActive'
+                        ? 'item active'
+                        : 'item'
+                    }
                     isSelected={selectedPlaylistTrack === index}
+                    showSelectionPlay={
+                      selectedPlaylistTrack === index && state.activeList !== 'playlistActive'
+                    }
+                    track={item}
                     href={item.track_id}
                     id={item.track_id}
                     like={item.like}

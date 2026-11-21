@@ -417,6 +417,61 @@ div #minus path {
   outline-offset: 2px;
 }
 
+.files-list .item.has-selection-play,
+.playlist-list .item.has-selection-play,
+.item.has-selection-play {
+  grid-template-columns: 2rem minmax(0, 1fr) 2rem;
+  column-gap: 0.5rem;
+}
+.has-selection-play .track-details,
+.has-selection-play .item-albumname {
+  grid-column: 2 / 3;
+}
+.has-selection-play .item-menu {
+  grid-column: 3 / 4;
+}
+.has-selection-play .item-albumtrack {
+  grid-column: 3 / 4;
+  grid-row: 2 / 3;
+}
+.selection-play {
+  grid-column: 1 / 2;
+  grid-row: 1 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  background: var(--ui-raised);
+  color: var(--ui-accent);
+  border: 1px solid var(--ui-border);
+  border-radius: 0.35rem;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+.selection-play svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+.files-list .selection-play,
+.playlist-list .selection-play {
+  grid-row: 1 / 4;
+}
+.selection-play:hover {
+  background: var(--ui-hover);
+}
+.selection-play:focus-visible {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 2px;
+}
+.selection-play:disabled {
+  cursor: progress;
+}
+.albumtrack.is-remembered .album-track-play svg {
+  color: var(--ui-accent);
+}
+
 .files-list {
   overflow-y: auto;
 }

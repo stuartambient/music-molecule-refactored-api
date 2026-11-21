@@ -2,6 +2,7 @@ import { forwardRef } from 'react';
 import ContextMenu from './ContextMenu';
 import { useAudioPlayer } from '../mainAudioContext';
 import handleTrackSelect from '../utility/audioUtils';
+import SelectionPlayButton from './SelectionPlayButton';
 /* import { FaCirclePlus as Plus } from 'react-icons/fa6'; */
 /* import { FaCircleMinus as Minus } from 'react-icons/fa6'; */
 import { HiPlusSm as Plus } from 'react-icons/hi';
@@ -33,12 +34,21 @@ const Item = forwardRef((props, ref) => {
     const newId = props.divId.split('--')[0];
     return (
       <div
-        className={`${props.className || 'item'}${state.flashDiv?.id === newId ? ' flash-effect' : ''}`}
+        className={`${props.className || 'item'}${props.showSelectionPlay ? ' has-selection-play' : ''}${state.flashDiv?.id === newId ? ' flash-effect' : ''}`}
         data-selected={props.isSelected || undefined}
         id={props.divId}
         ref={ref}
         /* fromlisttype={props.type} */
       >
+        {props.showSelectionPlay && (
+          <SelectionPlayButton
+            list="tracklistActive"
+            track={props.track}
+            index={Number(props['data-val'])}
+            queue={state.tracks}
+            title={props.title}
+          />
+        )}
         <a
           className="track-details"
           href={props.href}
@@ -71,12 +81,21 @@ const Item = forwardRef((props, ref) => {
     return (
       <div
         id={props.id}
-        className={`${props.className || 'item'}${state.flashDiv?.id === props.id ? ' flash-effect' : ''}`}
+        className={`${props.className || 'item'}${props.showSelectionPlay ? ' has-selection-play' : ''}${state.flashDiv?.id === props.id ? ' flash-effect' : ''}`}
         aria-current={props.isPlayingAlbum ? 'true' : undefined}
         data-selected={props.isSelected || undefined}
         ref={ref}
         /*  fromlisttype={props.type} */
       >
+        {props.showSelectionPlay && (
+          <SelectionPlayButton
+            list="albumTracksActive"
+            albumPath={props.fullpath}
+            queue={props.albumQueue}
+            onOpenAlbum={props.onOpenAlbum}
+            title={props.foldername}
+          />
+        )}
         <div className="item-albumname">
           <a
             href={props.href}
@@ -110,10 +129,19 @@ const Item = forwardRef((props, ref) => {
     return (
       <div
         id={props.divId}
-        className={props.className}
+        className={`${props.className || 'item'}${props.showSelectionPlay ? ' has-selection-play' : ''}`}
         data-selected={props.isSelected || undefined}
         ref={ref} /* fromlisttype={props.type} */
       >
+        {props.showSelectionPlay && (
+          <SelectionPlayButton
+            list="playlistActive"
+            track={props.track}
+            index={Number(props['data-val'])}
+            queue={state.playlistTracks}
+            title={props.title}
+          />
+        )}
         <a
           className="track-details"
           href={props.href}
