@@ -103,8 +103,13 @@ function preferences(value, role) {
       value,
       role === 'editor'
         ? ['theme', 'editorTheme', 'grids']
-        : ['mainTheme', 'schedule', 'playlistGapless']
+        : ['mainTheme', 'schedule', 'playlistGapless', 'playbackBackend']
     )
+  )
+    return false;
+  if (
+    'playbackBackend' in value &&
+    (role !== 'main' || !oneOf('builtin', 'mpv')(value.playbackBackend))
   )
     return false;
   if ('playlistGapless' in value && (role !== 'main' || !bool(value.playlistGapless))) return false;
@@ -195,6 +200,7 @@ function childRequest(value, role) {
 }
 const emptyChannels = [
   'db-check',
+  'mpv-status',
   'db-repair',
   'db-restore',
   'recovery-complete',
@@ -219,6 +225,39 @@ const emptyChannels = [
 ];
 const validators = Object.fromEntries(emptyChannels.map((channel) => [channel, noArgs]));
 Object.assign(validators, {
+  'mpv-load': argsOf(
+    (value) =>
+      keys(value, ['sessionId', 'ids', 'index', 'source', 'gapless', 'startTime', 'volume']) &&
+      id(value.sessionId) &&
+      list(value.ids, id, 10000) &&
+      value.ids.length > 0 &&
+      page(value.index) &&
+      value.index < value.ids.length &&
+      oneOf('tracklistActive', 'playlistActive', 'albumTracksActive')(value.source) &&
+      bool(value.gapless) &&
+      Number.isFinite(value.startTime) &&
+      value.startTime >= 0 &&
+      Number.isFinite(value.volume) &&
+      value.volume >= 0 &&
+      value.volume <= 1
+  ),
+  'mpv-update-queue': argsOf(
+    (value) =>
+      keys(value, ['sessionId', 'ids']) && id(value.sessionId) && list(value.ids, id, 10000)
+  ),
+  'mpv-control': argsOf(
+    (value) =>
+      keys(value, ['sessionId', 'operation', 'value']) &&
+      id(value.sessionId) &&
+      (value.operation === 'pause'
+        ? bool(value.value)
+        : value.operation === 'seek'
+          ? Number.isFinite(value.value) && value.value >= 0
+          : value.operation === 'volume'
+            ? Number.isFinite(value.value) && value.value >= 0 && value.value <= 1
+            : false)
+  ),
+  'mpv-stop': argsOf(id),
   'window-action': argsOf(oneOf('close', 'minimize', 'maximize')),
   'screen-mode': argsOf(oneOf('default', 'player', 'player-library', 'mini', 'mini-expanded')),
   'artwork-view': argsOf(bool),

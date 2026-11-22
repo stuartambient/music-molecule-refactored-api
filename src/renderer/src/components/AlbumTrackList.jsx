@@ -3,6 +3,8 @@ import { GiPlayButton } from 'react-icons/gi';
 import { HiPlusSm, HiCheck } from 'react-icons/hi';
 import { useAudioPlayer } from '../mainAudioContext';
 import { requestMusicTracks } from '../utility/musicRequests';
+import TrackProblemBadge from './TrackProblemBadge';
+import { getTrackProblem } from '../utility/trackProblems';
 import { trackNumber } from '../utility/albumTrackOrder';
 import { selectedTrackIndex } from '../utility/listSelection';
 
@@ -22,6 +24,7 @@ function AlbumTrack({ track, index, tracks, albumPath }) {
   const selected =
     state.listSelections?.albumTracksActive?.albumPath === albumPath &&
     selectedTrackIndex(state, 'albumTracksActive', tracks) === index;
+  const problem = getTrackProblem(state, track);
   const title = track.title || track.audiotrack;
   const disc = trackNumber(track.disc);
   const number = trackNumber(track.track);
@@ -50,6 +53,7 @@ function AlbumTrack({ track, index, tracks, albumPath }) {
     <li
       className={`albumtrack${current ? ' is-current' : ''}${selected && active ? ' is-selected' : ''}${selected && !active ? ' is-remembered' : ''}`}
       data-selected={selected || undefined}
+      data-playback-problem={problem ? true : undefined}
     >
       <span className="album-track-number">
         {disc ? `Disc ${disc} · ` : ''}
@@ -60,7 +64,7 @@ function AlbumTrack({ track, index, tracks, albumPath }) {
         type="button"
         className="album-track-play"
         title={`Play ${title}`}
-        aria-label={`Play ${title}`}
+        aria-label={`${problem ? 'Retry' : 'Play'} ${title}`}
         aria-current={current ? 'true' : undefined}
         onClick={() =>
           dispatch({
@@ -75,7 +79,10 @@ function AlbumTrack({ track, index, tracks, albumPath }) {
         }
       >
         <GiPlayButton aria-hidden="true" />
-        <span className="album-track-title">{title}</span>
+        <span className="album-track-label">
+          <span className="album-track-title">{title}</span>
+          <TrackProblemBadge track={track} />
+        </span>
       </button>
       <button
         type="button"

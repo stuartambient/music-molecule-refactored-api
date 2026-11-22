@@ -15,6 +15,11 @@ export const ipcContracts = {
   main: contract(
     [
       'db-check',
+      'mpv-status',
+      'mpv-load',
+      'mpv-control',
+      'mpv-update-queue',
+      'mpv-stop',
       'artwork-view',
       'get-roots',
       'update-roots',
@@ -52,6 +57,7 @@ export const ipcContracts = {
     ],
     ['window-action', 'screen-mode', 'clear-table', 'show-context-menu', 'open-album-folder'],
     [
+      'mpv-state',
       'album-menu',
       'context-menu-command',
       'hamburger-menu-command',

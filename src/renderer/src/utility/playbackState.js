@@ -75,6 +75,7 @@ export function selectPlaybackTrack(state, { track, index, list, queue, play, al
     ...state,
     playbackStartTime: startTime,
     gaplessTransition: null,
+    mpvTransition: null,
     gaplessBypass: false,
     active: track.track_id,
     activeList: list,

@@ -3,11 +3,13 @@ import { useAudioPlayer } from '../mainAudioContext';
 import ScheduleForm from './ScheduleForm';
 import NativeDragDropFolderInput from './NativeDragDropFolderInput';
 import MainPreferences from './MainPreferences';
+import PlaybackPreferences from './PlaybackPreferences';
 import '../style/Update.css';
 
 const sections = [
   ['setup', 'Setup / Modify', 'Choose the music folders included in your library.'],
   ['schedule', 'Scheduling', 'Choose when automatic library updates run.'],
+  ['playback', 'Playback', 'Choose the audio playback engine.'],
   ['preferences', 'Theme Preferences', 'Choose the colors used throughout the app.']
 ];
 
@@ -51,7 +53,7 @@ const Update = () => {
     >
       <header className="settings-header">
         <h1 id="settings-title">Settings</h1>
-        <p>Music folders, update schedules, and appearance.</p>
+        <p>Music folders, update schedules, playback, and appearance.</p>
       </header>
       <div className="settings-layout">
         <nav className="settings-nav" aria-label="Settings sections">
@@ -98,6 +100,7 @@ const Update = () => {
                   <NativeDragDropFolderInput rootDirs={rootDirs} setRootDirs={setRootDirs} />
                 ))}
               {id === 'schedule' && <ScheduleForm />}
+              {id === 'playback' && <PlaybackPreferences />}
               {id === 'preferences' && <MainPreferences />}
             </section>
           ))}

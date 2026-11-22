@@ -47,6 +47,7 @@ if (!process.versions.electron) {
             'style/NativeDragDropFolderInput.css',
             'style/Update.css',
             'style/MainPreferences.css',
+            'style/PlaybackPreferences.css',
             'style/ScheduleForm.css',
             'appstyles/mainThemes.css'
           ]
@@ -73,6 +74,11 @@ if (!process.versions.electron) {
         );
         const screenshot = await window.webContents.capturePage();
         writeFileSync(join(previewPath, `${theme}-folders.png`), screenshot.toPNG());
+        await window.webContents.executeJavaScript('window.showSettingsSection("playback")');
+        writeFileSync(
+          join(previewPath, `${theme}-playback.png`),
+          (await window.webContents.capturePage()).toPNG()
+        );
         await window.webContents.executeJavaScript('window.showSettingsSection("preferences")');
         const themeScreenshot = await window.webContents.capturePage();
         writeFileSync(join(previewPath, `${theme}-themes.png`), themeScreenshot.toPNG());

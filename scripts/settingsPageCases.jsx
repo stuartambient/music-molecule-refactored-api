@@ -164,7 +164,7 @@ window.settingsTests = (async () => {
     fixture(theme);
     const dispose = await mount(theme);
     assert(
-      document.querySelectorAll('.settings-card').length === 3,
+      document.querySelectorAll('.settings-card').length === 4,
       'Settings sections are not on one page'
     );
     assert(
@@ -246,7 +246,7 @@ window.settingsTests = (async () => {
       'Settings navigation leaked listeners'
     );
     results.push(
-      `PASS: ${theme} readable theme choices, three persistent sections, explicit folder/theme/schedule saves, and save failure recovery`
+      `PASS: ${theme} readable theme choices, four persistent sections, explicit folder/theme/schedule saves, and save failure recovery`
     );
   }
   {
@@ -286,7 +286,7 @@ window.settingsTests = (async () => {
       for (const listener of listeners.get('hamburger-menu-command')) listener('theme-preferences');
     });
     assert(
-      state.setup === 'preferences' && document.querySelectorAll('.settings-card').length === 3,
+      state.setup === 'preferences' && document.querySelectorAll('.settings-card').length === 4,
       'Existing theme link does not target the shared page'
     );
     await dispose();

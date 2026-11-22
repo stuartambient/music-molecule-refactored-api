@@ -1,0 +1,27 @@
+.playback-preferences {
+  display: grid;
+  gap: 0.6rem;
+  color: var(--ui-text);
+}
+.playback-preferences select {
+  width: min(100%, 22rem);
+  padding: 0.5rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 4px;
+  background: var(--ui-input);
+  color: var(--ui-text);
+  font: inherit;
+}
+.playback-preferences p {
+  max-width: 45rem;
+  line-height: 1.5;
+  color: var(--ui-muted);
+}
+.playback-preferences button {
+  padding: 0.4rem 0.65rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 4px;
+  color: var(--ui-text);
+  background: var(--ui-raised);
+  cursor: pointer;
+}

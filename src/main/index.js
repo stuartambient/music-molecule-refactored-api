@@ -17,6 +17,8 @@ import process from 'node:process';
 import fs from 'node:fs';
 import { pruneBackups } from './utility/utils.js';
 import { paths } from './paths.js';
+import { MpvService } from './mpvService.js';
+import { mpvExecutable, mpvRuntimeStatus } from './mpvRuntime.js';
 import {
   createOrUpdateChildWindow,
   sendToChild,
@@ -85,6 +87,39 @@ import {
 } from './stats';
 
 configureIpcCatalog(getDB);
+const mpvPath = mpvExecutable({ development: is.dev, resources: process.resourcesPath });
+const mpvService = new MpvService({ executable: mpvPath });
+mpvService.on('state', (snapshot) => {
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('mpv-state', snapshot);
+});
+let closingMpv = false;
+app.on('before-quit', (event) => {
+  if (closingMpv) return;
+  closingMpv = true;
+  event.preventDefault();
+  void mpvService.close().finally(() => app.quit());
+});
+function mpvCatalogTracks(ids) {
+  const statement = getDB().prepare(
+    'SELECT track_id, audiotrack FROM "audio-tracks" WHERE track_id = ?'
+  );
+  return ids.map((id) => {
+    const track = statement.get(id);
+    if (!track) throw new Error('An mpv queue entry is no longer in the music catalog.');
+    return track;
+  });
+}
+guardedIpc.handle('mpv-status', () => mpvRuntimeStatus(mpvPath));
+guardedIpc.handle('mpv-load', (_event, config) =>
+  mpvService.load(config, mpvCatalogTracks(config.ids))
+);
+guardedIpc.handle('mpv-control', (_event, command) =>
+  mpvService.control(command.sessionId, command.operation, command.value)
+);
+guardedIpc.handle('mpv-update-queue', (_event, config) =>
+  mpvService.updateQueue(config.sessionId, mpvCatalogTracks(config.ids))
+);
+guardedIpc.handle('mpv-stop', (_event, sessionId) => mpvService.stop(sessionId));
 protocol.registerSchemesAsPrivileged([
   {
     scheme: 'streaming',
@@ -447,6 +482,12 @@ function createWindow() {
   registerWindowAccess(mainWindow, 'main', rendererEntryUrl('index'));
   showWhenReady(mainWindow);
   // The independent editor and cover-search windows belong to this app session.
+  mainWindow.webContents.on('did-start-navigation', (_event, _url, inPlace, mainFrame) => {
+    if (mainFrame && !inPlace) void mpvService.stop(mpvService.session?.sessionId);
+  });
+  mainWindow.webContents.on('render-process-gone', () => {
+    void mpvService.stop(mpvService.session?.sessionId);
+  });
   mainWindow.once('closed', () => app.quit());
 
   mainWindow.webContents.setWindowOpenHandler((details) => {

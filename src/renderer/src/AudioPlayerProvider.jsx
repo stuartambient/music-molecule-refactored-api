@@ -1,7 +1,7 @@
 import { useReducer, useRef, useCallback, useEffect, useLayoutEffect } from 'react';
 import { MainAudioContext } from './mainAudioContext';
 import usePlayback from './hooks/usePlayback';
-import useGaplessPreference from './hooks/useGaplessPreference';
+import usePlaybackPreferences from './hooks/usePlaybackPreferences';
 import { PlaybackAudio } from './utility/playbackAudio';
 import audioPlayerReducer from './audioPlayerReducer';
 import { mainThemes, normalizeMainTheme } from '../../shared/themePreferences';
@@ -15,6 +15,8 @@ export const AudioPlayerProvider = ({ children }) => {
     audioRef,
     playbackTrack: null,
     playbackStartTime: 0,
+    playbackBackend: 'builtin',
+    backendPreferenceRevision: 0,
     playlistGapless: false,
     gaplessPreferenceRevision: 0,
     gaplessTransition: null,
@@ -24,6 +26,7 @@ export const AudioPlayerProvider = ({ children }) => {
     playbackQueue: [],
     playbackRequest: 0,
     playbackError: null,
+    trackProblems: {},
     musicNotice: null,
     pendingAdvance: null,
     tracksHasMore: false,
@@ -94,7 +97,9 @@ export const AudioPlayerProvider = ({ children }) => {
         'pauseplay',
         'playback-error',
         'toggle-playlist-gapless',
-        'hydrate-playlist-gapless'
+        'hydrate-playlist-gapless',
+        'set-playback-backend',
+        'hydrate-playback-backend'
       ].includes(action.type)
     ) {
       send({ ...action, playbackSnapshot: playbackSnapshot.current?.() });
@@ -103,7 +108,7 @@ export const AudioPlayerProvider = ({ children }) => {
     }
   }, []);
   usePlayback(state, dispatch, playbackSnapshot);
-  useGaplessPreference(state, dispatch);
+  usePlaybackPreferences(state, dispatch);
 
   useLayoutEffect(() => {
     const root = document.documentElement;

@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { createAvailablePlayback } from '../utility/availablePlayback';
 import { GaplessPlayback, streamingSource } from '../utility/gaplessPlayback';
-import { getAdjacentTrack } from '../utility/playbackState';
+import { MpvPlayback } from '../utility/mpvPlayback';
+import { getAdjacentTrack, getPlaybackQueue, getPlaybackPosition } from '../utility/playbackState';
 import { convertDuration } from './useTime';
 import { handlePicture } from '../utility/audioUtils';
 
@@ -14,7 +15,9 @@ export default function usePlayback(state, dispatch, playbackSnapshot) {
   const startTime = state.playbackStartTime || 0;
   const gapless =
     state.playlistGapless && state.activeList === 'playlistActive' && !state.gaplessBypass;
-  const handoff = state.gaplessTransition;
+  const mpv = state.playbackBackend === 'mpv';
+  const handoff = mpv ? state.mpvTransition : state.gaplessTransition;
+  const queue = getPlaybackQueue(state);
 
   useEffect(() => {
     const audio = state.audioRef.current;
@@ -58,7 +61,7 @@ export default function usePlayback(state, dispatch, playbackSnapshot) {
           return;
         }
         dispatch({
-          type: 'gapless-transition',
+          type: mpv ? 'mpv-transition' : 'gapless-transition',
           request,
           trackId: next.track_id,
           trackPath: next.audiotrack,
@@ -82,17 +85,29 @@ export default function usePlayback(state, dispatch, playbackSnapshot) {
       }
     };
     const adopted =
-      gapless &&
-      session?.kind === 'gapless' &&
-      session.adopt(track, latestState.current.newtrack, handoff, callbacks);
+      (mpv ? session?.kind === 'mpv' : gapless && session?.kind === 'gapless') &&
+      session.adopt(track, getPlaybackPosition(latestState.current), handoff, callbacks);
     if (!adopted) {
       session?.dispose();
       audio.useTransport?.(null);
-      if (gapless) {
+      if (mpv) {
+        session = new MpvPlayback({
+          track,
+          index: getPlaybackPosition(latestState.current),
+          queue: getPlaybackQueue(latestState.current),
+          source: latestState.current.activeList,
+          volume: audio.volume,
+          gapless,
+          startTime,
+          callbacks
+        });
+        audio.useTransport(session);
+        loadCover();
+      } else if (gapless) {
         try {
           session = new GaplessPlayback({
             track,
-            index: latestState.current.newtrack,
+            index: getPlaybackPosition(latestState.current),
             queue: latestState.current.playlistTracks,
             startTime,
             callbacks
@@ -146,11 +161,21 @@ export default function usePlayback(state, dispatch, playbackSnapshot) {
           dispatch({ type: 'update-like', request, isLiked: liked?.like === 1 });
       })
       .catch((error) => console.warn('Like lookup failed:', error.message));
-  }, [track, request, startTime, gapless, handoff, state.audioRef, dispatch, playbackSnapshot]);
+  }, [
+    track,
+    request,
+    startTime,
+    gapless,
+    mpv,
+    handoff,
+    state.audioRef,
+    dispatch,
+    playbackSnapshot
+  ]);
 
   useEffect(() => {
-    sessionRef.current?.updateQueue?.(state.playlistTracks);
-  }, [state.playlistTracks]);
+    sessionRef.current?.updateQueue?.(queue);
+  }, [queue]);
 
   useEffect(() => {
     if (state.pause) sessionRef.current?.pause();
@@ -158,7 +183,7 @@ export default function usePlayback(state, dispatch, playbackSnapshot) {
       sessionRef.current?.play()?.catch?.((error) => {
         dispatch({ type: 'playback-error', request, error: { message: error.message } });
       });
-  }, [state.pause, track, request, gapless, dispatch]);
+  }, [state.pause, track, request, gapless, mpv, dispatch]);
 
   useEffect(
     () => () => {

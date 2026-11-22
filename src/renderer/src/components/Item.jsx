@@ -2,6 +2,8 @@ import { forwardRef } from 'react';
 import ContextMenu from './ContextMenu';
 import { useAudioPlayer } from '../mainAudioContext';
 import handleTrackSelect from '../utility/audioUtils';
+import TrackProblemBadge from './TrackProblemBadge';
+import { getTrackProblem } from '../utility/trackProblems';
 import SelectionPlayButton from './SelectionPlayButton';
 /* import { FaCirclePlus as Plus } from 'react-icons/fa6'; */
 /* import { FaCircleMinus as Minus } from 'react-icons/fa6'; */
@@ -10,7 +12,7 @@ import { HiMinusSm as Minus } from 'react-icons/hi';
 /* import { Plus, Minus } from '../assets/icons'; */
 import '../style/FlashEffect.css';
 
-const TrackDetails = ({ artist, title, album }) => (
+const TrackDetails = ({ artist, title, album, track }) => (
   <>
     {[
       ['Artist', artist],
@@ -22,11 +24,13 @@ const TrackDetails = ({ artist, title, album }) => (
         <span className="track-field-value">{value}</span>
       </span>
     ))}
+    <TrackProblemBadge track={track} />
   </>
 );
 
 const Item = forwardRef((props, ref) => {
   const { state, dispatch } = useAudioPlayer();
+  const problem = getTrackProblem(state, props.track);
   /* const { setContextMenuItem } = useContextMenu(); */
 
   if (props.type === 'files') {
@@ -36,6 +40,7 @@ const Item = forwardRef((props, ref) => {
       <div
         className={`${props.className || 'item'}${props.showSelectionPlay ? ' has-selection-play' : ''}${state.flashDiv?.id === newId ? ' flash-effect' : ''}`}
         data-selected={props.isSelected || undefined}
+        data-playback-problem={problem ? true : undefined}
         id={props.divId}
         ref={ref}
         /* fromlisttype={props.type} */
@@ -66,7 +71,12 @@ const Item = forwardRef((props, ref) => {
             })
           }
         >
-          <TrackDetails artist={props.artist} title={props.title} album={props.album} />
+          <TrackDetails
+            artist={props.artist}
+            title={props.title}
+            album={props.album}
+            track={props.track}
+          />
         </a>
         <div className="item-menu">
           <ContextMenu fromlisttype={props.type} id={props.id} />
@@ -84,6 +94,7 @@ const Item = forwardRef((props, ref) => {
         className={`${props.className || 'item'}${props.showSelectionPlay ? ' has-selection-play' : ''}${state.flashDiv?.id === props.id ? ' flash-effect' : ''}`}
         aria-current={props.isPlayingAlbum ? 'true' : undefined}
         data-selected={props.isSelected || undefined}
+        data-playback-problem={problem ? true : undefined}
         ref={ref}
         /*  fromlisttype={props.type} */
       >
@@ -131,6 +142,7 @@ const Item = forwardRef((props, ref) => {
         id={props.divId}
         className={`${props.className || 'item'}${props.showSelectionPlay ? ' has-selection-play' : ''}`}
         data-selected={props.isSelected || undefined}
+        data-playback-problem={problem ? true : undefined}
         ref={ref} /* fromlisttype={props.type} */
       >
         {props.showSelectionPlay && (
@@ -159,7 +171,12 @@ const Item = forwardRef((props, ref) => {
             })
           }
         >
-          <TrackDetails artist={props.artist} title={props.title} album={props.album} />
+          <TrackDetails
+            artist={props.artist}
+            title={props.title}
+            album={props.album}
+            track={props.track}
+          />
         </a>
         <div className="item-menu">
           <ContextMenu fromlisttype={props.type} id={props.id} divid={props.divId} />

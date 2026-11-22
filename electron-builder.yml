@@ -5,9 +5,18 @@ directories:
 files:
   - '!**/.vscode/*'
   - '!src/*'
+  - '!vendor/**'
   - '!electron.vite.config.{js,ts,mjs,cjs}'
   - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
 extraResources:
+  - from: './vendor/mpv/windows-x64'
+    to: './mpv'
+    filter:
+      - 'mpv.exe'
+      - '*.dll'
+      - 'LICENSE*'
+      - 'NOTICE.md'
+      - 'runtime.json'
   - from: './src/main/preferences.json'
     to: './preferences.json'
 

@@ -5,6 +5,7 @@ import {
   rememberedPlaybackTime,
   getAdjacentTrack
 } from './utility/playbackState.js';
+import { recordTrackProblem, clearTrackProblem } from './utility/trackProblems.js';
 import { withoutListSelection } from './utility/listSelection.js';
 
 function setPlaylistGapless(state, enabled) {
@@ -36,7 +37,9 @@ const audioPlayerReducer = (state, action) => {
       'pauseplay',
       'playback-error',
       'toggle-playlist-gapless',
-      'hydrate-playlist-gapless'
+      'hydrate-playlist-gapless',
+      'set-playback-backend',
+      'hydrate-playback-backend'
     ].includes(action.type) &&
     (action.request === undefined || action.request === state.playbackRequest)
   ) {
@@ -46,6 +49,57 @@ const audioPlayerReducer = (state, action) => {
     console.log('action: ', action);
   }
   switch (action.type) {
+    case 'set-playback-backend':
+    case 'hydrate-playback-backend': {
+      if (action.type === 'hydrate-playback-backend' && state.backendPreferenceRevision)
+        return state;
+      const backend = action.backend === 'mpv' ? 'mpv' : 'builtin';
+      if (backend === (state.playbackBackend || 'builtin')) return state;
+      return {
+        ...state,
+        playbackBackend: backend,
+        backendPreferenceRevision:
+          action.type === 'set-playback-backend'
+            ? (state.backendPreferenceRevision || 0) + 1
+            : state.backendPreferenceRevision || 0,
+        gaplessTransition: null,
+        mpvTransition: null,
+        gaplessBypass: false,
+        ...(state.playbackTrack
+          ? {
+              playbackStartTime: rememberedPlaybackTime(state),
+              playbackRequest: state.playbackRequest + 1,
+              playbackError: null,
+              duration: '',
+              delay: false
+            }
+          : {})
+      };
+    }
+    case 'mpv-transition': {
+      if (
+        state.playbackBackend !== 'mpv' ||
+        state.activeList === 'albumTracksActive' ||
+        action.request !== state.playbackRequest
+      )
+        return state;
+      const next = getAdjacentTrack(state, 1);
+      if (
+        !next ||
+        next.index !== action.index ||
+        next.track.track_id !== action.trackId ||
+        next.track.audiotrack !== action.trackPath
+      )
+        return state;
+      return {
+        ...selectPlaybackTrack(rememberPlaybackPosition(state, null, true), {
+          ...next,
+          list: state.activeList,
+          play: true
+        }),
+        mpvTransition: action.token
+      };
+    }
     case 'toggle-playlist-gapless':
       return {
         ...setPlaylistGapless(state, !state.playlistGapless),
@@ -153,6 +207,7 @@ const audioPlayerReducer = (state, action) => {
         ? {
             ...state,
             playbackError: action.error,
+            trackProblems: recordTrackProblem(state, action.error),
             pause: true,
             delay: false,
             seeking: false
@@ -225,7 +280,11 @@ const audioPlayerReducer = (state, action) => {
       if (action.request !== undefined && action.request !== state.playbackRequest) return state;
       return {
         ...state,
-        duration: action.duration
+        duration: action.duration,
+        trackProblems:
+          action.request === state.playbackRequest && !state.playbackError
+            ? clearTrackProblem(state)
+            : state.trackProblems
       };
     }
 

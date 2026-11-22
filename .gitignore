@@ -21,3 +21,5 @@ ProfilingData
 
 # DB backup folders (if you ever store backups under project root)
 **/backups/**
+# Downloaded mpv experiment runtime
+/vendor/mpv/
