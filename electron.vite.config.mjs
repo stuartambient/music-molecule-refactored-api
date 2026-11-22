@@ -12,7 +12,7 @@ const developmentCsp = {
     handler(html, context) {
       const updated = html
         .replace("script-src 'self';", "script-src 'self' 'unsafe-inline';")
-        .replace("connect-src 'self';", "connect-src 'self' ws://localhost:* ws://127.0.0.1:*;");
+        .replace(/connect-src ([^;]*);/g, 'connect-src $1 ws://localhost:* ws://127.0.0.1:*;');
       if (!context.filename.endsWith('index.html')) return updated;
       return {
         html: updated.replace(

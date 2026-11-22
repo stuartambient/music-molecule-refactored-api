@@ -2,15 +2,42 @@ import {
   advancePlayback,
   selectPlaybackTrack,
   rememberPlaybackPosition,
-  rememberedPlaybackTime
+  rememberedPlaybackTime,
+  getAdjacentTrack
 } from './utility/playbackState.js';
 import { withoutListSelection } from './utility/listSelection.js';
 
+function setPlaylistGapless(state, enabled) {
+  if (state.playlistGapless === enabled) return state;
+  const active = state.activeList === 'playlistActive' && state.playbackTrack;
+  return {
+    ...state,
+    playlistGapless: enabled,
+    gaplessBypass: false,
+    gaplessTransition: null,
+    ...(active
+      ? {
+          playbackStartTime: rememberedPlaybackTime(state),
+          playbackRequest: state.playbackRequest + 1,
+          playbackError: null,
+          duration: '',
+          delay: false
+        }
+      : {})
+  };
+}
+
 const audioPlayerReducer = (state, action) => {
   if (
-    ['select-track', 'advance-track', 'retry-track', 'pauseplay', 'playback-error'].includes(
-      action.type
-    ) &&
+    [
+      'select-track',
+      'advance-track',
+      'retry-track',
+      'pauseplay',
+      'playback-error',
+      'toggle-playlist-gapless',
+      'hydrate-playlist-gapless'
+    ].includes(action.type) &&
     (action.request === undefined || action.request === state.playbackRequest)
   ) {
     state = rememberPlaybackPosition(state, action.playbackSnapshot, action.ended);
@@ -19,6 +46,54 @@ const audioPlayerReducer = (state, action) => {
     console.log('action: ', action);
   }
   switch (action.type) {
+    case 'toggle-playlist-gapless':
+      return {
+        ...setPlaylistGapless(state, !state.playlistGapless),
+        gaplessPreferenceRevision: (state.gaplessPreferenceRevision || 0) + 1
+      };
+    case 'hydrate-playlist-gapless':
+      return state.gaplessPreferenceRevision ? state : setPlaylistGapless(state, action.enabled);
+    case 'gapless-transition': {
+      if (
+        !state.playlistGapless ||
+        state.activeList !== 'playlistActive' ||
+        action.request !== state.playbackRequest
+      )
+        return state;
+      const next = getAdjacentTrack(state, 1);
+      if (
+        !next ||
+        next.index !== action.index ||
+        next.track.track_id !== action.trackId ||
+        next.track.audiotrack !== action.trackPath
+      )
+        return state;
+      const completed = rememberPlaybackPosition(state, null, true);
+      return {
+        ...selectPlaybackTrack(completed, { ...next, list: 'playlistActive', play: true }),
+        gaplessTransition: action.token
+      };
+    }
+    case 'gapless-fallback':
+      return action.request === state.playbackRequest &&
+        state.playlistGapless &&
+        state.activeList === 'playlistActive'
+        ? {
+            ...state,
+            gaplessBypass: true,
+            gaplessTransition: null,
+            playbackRequest: state.playbackRequest + 1,
+            playbackStartTime: action.position || 0,
+            duration: '',
+            delay: false,
+            musicNotice: {
+              title: 'Standard playback for this track',
+              message:
+                (action.reason ? action.reason + ' ' : '') +
+                'This track will use standard playback; gapless will be tried again on the next track.'
+            }
+          }
+        : state;
     case 'music-notice':
       return { ...state, musicNotice: action.notice };
     case 'music-notice-result':

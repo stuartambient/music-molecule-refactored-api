@@ -99,9 +99,15 @@ function tagEdits(value) {
 }
 function preferences(value, role) {
   if (
-    !keys(value, role === 'editor' ? ['theme', 'editorTheme', 'grids'] : ['mainTheme', 'schedule'])
+    !keys(
+      value,
+      role === 'editor'
+        ? ['theme', 'editorTheme', 'grids']
+        : ['mainTheme', 'schedule', 'playlistGapless']
+    )
   )
     return false;
+  if ('playlistGapless' in value && (role !== 'main' || !bool(value.playlistGapless))) return false;
   if ('theme' in value && !oneOf('light', 'dark')(value.theme)) return false;
   if ('editorTheme' in value && !oneOf('follow', 'light', 'dark')(value.editorTheme)) return false;
   if (

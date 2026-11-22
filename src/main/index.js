@@ -88,7 +88,13 @@ configureIpcCatalog(getDB);
 protocol.registerSchemesAsPrivileged([
   {
     scheme: 'streaming',
-    privileges: { stream: true, standard: true, bypassCSP: true, supportFetchAPI: true }
+    privileges: {
+      stream: true,
+      standard: true,
+      bypassCSP: true,
+      supportFetchAPI: true,
+      corsEnabled: true
+    }
   },
   {
     scheme: 'cover',
@@ -530,6 +536,7 @@ app
 
           const headers = {
             'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+            'Access-Control-Allow-Origin': '*',
             'Accept-Ranges': 'bytes',
             'Content-Length': String(chunksize),
             'Content-Type': 'audio/mpeg'
@@ -551,7 +558,11 @@ app
           console.log('No range header provided');
           cb({
             statusCode: 200,
-            headers: { 'Content-Length': String(fileSize), 'Content-Type': 'audio/mpeg' },
+            headers: {
+              'Content-Length': String(fileSize),
+              'Content-Type': 'audio/mpeg',
+              'Access-Control-Allow-Origin': '*'
+            },
             data: fs.createReadStream(path).on('error', (err) => {
               console.error('Stream error:', err);
               cb({

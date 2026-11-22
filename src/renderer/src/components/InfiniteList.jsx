@@ -160,7 +160,7 @@ const InfiniteList = () => {
   };
 
   const handlePlaylistFiles = (e) => {
-    switch (e.target.id) {
+    switch (e.currentTarget.id) {
       case 'playlist-save':
         return setPlaylistReq('playlist-save');
       case 'playlist-open': {

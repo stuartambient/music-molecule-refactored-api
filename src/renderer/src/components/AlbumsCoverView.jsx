@@ -9,6 +9,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 const Overlay = React.lazy(() => import('./Overlay'));
 import { openChildWindow } from './ChildWindows/openChildWindow';
 import { requestMusicTracks } from '../utility/musicRequests';
+import { sortAlbumTracks } from '../utility/albumTrackOrder';
 //import Overlay from './Overlay';
 import '../style/AlbumsCoverView.css';
 
@@ -105,7 +106,7 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
     async (event, id) => {
       const request = ++albumPlayRequest.current;
       setCurrentAlbum(id);
-      const albumTracks = await requestMusicTracks(
+      const requestedTracks = await requestMusicTracks(
         'prepare-music-tracks',
         [{ album: id }],
         dispatch,
@@ -113,6 +114,7 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
         () => request === albumPlayRequest.current
       );
 
+      const albumTracks = requestedTracks ? sortAlbumTracks(requestedTracks) : null;
       if (request === albumPlayRequest.current && !albumTracks?.length) setCurrentAlbum('');
 
       if (request === albumPlayRequest.current && albumTracks?.length) {

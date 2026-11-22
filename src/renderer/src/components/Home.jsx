@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useAudioPlayer } from '../mainAudioContext';
 import SearchField from './SearchField';
+import GaplessToggle from './GaplessToggle';
 import { AiFillDownSquare } from 'react-icons/ai';
 import { GrDocumentMissing } from 'react-icons/gr';
 import { IoIosRefresh } from 'react-icons/io';
@@ -93,6 +94,9 @@ const Home = () => {
                 inputRef={coverSearchRef}
                 onSubmit={handleCoversSearchTerm}
               />
+            </li>
+            <li className="covers-gapless">
+              <GaplessToggle />
             </li>
             <li className="range-slider">
               <input

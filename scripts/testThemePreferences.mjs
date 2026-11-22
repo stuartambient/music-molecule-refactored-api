@@ -31,7 +31,22 @@ test('editor theme preference and subscription keep IPC role boundaries', () => 
   );
 });
 
-test('concurrent theme and grid saves all persist before their callers resolve', async () => {
+test('Gapless preference accepts only a boolean from the main renderer', () => {
+  for (const enabled of [true, false])
+    assert.doesNotThrow(() =>
+      validateIpcArguments('save-preferences', [{ playlistGapless: enabled }], 'main')
+    );
+  for (const enabled of ['true', 1, null])
+    assert.throws(() =>
+      validateIpcArguments('save-preferences', [{ playlistGapless: enabled }], 'main')
+    );
+  for (const role of ['editor', 'cover', 'recovery'])
+    assert.throws(() =>
+      validateIpcArguments('save-preferences', [{ playlistGapless: true }], role)
+    );
+});
+
+test('concurrent theme, playback and grid saves all persist before their callers resolve', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'theme-preferences-'));
   const file = join(directory, 'preferences.json');
   writeFileSync(file, JSON.stringify({ unrelated: 'preserved' }));
@@ -64,14 +79,16 @@ test('concurrent theme and grid saves all persist before their callers resolve',
       await Promise.all([
         savePreferences({ mainTheme: 'theme-1' }),
         savePreferences({ editorTheme: 'follow' }),
+        savePreferences({ playlistGapless: true }),
         savePreferences({ grids: { tagEdit: { columns: [{ colId: 'title', width: 240 }] } } })
       ]),
-      [true, true, true]
+      [true, true, true, true]
     );
     const saved = JSON.parse(readFileSync(file));
     assert.equal(saved.unrelated, 'preserved');
     assert.equal(saved.mainTheme, 'theme-1');
     assert.equal(saved.editorTheme, 'follow');
+    assert.equal(saved.playlistGapless, true);
     assert.equal(saved.grids.tagEdit.columns[0].width, 240);
   } finally {
     hooks.deregister();

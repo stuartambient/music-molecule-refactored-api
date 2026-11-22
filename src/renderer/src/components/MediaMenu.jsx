@@ -1,5 +1,6 @@
 import { useAudioPlayer } from '../mainAudioContext';
 import SearchField from './SearchField';
+import GaplessToggle from './GaplessToggle';
 import { AiFillDownSquare } from 'react-icons/ai';
 import { LuScrollText } from 'react-icons/lu';
 import '../style/MediaMenu.css';
@@ -39,6 +40,7 @@ const MediaMenu = ({
 
   return (
     <ul
+      data-playlist={state.listType === 'playlist' || undefined}
       className={
         state.miniModePlaylist
           ? `media-menu media-menu--minimal ${state.mainTheme}`
@@ -129,14 +131,32 @@ const MediaMenu = ({
             />
           </div>
           <li className="playlist-dialogs">
-            <span id="playlist-clear" onClick={handlePlaylistFiles}>
-              Clear
-            </span>
-            <span id="playlist-open" onClick={handlePlaylistFiles}>
-              Open
-            </span>
-            <span id="playlist-save" onClick={handlePlaylistFiles}>
-              Save
+            <GaplessToggle />
+            <span className="playlist-actions" role="group" aria-label="Playlist files">
+              <button
+                type="button"
+                id="playlist-clear"
+                onClick={handlePlaylistFiles}
+                title="Clear playlist"
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                id="playlist-open"
+                onClick={handlePlaylistFiles}
+                title="Open playlist"
+              >
+                Open
+              </button>
+              <button
+                type="button"
+                id="playlist-save"
+                onClick={handlePlaylistFiles}
+                title="Save playlist"
+              >
+                Save
+              </button>
             </span>
           </li>
         </>

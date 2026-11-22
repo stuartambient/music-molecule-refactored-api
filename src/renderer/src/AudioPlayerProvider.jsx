@@ -1,18 +1,24 @@
 import { useReducer, useRef, useCallback, useEffect, useLayoutEffect } from 'react';
 import { MainAudioContext } from './mainAudioContext';
 import usePlayback from './hooks/usePlayback';
+import useGaplessPreference from './hooks/useGaplessPreference';
+import { PlaybackAudio } from './utility/playbackAudio';
 import audioPlayerReducer from './audioPlayerReducer';
 import { mainThemes, normalizeMainTheme } from '../../shared/themePreferences';
 
 export const AudioPlayerProvider = ({ children }) => {
   const audioRef = useRef(null);
-  if (!audioRef.current) audioRef.current = new Audio();
+  if (!audioRef.current) audioRef.current = new PlaybackAudio(new Audio());
   /* const trackRef = useRef(null); */
 
   const initialState = {
     audioRef,
     playbackTrack: null,
     playbackStartTime: 0,
+    playlistGapless: false,
+    gaplessPreferenceRevision: 0,
+    gaplessTransition: null,
+    gaplessBypass: false,
     playbackAlbumPath: null,
     listSelections: {},
     playbackQueue: [],
@@ -81,9 +87,15 @@ export const AudioPlayerProvider = ({ children }) => {
   const playbackSnapshot = useRef(null);
   const dispatch = useCallback((action) => {
     if (
-      ['select-track', 'advance-track', 'retry-track', 'pauseplay', 'playback-error'].includes(
-        action.type
-      )
+      [
+        'select-track',
+        'advance-track',
+        'retry-track',
+        'pauseplay',
+        'playback-error',
+        'toggle-playlist-gapless',
+        'hydrate-playlist-gapless'
+      ].includes(action.type)
     ) {
       send({ ...action, playbackSnapshot: playbackSnapshot.current?.() });
     } else {
@@ -91,6 +103,7 @@ export const AudioPlayerProvider = ({ children }) => {
     }
   }, []);
   usePlayback(state, dispatch, playbackSnapshot);
+  useGaplessPreference(state, dispatch);
 
   useLayoutEffect(() => {
     const root = document.documentElement;

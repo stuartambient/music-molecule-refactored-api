@@ -1,0 +1,33 @@
+.gapless-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  min-height: 1.75rem;
+  padding: 0.2rem 0.5rem;
+  font: inherit;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  color: var(--ui-text);
+  background: var(--ui-raised);
+  border: 1px solid var(--ui-border);
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-app-region: no-drag;
+}
+.gapless-check {
+  width: 0.8em;
+}
+.gapless-toggle[aria-pressed='true'] {
+  background: var(--ui-selection);
+  color: var(--ui-on-selection);
+  border-color: var(--ui-focus);
+}
+.gapless-toggle:hover {
+  background: var(--ui-hover);
+}
+.gapless-toggle:focus-visible {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 2px;
+}

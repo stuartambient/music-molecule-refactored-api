@@ -21,11 +21,11 @@ const Extras = ({ handlePlayerControls }) => {
       </li>
       {state.volume ? (
         <li className="volume on">
-          <p>{state.volume}</p>
+          <p>{state.volume.toFixed(3)}</p>
         </li>
       ) : (
         <li className="volume off">
-          <p>{state.volume}</p>
+          <p>{state.volume.toFixed(3)}</p>
         </li>
       )}
       <li className={state.seeking ? 'seeking on' : 'seeking off'}>

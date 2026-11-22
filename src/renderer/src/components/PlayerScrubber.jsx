@@ -44,6 +44,7 @@ const PlayerScrubber = ({ cTime, setCTime }) => {
     for (const event of ['timeupdate', 'loadedmetadata', 'seeked'])
       audio.addEventListener(event, update);
     audio.addEventListener('emptied', clear);
+    update();
     return () => {
       for (const event of ['timeupdate', 'loadedmetadata', 'seeked'])
         audio.removeEventListener(event, update);

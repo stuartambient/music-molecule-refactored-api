@@ -152,3 +152,9 @@
 .sort-icon-static {
   fill: var(--sort-icon-inactive);
 }
+
+.album-cover-tools .covers-gapless {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
