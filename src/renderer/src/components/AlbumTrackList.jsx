@@ -20,9 +20,12 @@ function AlbumTrack({ track, index, tracks, albumPath }) {
   }, []);
   const inPlaylist = state.playlistTracks.some((entry) => entry.track_id === track.track_id);
   const active = state.activeList === 'albumTracksActive' && state.playbackAlbumPath === albumPath;
-  const current = active && state.playbackTrack?.track_id === track.track_id;
+  const selection = state.listSelections?.albumTracksActive;
+  const current =
+    active && !selection?.completed && state.playbackTrack?.track_id === track.track_id;
   const selected =
-    state.listSelections?.albumTracksActive?.albumPath === albumPath &&
+    !selection?.completed &&
+    selection?.albumPath === albumPath &&
     selectedTrackIndex(state, 'albumTracksActive', tracks) === index;
   const problem = getTrackProblem(state, track);
   const title = track.title || track.audiotrack;

@@ -173,6 +173,17 @@ const click = (element, location = new Error().stack) =>
     element.click();
   });
 const expand = async () => {
+  // After collapsing a restored virtual row, its header may need to scroll back into view.
+  for (
+    let attempt = 0;
+    attempt < 40 && !document.querySelector('#album-a .item-albumtrack');
+    attempt++
+  ) {
+    await act(async () => {
+      document.querySelector('.albums-list').scrollTop = 0;
+      await frame();
+    });
+  }
   await click(document.querySelector('#album-a .item-albumtrack'));
   await act(async () => {
     await frame();
@@ -505,11 +516,77 @@ window.albumTests = (async () => {
     await click(added);
     assert(additions.length === 1, 'Duplicate click issued another add request');
     await act(async () => {
+      dispatch({ type: 'pauseplay' });
+    });
+    assert(
+      play(tracks[0].title).closest('.albumtrack').classList.contains('is-current'),
+      'Pausing an unfinished album track cleared its highlight'
+    );
+    await act(async () => {
+      dispatch({ type: 'pauseplay' });
+    });
+    const activeCaretColor = getComputedStyle(play(tracks[0].title).querySelector('svg')).color;
+    await act(async () => {
       dispatch({ type: 'advance-track', direction: 1, ended: true, play: true, request });
     });
     assert(
       state.active === 'one' && state.pause,
       'Album track automatically advanced when it ended'
+    );
+    const checkEndedHighlight = () => {
+      const button = play(tracks[0].title);
+      const row = button.closest('.albumtrack');
+      assert(
+        !row.matches('.is-current, .is-selected, .is-remembered') &&
+          !row.dataset.selected &&
+          !button.hasAttribute('aria-current'),
+        'Completed album track retained its highlight'
+      );
+      assert(
+        getComputedStyle(button.querySelector('svg')).color !== activeCaretColor,
+        'Completed album track retained its blue play caret'
+      );
+      assert(
+        !document.querySelector('#album-a.album-playing, #album-a.album-selected'),
+        'Completed album retained its active highlight'
+      );
+    };
+    checkEndedHighlight();
+    const tab = (name) =>
+      [...document.querySelectorAll('.tabs .tab')].find((node) => node.textContent === name);
+    for (const name of ['playlist', 'tracks']) {
+      await click(tab(name));
+      if (name === 'playlist') {
+        await act(async () => {
+          dispatch({
+            type: 'select-track',
+            track: tracks[0],
+            index: 0,
+            queue: state.playlistTracks,
+            list: 'playlistActive',
+            play: true,
+            playbackSnapshot: { request, position: 180 }
+          });
+        });
+      }
+      await click(tab('albums'));
+      for (let attempt = 0; attempt < 40; attempt++) {
+        await act(async () => {
+          await frame();
+        });
+        if (play(tracks[0].title)) break;
+      }
+      checkEndedHighlight();
+    }
+    const restartRequest = state.playbackRequest;
+    await click(play(tracks[0].title));
+    assert(
+      state.playbackStartTime === 0 && state.playbackRequest === restartRequest + 1 && !state.pause,
+      'Reselecting a completed album track did not restart from zero'
+    );
+    assert(
+      play(tracks[0].title).closest('.albumtrack').classList.contains('is-current'),
+      'Reselecting the completed track did not restore its highlight'
     );
     await act(async () => {
       dispatch({ type: 'advance-track', direction: 1, play: true });

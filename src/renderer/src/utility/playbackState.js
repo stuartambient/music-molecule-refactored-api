@@ -29,7 +29,8 @@ export function getAdjacentTrack(state, direction) {
 // session has no sample, so its saved position survives an unavailable drive.
 export function rememberPlaybackPosition(state, snapshot, ended = false) {
   const selection = state.listSelections?.[state.activeList];
-  if (!state.playbackTrack || selection?.trackId !== state.active) return state;
+  if (!state.playbackTrack || selection?.trackId !== state.active || selection.completed)
+    return state;
   if (state.activeList === 'albumTracksActive' && selection.albumPath !== state.playbackAlbumPath)
     return state;
   if (
@@ -116,7 +117,19 @@ export function advancePlayback(state, action) {
   // Selecting a track in an expanded album is a single-track audition. Explicit
   // Next/Previous still work; Playlist and Tracks retain automatic advancement.
   if (action.ended && state.activeList === 'albumTracksActive') {
-    return { ...state, pause: true, pendingAdvance: null };
+    return {
+      ...state,
+      pause: true,
+      pendingAdvance: null,
+      listSelections: {
+        ...state.listSelections,
+        albumTracksActive: {
+          ...state.listSelections?.albumTracksActive,
+          position: 0,
+          completed: true
+        }
+      }
+    };
   }
   const next = getAdjacentTrack(state, action.direction);
   if (!next) {

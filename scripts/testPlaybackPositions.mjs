@@ -41,6 +41,34 @@ test('each source resumes its own time, including the same song in different lis
   assert.equal(state.playbackStartTime, 12);
 });
 
+test('completed album tracks stay completed across snapshots and other playback until selected again', () => {
+  let state = select(initial(), 0, 'albumTracksActive', { albumPath: 'Album' });
+  state = reducer(state, { type: 'pauseplay', playbackSnapshot: sample(state, 40) });
+  assert.equal(state.listSelections.albumTracksActive.completed, undefined);
+  state = reducer(state, {
+    type: 'advance-track',
+    ended: true,
+    direction: 1,
+    request: state.playbackRequest
+  });
+  assert.equal(state.listSelections.albumTracksActive.completed, true);
+  assert.equal(state.listSelections.albumTracksActive.position, 0);
+  state = select(state, 1, 'playlistActive', { playbackSnapshot: sample(state, 180) });
+  assert.equal(state.listSelections.albumTracksActive.completed, true);
+  assert.equal(state.listSelections.albumTracksActive.position, 0);
+  state = select(state, 0, 'albumTracksActive', { albumPath: 'Album', resume: true });
+  assert.notEqual(state.listSelections.albumTracksActive.completed, true);
+  assert.equal(state.playbackStartTime, 0);
+  assert.equal(state.pause, false);
+  const stale = reducer(state, {
+    type: 'advance-track',
+    ended: true,
+    direction: 1,
+    request: state.playbackRequest - 1
+  });
+  assert.equal(stale, state);
+});
+
 test('choosing another track or another album starts at zero', () => {
   let state = select(initial(), 0, 'albumTracksActive', { albumPath: 'Album' });
   state = select(state, 1, 'playlistActive', { playbackSnapshot: sample(state, 85) });

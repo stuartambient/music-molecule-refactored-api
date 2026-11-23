@@ -126,16 +126,17 @@ const InfiniteList = () => {
     setPlaylistReq
   );
 
+  const albumSelection = state.listSelections?.albumTracksActive;
   const playingAlbum =
-    state.activeList === 'albumTracksActive'
+    state.activeList === 'albumTracksActive' && !albumSelection?.completed
       ? findPlayingAlbum(state.albums, state.playbackTrack)
       : null;
-  const albumSelection = state.listSelections?.albumTracksActive;
   const selectedAlbumPath = state.selectedAlbumPath || albumSelection?.albumPath;
   // Each list keeps its own track when playback moves to another source.
-  const rememberedAlbum = albumSelection?.trackId
-    ? state.albums.find((album) => album.fullpath === albumSelection.albumPath)
-    : null;
+  const rememberedAlbum =
+    albumSelection?.trackId && !albumSelection.completed
+      ? state.albums.find((album) => album.fullpath === albumSelection.albumPath)
+      : null;
   const returnAlbum = playingAlbum || rememberedAlbum;
   const returnTrackId = playingAlbum
     ? state.playbackTrack?.track_id
@@ -442,7 +443,7 @@ const InfiniteList = () => {
                       onToggle={() => handleAlbumTracksRequest(item.fullpath)}
                       key={item.id}
                       id={item.id}
-                      className={`item${playingAlbum === item && state.activeList === 'albumTracksActive' ? ' album-playing' : ''}${selectedAlbumPath === item.fullpath && state.activeList === 'albumTracksActive' && state.playbackAlbumPath === item.fullpath ? ' album-selected' : ''}`}
+                      className={`item${playingAlbum === item && state.activeList === 'albumTracksActive' ? ' album-playing' : ''}${selectedAlbumPath === item.fullpath && playingAlbum === item ? ' album-selected' : ''}`}
                       isSelected={selectedAlbumPath === item.fullpath}
                       isPlayingAlbum={
                         playingAlbum === item && state.activeList === 'albumTracksActive'
