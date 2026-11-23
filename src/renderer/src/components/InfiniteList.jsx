@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect /* , Profiler */ } from 'react';
+import { useState, useRef, useEffect, useMemo /* , Profiler */ } from 'react';
 import { useAudioPlayer } from '../mainAudioContext';
 import { getPlaybackPosition, getPlaybackQueue } from '../utility/playbackState';
 import { findPlayingAlbum } from '../utility/albumPlayback';
@@ -14,6 +14,25 @@ import Loader from './Loader';
 import { useTracks, useAlbums, useAlbumTracks, usePlaylistDialog } from '../hooks/useDb';
 import '../style/InfiniteList.css';
 
+function AlbumListItem({ album, expanded, onToggle, trackCache, ...props }) {
+  const { dispatch } = useAudioPlayer();
+  const { albumTracks } = useAlbumTracks(expanded ? album.fullpath : null, dispatch, trackCache);
+  return (
+    <Item
+      {...props}
+      type="folder"
+      id={album.id}
+      foldername={album.foldername}
+      fullpath={album.fullpath}
+      expanded={expanded}
+      handleAlbumTracksRequest={onToggle}
+      albumsTracks={
+        expanded ? <AlbumTrackList tracks={albumTracks} albumPath={album.fullpath} /> : null
+      }
+    />
+  );
+}
+
 const InfiniteList = () => {
   const { state, dispatch } = useAudioPlayer();
   const [tracksSearchTerm, setTracksSearchTerm] = useState('');
@@ -23,8 +42,8 @@ const InfiniteList = () => {
 
   /*   window.getPreferences; */
 
-  const [albumPattern, setAlbumPattern] = useState('');
-  const [showMore, setShowMore] = useState(null);
+  // Preserve expansion order so the last unfolded album is the fallback return target.
+  const [expandedAlbums, setExpandedAlbums] = useState([]);
   const [filesSortType, setFilesSortType] = useState('DESC');
   const [albumsSortType, setAlbumsSortType] = useState('DESC');
   const [resetKey, setResetKey] = useState('');
@@ -50,12 +69,18 @@ const InfiniteList = () => {
 
   const [contSize, setContSize] = useState(0);
 
-  const { albumTracks, setAlbumTracks } = useAlbumTracks(albumPattern, dispatch);
-
   const fileslistRef = useRef(null);
   const playlistRef = useRef(null);
   const albumSnapshot = useRef(null);
-  const albumViewKey = JSON.stringify([albumsSearchTerm, albumsSortType, albumsResetKey]);
+  const albumView = useMemo(
+    () => ({
+      key: JSON.stringify([albumsSearchTerm, albumsSortType, albumsResetKey]),
+      tracks: new Map()
+    }),
+    [albumsSearchTerm, albumsSortType, albumsResetKey]
+  );
+  const albumViewKey = albumView.key;
+  const albumTrackCache = albumView.tracks;
   const resultsRef = useRef(null);
 
   /*   useEffect(() => {
@@ -101,9 +126,24 @@ const InfiniteList = () => {
     setPlaylistReq
   );
 
-  const albumsTracks = <AlbumTrackList tracks={albumTracks} albumPath={albumPattern} />;
-  const playingAlbum = findPlayingAlbum(state.albums, state.playbackTrack);
-  const selectedAlbumPath = state.listSelections?.albumTracksActive?.albumPath;
+  const playingAlbum =
+    state.activeList === 'albumTracksActive'
+      ? findPlayingAlbum(state.albums, state.playbackTrack)
+      : null;
+  const albumSelection = state.listSelections?.albumTracksActive;
+  const selectedAlbumPath = state.selectedAlbumPath || albumSelection?.albumPath;
+  // Each list keeps its own track when playback moves to another source.
+  const rememberedAlbum = albumSelection?.trackId
+    ? state.albums.find((album) => album.fullpath === albumSelection.albumPath)
+    : null;
+  const returnAlbum = playingAlbum || rememberedAlbum;
+  const returnTrackId = playingAlbum
+    ? state.playbackTrack?.track_id
+    : rememberedAlbum
+      ? albumSelection.trackId
+      : undefined;
+  const returnAlbumPath = returnAlbum?.fullpath || expandedAlbums.at(-1);
+  const returnAlbumIndex = state.albums.findIndex((album) => album.fullpath === returnAlbumPath);
   const selectedFile = selectedTrackIndex(state, 'tracklistActive', state.tracks);
   const selectedPlaylistTrack = selectedTrackIndex(state, 'playlistActive', state.playlistTracks);
 
@@ -187,19 +227,18 @@ const InfiniteList = () => {
     }
   };
 
-  const handleAlbumTracksRequest = (e) => {
-    const term = e.currentTarget.dataset.term;
-    console.log('term: ', term);
-
-    if (showMore === e.currentTarget.id) {
-      setShowMore(null);
-      setAlbumTracks([]);
-      setAlbumPattern(null);
+  const handleAlbumTracksRequest = (albumPath) => {
+    if (!expandedAlbums.includes(albumPath)) {
+      dispatch({ type: 'select-album', albumPath });
     } else {
-      dispatch({ type: 'select-album', albumPath: term });
-      setShowMore(e.currentTarget.id);
-      setAlbumPattern(term);
+      // Explicitly reopening an album refreshes its tracks and availability.
+      albumTrackCache.delete(albumPath);
     }
+    setExpandedAlbums((previous) =>
+      previous.includes(albumPath)
+        ? previous.filter((path) => path !== albumPath)
+        : [...previous, albumPath]
+    );
   };
 
   const handleSortClick = (e) => {
@@ -363,6 +402,17 @@ const InfiniteList = () => {
                 key={albumViewKey}
                 memory={albumSnapshot}
                 memoryKey={albumViewKey}
+                targetIndex={returnAlbumIndex}
+                targetTrackId={returnTrackId}
+                onRestore={() => {
+                  if (returnAlbum) {
+                    setExpandedAlbums((previous) =>
+                      previous.includes(returnAlbum.fullpath)
+                        ? previous
+                        : [...previous, returnAlbum.fullpath]
+                    );
+                  }
+                }}
                 computeItemKey={(_index, album) => album.id}
                 data={state.albums}
                 className="albums-list" /*  */
@@ -385,22 +435,15 @@ const InfiniteList = () => {
                 }}
                 itemContent={(index, item) => {
                   return (
-                    <Item
-                      type="folder"
+                    <AlbumListItem
+                      album={item}
+                      trackCache={albumTrackCache}
+                      expanded={expandedAlbums.includes(item.fullpath)}
+                      onToggle={() => handleAlbumTracksRequest(item.fullpath)}
                       key={item.id}
                       id={item.id}
                       className={`item${playingAlbum === item && state.activeList === 'albumTracksActive' ? ' album-playing' : ''}${selectedAlbumPath === item.fullpath && state.activeList === 'albumTracksActive' && state.playbackAlbumPath === item.fullpath ? ' album-selected' : ''}`}
                       isSelected={selectedAlbumPath === item.fullpath}
-                      showSelectionPlay={
-                        selectedAlbumPath === item.fullpath &&
-                        (state.activeList !== 'albumTracksActive' ||
-                          state.playbackAlbumPath !== item.fullpath)
-                      }
-                      albumQueue={albumPattern === item.fullpath ? albumTracks : undefined}
-                      onOpenAlbum={() => {
-                        setShowMore(item.id);
-                        setAlbumPattern(item.fullpath);
-                      }}
                       isPlayingAlbum={
                         playingAlbum === item && state.activeList === 'albumTracksActive'
                       }
@@ -409,11 +452,6 @@ const InfiniteList = () => {
                       foldername={item.foldername}
                       term={item.fullpath}
                       fullpath={item.fullpath}
-                      handleAlbumTracksRequest={handleAlbumTracksRequest}
-                      showMore={showMore}
-                      albumPattern={albumPattern}
-                      albumTracksLength={albumTracks.length}
-                      albumsTracks={albumsTracks}
                     />
                   );
                 }}

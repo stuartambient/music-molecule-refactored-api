@@ -98,15 +98,6 @@ const Item = forwardRef((props, ref) => {
         ref={ref}
         /*  fromlisttype={props.type} */
       >
-        {props.showSelectionPlay && (
-          <SelectionPlayButton
-            list="albumTracksActive"
-            albumPath={props.fullpath}
-            queue={props.albumQueue}
-            onOpenAlbum={props.onOpenAlbum}
-            title={props.foldername}
-          />
-        )}
         <div className="item-albumname">
           <a
             href={props.href}
@@ -128,11 +119,9 @@ const Item = forwardRef((props, ref) => {
           data-term={props.term}
           onClick={(e) => props.handleAlbumTracksRequest(e)}
         >
-          {props.showMore === props.id ? <Minus id="minus" /> : <Plus id="plus" />}
+          {props.expanded ? <Minus id="minus" /> : <Plus id="plus" />}
         </div>
-        {props.albumPattern === props.fullpath && props.albumTracksLength ? (
-          <ul className="albumtracks">{props.albumsTracks}</ul>
-        ) : null}
+        {props.expanded ? <ul className="albumtracks">{props.albumsTracks}</ul> : null}
       </div>
     );
   }

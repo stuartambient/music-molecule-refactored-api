@@ -192,11 +192,16 @@ const useAlbums = (albumsPageNumber, albumsSearchTerm, sortType, resetKey, dispa
   return { albumsLoading, hasMoreAlbums, albumsError };
 };
 
-const useAlbumTracks = (pattern, dispatch) => {
-  const [albumTracks, setAlbumTracks] = useState([]);
+const useAlbumTracks = (pattern, dispatch, cache) => {
+  const [albumTracks, setAlbumTracks] = useState(() => cache?.get(pattern) || []);
   const [error, setError] = useState([]);
 
   useEffect(() => {
+    // Virtualized rows and the Albums tab remount without the user reopening an album.
+    if (pattern && cache?.has(pattern)) {
+      setAlbumTracks(cache.get(pattern));
+      return;
+    }
     let subscribed = true;
     const loadAlbumTracks = async () => {
       try {
@@ -210,7 +215,9 @@ const useAlbumTracks = (pattern, dispatch) => {
           true
         );
         if (albumTracksRequest && subscribed) {
-          setAlbumTracks(sortAlbumTracks(albumTracksRequest));
+          const sorted = sortAlbumTracks(albumTracksRequest);
+          cache?.set(pattern, sorted);
+          setAlbumTracks(sorted);
         }
       } catch (err) {
         if (subscribed) {
@@ -224,7 +231,7 @@ const useAlbumTracks = (pattern, dispatch) => {
       loadAlbumTracks();
     }
     return () => (subscribed = false);
-  }, [pattern, dispatch]);
+  }, [pattern, dispatch, cache]);
   return { albumTracks, setAlbumTracks, error };
 };
 

@@ -47,7 +47,9 @@ test('browsing another album does not alter playback, and manual Next remembers 
   const browsed = reducer(playing, { type: 'select-album', albumPath: 'C:/Music/B' });
   assert.equal(browsed.playbackRequest, playing.playbackRequest);
   assert.equal(browsed.playbackTrack, a);
-  assert.equal(browsed.listSelections.albumTracksActive.albumPath, 'C:/Music/B');
+  assert.equal(browsed.selectedAlbumPath, 'C:/Music/B');
+  assert.equal(browsed.listSelections.albumTracksActive.albumPath, 'C:/Music/A');
+  assert.equal(browsed.listSelections.albumTracksActive.trackId, 'a');
   const next = reducer(browsed, { type: 'advance-track', direction: 1 });
   assert.equal(next.active, 'b');
   assert.equal(next.listSelections.albumTracksActive.albumPath, 'C:/Music/A');

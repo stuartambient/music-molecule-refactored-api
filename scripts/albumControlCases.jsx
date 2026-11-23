@@ -50,8 +50,19 @@ const tracks = [
     trackCount: 2
   }
 ];
-let state, dispatch, additions, pending, albumRows, trackRows, playlistRows, pendingAlbum;
+let state,
+  dispatch,
+  additions,
+  pending,
+  albumRows,
+  trackRows,
+  playlistRows,
+  pendingAlbum,
+  albumTrackRows,
+  albumRequests;
 function fixture() {
+  albumRequests = 0;
+  albumTrackRows = tracks;
   albumRows = [album, other];
   trackRows = [];
   playlistRows = [];
@@ -62,16 +73,28 @@ function fixture() {
     getTracks: async () => trackRows,
     getAlbums: async () => [],
     prepareMusicTracks: async (request) => {
+      if (request.album) albumRequests++;
       if (request.album && pendingAlbum) return pendingAlbum.promise;
-      if (request.album)
+      if (request.album) {
+        const entries =
+          request.album === album.fullpath
+            ? albumTrackRows
+            : [
+                {
+                  track_id: 'other-track',
+                  title: 'Another song',
+                  audiotrack: other.fullpath + '/01.flac'
+                }
+              ];
         return {
-          tracks,
-          catalogTracks: tracks,
-          requestedCount: tracks.length,
+          tracks: entries,
+          catalogTracks: entries,
+          requestedCount: entries.length,
           unavailableCount: 0,
           missingCatalogCount: 0,
           examples: []
         };
+      }
       additions.push(request.tracks);
       return pending.promise;
     },
@@ -144,9 +167,9 @@ async function mount(theme = 'basic') {
     element.remove();
   };
 }
-const click = (element) =>
+const click = (element, location = new Error().stack) =>
   act(async () => {
-    assert(element, 'Expected album control is missing');
+    assert(element, `Expected album control is missing: ${location}`);
     element.click();
   });
 const expand = async () => {
@@ -156,7 +179,8 @@ const expand = async () => {
     await frame();
   });
 };
-const play = (title) => document.querySelector(`.albumtracks button[aria-label="Play ${title}"]`);
+const play = (title) =>
+  document.querySelector(`#album-a .albumtracks button[aria-label="Play ${title}"]`);
 const add = (title) =>
   document.querySelector(`.albumtracks button[aria-label="Add ${title} to playlist"]`);
 const available = (entries) => ({
@@ -169,6 +193,202 @@ const available = (entries) => ({
 
 window.albumTests = (async () => {
   const results = [];
+  {
+    fixture();
+    const dispose = await mount();
+    await expand();
+    await click(document.querySelector('#album-b .item-albumtrack'));
+    const loadedAlbumRequests = albumRequests;
+    const tab = (name) =>
+      [...document.querySelectorAll('.tabs .tab')].find((node) => node.textContent === name);
+    const returnToAlbums = async (via) => {
+      await click(tab(via));
+      await click(tab('albums'));
+      for (let attempt = 0; attempt < 40; attempt++) {
+        await act(async () => {
+          await frame();
+        });
+        if (
+          document.querySelector('#album-a .albumtrack') &&
+          document.querySelector('#album-b .albumtrack')
+        ) {
+          assert(
+            albumRequests === loadedAlbumRequests,
+            'Switching lists rechecked open albums and flashed availability notices'
+          );
+          return;
+        }
+      }
+      throw new Error('Switching lists did not preserve both unfolded albums');
+    };
+    await returnToAlbums('tracks');
+    assert(!state.playbackTrack, 'Returning without playback started a track');
+    await click(play(tracks[1].title));
+    const request = state.playbackRequest;
+    for (const via of ['playlist', 'tracks', 'playlist']) {
+      await returnToAlbums(via);
+      assert(
+        document.querySelector('#album-a [data-track-id="two"].is-current'),
+        'Switching lists lost the active album track'
+      );
+      assert(state.playbackRequest === request && !state.pause, 'Switching lists changed playback');
+      assert(
+        !document.querySelector('#album-b .selection-play'),
+        'The unrelated unfolded album received the play icon'
+      );
+    }
+    await dispose();
+    results.push(
+      'PASS: both unfolded albums survive repeated Tracks and Playlist switches, with and without an active track'
+    );
+  }
+  {
+    fixture();
+    const dispose = await mount();
+    for (
+      let attempt = 0;
+      attempt < 40 && !document.querySelector('#album-b .item-albumtrack');
+      attempt++
+    ) {
+      await act(async () => {
+        await frame();
+      });
+    }
+    await click(document.querySelector('#album-b .item-albumtrack'));
+    await act(async () => {
+      dispatch({ type: 'library' });
+      // Covers loads the album into Playlist, then starts its first track.
+      dispatch({ type: 'play-this-album', playlistTracks: tracks, list: 'playlistActive' });
+      dispatch({
+        type: 'select-track',
+        track: tracks[0],
+        index: 0,
+        list: 'playlistActive',
+        play: true
+      });
+    });
+    const request = state.playbackRequest;
+    await act(async () => {
+      dispatch({ type: 'library' });
+      dispatch({ type: 'set-list-type', listType: 'albums' });
+    });
+    await act(async () => {
+      for (let attempt = 0; attempt < 12; attempt++) await frame();
+    });
+    assert(
+      document.querySelector('#album-b .albumtrack'),
+      'Covers playback closed a manually unfolded album'
+    );
+    assert(
+      !document.querySelector('#album-a .albumtracks'),
+      'Covers playback automatically unfolded its album in Lists'
+    );
+    assert(
+      !document.querySelector('.album-playing'),
+      'Playlist playback received an Albums playback highlight'
+    );
+    assert(
+      state.activeList === 'playlistActive' &&
+        state.active === tracks[0].track_id &&
+        !state.pause &&
+        state.playbackRequest === request,
+      'Returning to Albums changed Covers playback'
+    );
+    await dispose();
+    results.push(
+      'PASS: Covers playback keeps its album folded and preserves manually unfolded albums'
+    );
+  }
+  {
+    fixture();
+    albumTrackRows = Array.from({ length: 24 }, (_, index) => ({
+      track_id: `unfinished-${index}`,
+      title: `Unfinished album track ${index + 1}`,
+      audiotrack: `${album.fullpath}/${index + 1}.flac`,
+      track: index + 1
+    }));
+    const playlistTrack = {
+      track_id: 'playlist-song',
+      title: 'Playlist song',
+      audiotrack: other.fullpath + '/01.flac'
+    };
+    playlistRows = [playlistTrack];
+    albumRows.push(
+      ...Array.from({ length: 60 }, (_, index) => ({
+        id: `following-${index}`,
+        foldername: `Following ${index}`,
+        fullpath: `C:/Music/Following ${index}`
+      }))
+    );
+    const dispose = await mount();
+    await expand();
+    const unfinished = albumTrackRows[8];
+    await click(play(unfinished.title));
+    const albumRequest = state.playbackRequest;
+    await act(async () => {
+      document.querySelector('.albums-list').scrollTop = 1250;
+    });
+    for (let attempt = 0; attempt < 40; attempt++) {
+      await act(async () => {
+        await frame();
+      });
+      if (document.querySelector('#album-b .item-albumtrack')) break;
+    }
+    await click(document.querySelector('#album-b .item-albumtrack'));
+    const tab = (name) =>
+      [...document.querySelectorAll('.tabs .tab')].find((node) => node.textContent === name);
+    await click(tab('playlist'));
+    await act(async () => {
+      dispatch({
+        type: 'select-track',
+        track: playlistTrack,
+        index: 0,
+        queue: playlistRows,
+        list: 'playlistActive',
+        play: true,
+        playbackSnapshot: { request: albumRequest, position: 45 }
+      });
+    });
+    const playlistRequest = state.playbackRequest;
+    await click(tab('albums'));
+    let visible = false;
+    for (let attempt = 0; attempt < 60; attempt++) {
+      await act(async () => {
+        await frame();
+      });
+      const row = document.querySelector(`[data-track-id="${unfinished.track_id}"]`);
+      const viewport = document.querySelector('.albums-list').getBoundingClientRect();
+      const bounds = row?.getBoundingClientRect();
+      visible = Boolean(bounds && bounds.top >= viewport.top && bounds.bottom <= viewport.bottom);
+    }
+    assert(
+      visible,
+      'Albums returned to the last unfolded album instead of its unfinished track after Playlist playback'
+    );
+    assert(
+      document.querySelector(`[data-track-id="${unfinished.track_id}"] .selection-play`),
+      'Unfinished album track lost its play indicator'
+    );
+    assert(
+      state.listSelections.albumTracksActive.position === 45,
+      'Browsing another album erased the unfinished track time'
+    );
+    assert(
+      state.playbackRequest === playlistRequest &&
+        state.activeList === 'playlistActive' &&
+        !state.pause,
+      'Returning to Albums interrupted Playlist playback'
+    );
+    await click(document.querySelector(`[data-track-id="${unfinished.track_id}"] .selection-play`));
+    assert(
+      state.playbackStartTime === 45 && state.active === unfinished.track_id,
+      'Album track did not resume at its unfinished position'
+    );
+    await dispose();
+    results.push(
+      'PASS: unfinished album track takes priority over the last unfolded album after Playlist playback and resumes its saved time'
+    );
+  }
   for (const theme of ['basic', 'theme-1']) {
     fixture();
     const dispose = await mount(theme);
@@ -197,7 +417,6 @@ window.albumTests = (async () => {
     );
     input.blur();
     await expand();
-    await click(document.querySelector('#album-a .selection-play'));
     assert(
       !state.playbackTrack,
       'An album with no remembered track automatically started its first track'
@@ -235,6 +454,28 @@ window.albumTests = (async () => {
       'Playing-track marker does not identify the current track uniquely'
     );
     const request = state.playbackRequest;
+    await click(document.querySelector('#album-b .item-albumtrack'));
+    assert(
+      document.querySelector('#album-a .albumtrack.is-current'),
+      'Opening another album hid the playing track'
+    );
+    assert(
+      document.querySelector('#album-b .albumtrack'),
+      'Second album did not unfold independently'
+    );
+    assert(
+      !document.querySelector('#album-b .selection-play'),
+      'Browsing another album placed a play indicator on it'
+    );
+    assert(
+      state.listSelections.albumTracksActive.trackId === 'one',
+      'Browsing erased the remembered track'
+    );
+    await click(document.querySelector('#album-b .item-albumtrack'));
+    assert(
+      document.querySelector('#album-a .albumtrack.is-current'),
+      'Collapsing another album hid the playing track'
+    );
     pending = deferred();
     await click(add(tracks[0].title));
     const addButton = document.querySelector('.albumtrack .album-add-track');
@@ -337,8 +578,7 @@ window.albumTests = (async () => {
       await frame();
       await frame();
     });
-    const saved = scroller.scrollTop;
-    assert(saved > 1000, 'Scroll restoration test did not scroll the album list');
+    assert(scroller.scrollTop > 1000, 'Scroll restoration test did not scroll the album list');
     const tab = (name) =>
       [...document.querySelectorAll('.tabs .tab')].find((element) => element.textContent === name);
     await click(tab('tracks'));
@@ -352,11 +592,13 @@ window.albumTests = (async () => {
         await act(async () => {
           await frame();
         });
-        if (Math.abs(document.querySelector('.albums-list').scrollTop - saved) < 3) return;
+        if (
+          document.querySelector('#album-a') &&
+          document.querySelector('.albums-list').scrollTop < 3
+        )
+          return;
       }
-      throw new Error(
-        `Albums did not restore their saved position: expected ${saved}, got ${document.querySelector('.albums-list').scrollTop}`
-      );
+      throw new Error('Albums did not return to the last unfolded album');
     };
     await waitForPosition();
     await act(async () => {
@@ -382,7 +624,7 @@ window.albumTests = (async () => {
     );
     await dispose();
     results.push(
-      'PASS: Albums restores measured scroll position across tabs and hidden views, and new searches start at the top'
+      'PASS: Albums returns to the last unfolded album across tabs and hidden views, and new searches start at the top'
     );
   }
   {
@@ -409,7 +651,12 @@ window.albumTests = (async () => {
         await act(async () => {
           await frame();
         });
-        if (document.querySelector(selector)) return;
+        if (document.querySelector(selector)) {
+          await act(async () => {
+            for (let index = 0; index < 6; index++) await frame();
+          });
+          return;
+        }
       }
       throw new Error(`Selected ${name} list did not render its rows`);
     };
@@ -423,7 +670,7 @@ window.albumTests = (async () => {
       'Tracks selection was not highlighted'
     );
     await switchTo('albums');
-    await expand();
+    if (!document.querySelector('#album-a .albumtracks')) await expand();
     await click(play(tracks[1].title));
     assert(
       document.querySelector('#album-a')?.classList.contains('album-selected'),
@@ -521,7 +768,8 @@ window.albumTests = (async () => {
       'Album should be collapsed before testing a fresh load'
     );
     pendingAlbum = deferred();
-    await click(document.querySelector('#album-a .selection-play'));
+    await expand();
+    await expand();
     await act(async () => {
       dispatch({
         type: 'select-track',
@@ -535,17 +783,74 @@ window.albumTests = (async () => {
     });
     assert(
       state.active === 'one' && state.activeList === 'tracklistActive',
-      'A delayed album request replaced a newer playback selection'
+      'A delayed expansion request replaced a newer playback selection'
+    );
+    assert(
+      !document.querySelector('#album-a .albumtrack'),
+      'A late response reopened a collapsed album'
     );
     pendingAlbum = null;
+    await expand();
     await click(document.querySelector('#album-a .selection-play'));
     assert(
       state.active === 'two' && state.activeList === 'albumTracksActive' && !state.pause,
-      'Collapsed album indicator did not reload and play the remembered track'
+      'Reopened album did not retain its remembered track play indicator'
     );
     await dispose();
     results.push(
       'PASS: each list restores its own track or album selection after playback elsewhere, without restarting audio'
+    );
+  }
+  {
+    fixture();
+    albumTrackRows = Array.from({ length: 40 }, (_, index) => ({
+      track_id: `long-${index}`,
+      title: `Long album track ${index + 1}`,
+      audiotrack: `${album.fullpath}/${index + 1}.flac`,
+      track: index + 1
+    }));
+    albumRows.push(
+      ...Array.from({ length: 100 }, (_, index) => ({
+        id: `tail-${index}`,
+        foldername: `Tail ${index}`,
+        fullpath: `C:/Music/Tail ${index}`
+      }))
+    );
+    const dispose = await mount();
+    await expand();
+    const target = albumTrackRows[30];
+    await click(play(target.title));
+    const request = state.playbackRequest;
+    await act(async () => {
+      document.querySelector('.albums-list').scrollTop = 4000;
+      await frame();
+      await frame();
+    });
+    const tab = (name) =>
+      [...document.querySelectorAll('.tabs .tab')].find((node) => node.textContent === name);
+    await click(tab('tracks'));
+    await click(tab('albums'));
+    let visible = false;
+    for (let attempt = 0; attempt < 60; attempt++) {
+      await act(async () => {
+        await frame();
+      });
+      const row = document.querySelector(`[data-track-id="${target.track_id}"]`);
+      const viewport = document.querySelector('.albums-list').getBoundingClientRect();
+      const bounds = row?.getBoundingClientRect();
+      if (bounds && bounds.top >= viewport.top && bounds.bottom <= viewport.bottom) {
+        visible = true;
+        break;
+      }
+    }
+    assert(visible, 'Returning to Albums did not reveal the playing track inside a long album');
+    assert(
+      state.playbackRequest === request && state.active === target.track_id,
+      'Restoring the track position restarted playback'
+    );
+    await dispose();
+    results.push(
+      'PASS: returning to Albums centers the playing track inside a long album without restarting playback'
     );
   }
   return results;

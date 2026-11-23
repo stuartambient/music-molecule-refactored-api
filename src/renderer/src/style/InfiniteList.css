@@ -398,6 +398,13 @@ div #minus path {
 .album-track-play svg {
   flex-shrink: 0;
 }
+.album-track-play.selection-play {
+  grid-column: auto;
+  grid-row: auto;
+  width: auto;
+  height: auto;
+  justify-content: flex-start;
+}
 .album-track-title {
   overflow: hidden;
   text-overflow: ellipsis;

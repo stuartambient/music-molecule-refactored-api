@@ -178,14 +178,9 @@ const audioPlayerReducer = (state, action) => {
     case 'select-track':
       return selectPlaybackTrack(state, action);
     case 'select-album': {
-      const previous = state.listSelections?.albumTracksActive;
       return {
         ...state,
-        listSelections: {
-          ...state.listSelections,
-          albumTracksActive:
-            previous?.albumPath === action.albumPath ? previous : { albumPath: action.albumPath }
-        }
+        selectedAlbumPath: action.albumPath
       };
     }
     case 'advance-track':

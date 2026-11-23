@@ -53,6 +53,7 @@ function AlbumTrack({ track, index, tracks, albumPath }) {
     <li
       className={`albumtrack${current ? ' is-current' : ''}${selected && active ? ' is-selected' : ''}${selected && !active ? ' is-remembered' : ''}`}
       data-selected={selected || undefined}
+      data-track-id={track.track_id}
       data-playback-problem={problem ? true : undefined}
     >
       <span className="album-track-number">
@@ -62,7 +63,7 @@ function AlbumTrack({ track, index, tracks, albumPath }) {
       </span>
       <button
         type="button"
-        className="album-track-play"
+        className={`album-track-play${selected && !active ? ' selection-play' : ''}`}
         title={`Play ${title}`}
         aria-label={`${problem ? 'Retry' : 'Play'} ${title}`}
         aria-current={current ? 'true' : undefined}
@@ -74,7 +75,8 @@ function AlbumTrack({ track, index, tracks, albumPath }) {
             queue: tracks,
             list: 'albumTracksActive',
             albumPath,
-            play: true
+            play: true,
+            resume: selected && !active
           })
         }
       >
