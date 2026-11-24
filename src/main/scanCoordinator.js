@@ -1,5 +1,5 @@
 // Share one scan of each kind per catalog, retaining ownership until its worker exits.
-export function createScanCoordinator() {
+export function createScanCoordinator({ onChange = () => {} } = {}) {
   const active = new Map();
   return function runScan({
     kind,
@@ -32,6 +32,13 @@ export function createScanCoordinator() {
           formatted = formatResult(result);
         } catch (failure) {
           error = failure;
+        }
+      }
+      if (!error && !result.nochange) {
+        try {
+          onChange(kind, result);
+        } catch (failure) {
+          console.error('Could not refresh catalog views:', failure);
         }
       }
       for (const receiver of job.targets) {

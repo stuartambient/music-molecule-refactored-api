@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { commitScanChanges } from '../src/main/utility/scanWrites.js';
 const require = createRequire(import.meta.url);
 const Database = require('better-sqlite3');
-const db = new Database(workerData.dbPath);
+const db = new Database(workerData.dbPath, { timeout: workerData.timeout ?? 5000 });
 const { kind, rows } = workerData;
 const table = kind === 'files' ? '"audio-tracks"' : 'albums';
 const column = kind === 'files' ? 'audiotrack' : 'fullpath';

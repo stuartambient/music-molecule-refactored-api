@@ -130,3 +130,22 @@ test('closed windows are skipped and file summaries retain their UI shape', asyn
   assert.deepEqual(closed.messages, []);
   assert.deepEqual(live.messages, [['update-complete', 'files', { new: 2 }]]);
 });
+
+test('committed changes refresh views once for shared scheduled/manual scans, and no-op scans do not', async () => {
+  const changes = [];
+  const coordinate = createScanCoordinator({ onChange: (...args) => changes.push(args) });
+  const worker = new EventEmitter();
+  worker.postMessage = () => {};
+  const options = { kind: 'files', createWorker: () => worker, workerData: 'catalog.db' };
+  const first = coordinate(options);
+  assert.equal(coordinate({ ...options, target: receiver() }), first);
+  complete(worker, { new: ['file'], nochange: false });
+  await first;
+  assert.equal(changes.length, 1);
+  const nextWorker = new EventEmitter();
+  nextWorker.postMessage = () => {};
+  const next = coordinate({ ...options, createWorker: () => nextWorker });
+  complete(nextWorker, { new: [], nochange: true });
+  await next;
+  assert.equal(changes.length, 1);
+});

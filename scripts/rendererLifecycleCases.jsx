@@ -41,28 +41,6 @@ const mount = () => {
     }
   };
 };
-const timers = () => {
-  const nativeSet = window.setTimeout,
-    nativeClear = window.clearTimeout;
-  const jobs = [];
-  window.setTimeout = (callback, delay, ...args) => {
-    if (delay !== 250 && delay !== 500) return nativeSet(callback, delay, ...args);
-    const job = { callback, cancelled: false };
-    jobs.push(job);
-    return job;
-  };
-  window.clearTimeout = (id) => {
-    if (jobs.includes(id)) id.cancelled = true;
-    else nativeClear(id);
-  };
-  return {
-    jobs,
-    restore() {
-      window.setTimeout = nativeSet;
-      window.clearTimeout = nativeClear;
-    }
-  };
-};
 
 window.lifecycleTests = (async () => {
   const results = await testPlaybackPositions();
@@ -173,15 +151,17 @@ window.lifecycleTests = (async () => {
   window.Audio = nativeAudio;
 
   for (const kind of ['albums', 'covers']) {
-    const clock = timers();
     const view = mount();
     const actions = [];
     const dispatch = (action) => actions.push(action);
+    const requests = new Map();
     let snapshot;
-    window.ipcApi = {
-      getAlbums: async (_page, term) => [term],
-      getCovers: async (_page, term) => [term]
+    const load = (_cursor, term) => {
+      const pending = deferred();
+      requests.set(term, pending);
+      return pending.promise;
     };
+    window.ipcApi = { getAlbums: load, getCovers: load };
     function Probe({ term }) {
       snapshot =
         kind === 'albums'
@@ -189,36 +169,30 @@ window.lifecycleTests = (async () => {
           : useAllAlbumsCovers(0, term, 'DESC', 'not-requested', dispatch, 0);
       return null;
     }
-    try {
-      await view.render(<Probe term="old" />);
-      const old = clock.jobs.at(-1);
-      await view.render(<Probe term="new" />);
-      assert(old.cancelled, `${kind}: old result timer was not cancelled`);
-      await act(async () => {
-        old.callback();
-      });
-      assert(actions.length === 0, `${kind}: cancelled callback dispatched stale data`);
-      await act(async () => {
-        clock.jobs.at(-1).callback();
-      });
-      assert(actions.length === 1, `${kind}: current result did not dispatch`);
-      assert((actions[0].albums || actions[0].covers)[0] === 'new', `${kind}: wrong result`);
-      assert(
-        snapshot[kind === 'albums' ? 'albumsLoading' : 'coversLoading'] === false,
-        `${kind}: loading never finished`
-      );
-      await view.render(<Probe term="unmounted" />);
-      const pending = clock.jobs.at(-1);
-      await view.dispose();
-      assert(pending.cancelled, `${kind}: unmount did not clear result timer`);
-      await act(async () => {
-        pending.callback();
-      });
-      assert(actions.length === 1, `${kind}: unmounted callback dispatched`);
-      results.push(`PASS: ${kind} ignores delayed callbacks after replacement and unmount`);
-    } finally {
-      clock.restore();
-    }
+    await view.render(<Probe term="old" />);
+    await view.render(<Probe term="new" />);
+    await act(async () => {
+      requests.get('old').resolve({ items: ['old'], nextCursor: null });
+    });
+    assert(actions.length === 0, `${kind}: obsolete response dispatched stale data`);
+    await act(async () => {
+      requests.get('new').resolve({ items: ['new'], nextCursor: null });
+    });
+    assert(
+      actions.length === 1 && (actions[0].albums || actions[0].covers)[0] === 'new',
+      `${kind}: wrong current result`
+    );
+    assert(
+      snapshot[kind === 'albums' ? 'albumsLoading' : 'coversLoading'] === false,
+      `${kind}: loading never finished`
+    );
+    await view.render(<Probe term="unmounted" />);
+    await view.dispose();
+    await act(async () => {
+      requests.get('unmounted').resolve({ items: ['unmounted'], nextCursor: null });
+    });
+    assert(actions.length === 1, `${kind}: unmounted response dispatched`);
+    results.push(`PASS: ${kind} ignores cursor responses after query replacement and unmount`);
   }
 
   for (const lateFailure of [false, true]) {
@@ -252,7 +226,7 @@ window.lifecycleTests = (async () => {
     await view.render(<Probe shuffle={true} />);
     await view.render(<Probe shuffle={false} />);
     await act(async () => {
-      current.resolve([{ track_id: 'current' }]);
+      current.resolve({ items: [{ track_id: 'current' }], nextCursor: null });
     });
     const before = actions.length;
     await act(async () => {
@@ -287,6 +261,81 @@ window.lifecycleTests = (async () => {
     });
     assert(updates.length === 0, 'Directory request updated an unmounted component');
     results.push('PASS: directory response is ignored after unmount');
+  }
+  {
+    const view = mount(),
+      actions = [],
+      calls = [];
+    const dispatch = (action) => actions.push(action);
+    const firstCursor = { scope: 'test', key: [1, 'a', 1] };
+    const pending = deferred();
+    window.ipcApi = {
+      getAlbums: async (cursor) => {
+        calls.push(cursor);
+        if (calls.length === 1) return { items: [{ id: 'a' }], nextCursor: firstCursor };
+        if (calls.length === 2) return pending.promise;
+        return { items: [{ id: 'fresh' }], nextCursor: null };
+      }
+    };
+    function Probe({ page, revision }) {
+      useAlbums(page, '', 'ASC', '', dispatch, revision);
+      return null;
+    }
+    await view.render(<Probe page={0} revision={0} />);
+    await view.render(<Probe page={1} revision={0} />);
+    assert(
+      calls[0] === null && calls[1] === firstCursor,
+      'Second page used a row offset instead of its cursor'
+    );
+    await view.render(<Probe page={0} revision={1} />);
+    await act(async () => {
+      pending.resolve({ items: [{ id: 'stale' }], nextCursor: null });
+    });
+    assert(
+      actions.length === 2 && actions[1].albums[0].id === 'fresh' && actions[1].replace,
+      'Catalog refresh appended stale in-flight page data'
+    );
+    assert(calls[2] === null, 'Catalog refresh reused an obsolete cursor');
+    await view.dispose();
+    results.push('PASS: cursor paging and scan revisions reject stale in-flight pages');
+  }
+  {
+    const view = mount(),
+      first = deferred(),
+      actions = [],
+      cursors = [];
+    const dispatch = (action) => actions.push(action);
+    const next = { scope: 'test', key: [1, 'a', 1] };
+    window.ipcApi = {
+      getAlbums: (cursor) => {
+        cursors.push(cursor);
+        return cursor === null
+          ? first.promise
+          : Promise.resolve({ items: [{ id: 'b' }], nextCursor: null });
+      }
+    };
+    function Probe({ page }) {
+      useAlbums(page, '', 'ASC', '', dispatch);
+      return null;
+    }
+    await view.render(<Probe page={0} />);
+    await view.render(<Probe page={1} />);
+    await act(async () => {
+      first.resolve({ items: [{ id: 'a' }], nextCursor: next });
+    });
+    assert(
+      cursors.length === 2 && cursors[0] === null && cursors[1] === next,
+      'Rapid next-page request lost its prerequisite cursor'
+    );
+    assert(
+      actions.length === 2 &&
+        actions[0].replace &&
+        !actions[1].replace &&
+        actions[1].albums[0].id === 'b',
+      'Rapid paging skipped or duplicated a page'
+    );
+    await view.dispose();
+    results.push('PASS: early next-page requests await their cursor without losing rows');
   }
   return results;
 })();

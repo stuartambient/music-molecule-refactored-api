@@ -333,7 +333,12 @@ async function changeSemicolonDelimeter() {
 }
 /* setTimeout(() => changeSemicolonDelimeter(), 3000); */
 
-const coordinateScan = createScanCoordinator();
+const coordinateScan = createScanCoordinator({
+  onChange: (kind) => {
+    if (mainWindow && !mainWindow.isDestroyed())
+      mainWindow.webContents.send('catalog-changed', kind);
+  }
+});
 
 function runCatalogScan(kind, target) {
   return coordinateScan({

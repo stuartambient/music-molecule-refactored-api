@@ -65,6 +65,7 @@ export const ipcContracts = {
       'track-like-removed',
       'track-liked',
       'tracks-loaded',
+      'catalog-changed',
       'update-complete',
       'update-error',
       'updated-tags',

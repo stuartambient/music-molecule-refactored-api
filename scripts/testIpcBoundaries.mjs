@@ -104,13 +104,13 @@ test('event callbacks receive data without the privileged event and unsubscribe 
 });
 test('the registered owner, top-level frame, and exact renderer document are all required', () => {
   const main = windowFor('main');
-  assert.equal(allow(main, 'get-tracks', [0, '', 'ASC']), 'main');
+  assert.equal(allow(main, 'get-tracks', [null, '', 'ASC']), 'main');
   assert.throws(() =>
     authorizeIpc(
       { ...event(main), senderFrame: { url: main.webContents.mainFrame.url } },
       'invoke',
       'get-tracks',
-      [0, '', 'ASC']
+      [null, '', 'ASC']
     )
   );
   const original = main.webContents.mainFrame.url;
@@ -143,8 +143,8 @@ test('malformed sort, pagination, root, menu, and preference arguments are rejec
     editor = windowFor('editor');
   for (const args of [
     [-1, '', 'ASC'],
-    [0, '', 'DESC; DROP TABLE albums'],
-    [0, {}, 'ASC']
+    [null, '', 'DESC; DROP TABLE albums'],
+    [null, {}, 'ASC']
   ])
     assert.throws(() => allow(main, 'get-tracks', args));
   assert.throws(() => allow(main, 'update-roots', [['relative/path']]));
@@ -265,3 +265,21 @@ test('all registered handlers have a validator and per-window permission', () =>
   assert.equal(channels.filter(([, name]) => name === 'window-action').length, 1);
 });
 hooks.deregister();
+
+test('library cursor envelopes accept bounded keys and reject malformed payloads', () => {
+  const main = windowFor('main');
+  const cursor = { scope: JSON.stringify(['tracks', 'ASC', '', false]), key: [null, 'track', 12] };
+  assert.equal(allow(main, 'get-tracks', [cursor, '', 'ASC']), 'main');
+  for (const malformed of [
+    0,
+    {},
+    [],
+    { ...cursor, extra: true },
+    { ...cursor, key: [1, 'track', 1.5] },
+    { ...cursor, key: [1, 'track', 12, 13] },
+    { ...cursor, key: [true, 'track', 12] },
+    { ...cursor, scope: 'x'.repeat(20000) }
+  ]) {
+    assert.throws(() => allow(main, 'get-tracks', [malformed, '', 'ASC']));
+  }
+});

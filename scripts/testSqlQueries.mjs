@@ -31,7 +31,19 @@ const hooks = registerHooks({
     return next(specifier, context);
   }
 });
-const sql = await import('../src/main/sql.js');
+const pages = await import('../src/main/sql.js');
+// Matching assertions use rows; cursor traversal below exercises the complete page envelope.
+const sql = { ...pages };
+for (const name of [
+  'allTracksByScroll',
+  'allTracksBySearchTerm',
+  'allAlbumsByScroll',
+  'allAlbumsBySearchTerm',
+  'allCoversByScroll',
+  'allMissingCoversByScroll'
+]) {
+  sql[name] = (cursor, ...args) => pages[name](cursor === 0 ? null : cursor, ...args).items;
+}
 hooks.deregister();
 delete globalThis.sqlQueryTestDb;
 after(() => db.close());
@@ -197,31 +209,35 @@ test('all library pages use deterministic timestamp and ID ordering in both dire
     }
   })();
   const pageQueries = [
-    [(page, order) => sql.allTracksByScroll(page, order), 'track_id', 200, false],
-    [(page, order) => sql.allTracksBySearchTerm(page, 'id Music', order), 'track_id', 200, false],
-    [(page, order) => sql.allAlbumsByScroll(page, order), 'id', 200, false],
-    [(page, order) => sql.allAlbumsBySearchTerm(page, 'id Music', order), 'id', 200, false],
-    [(page, order) => sql.allCoversByScroll(page, order, ''), 'id', 100, false],
-    [(page, order) => sql.allCoversByScroll(page, order, 'id Music'), 'id', 100, false],
-    [(page, order) => sql.allMissingCoversByScroll(page, order), 'id', 100, true]
+    [(page, order) => pages.allTracksByScroll(page, order), 'track_id', 200, false],
+    [(page, order) => pages.allTracksBySearchTerm(page, 'id Music', order), 'track_id', 200, false],
+    [(page, order) => pages.allAlbumsByScroll(page, order), 'id', 200, false],
+    [(page, order) => pages.allAlbumsBySearchTerm(page, 'id Music', order), 'id', 200, false],
+    [(page, order) => pages.allCoversByScroll(page, order, ''), 'id', 100, false],
+    [(page, order) => pages.allCoversByScroll(page, order, 'id Music'), 'id', 100, false],
+    [(page, order) => pages.allMissingCoversByScroll(page, order), 'id', 100, true]
   ];
   for (const order of ['ASC', 'DESC']) {
     const sorted = [...rows].sort(
       (a, b) => (a.birth ?? -1) - (b.birth ?? -1) || a.id.localeCompare(b.id)
     );
     if (order === 'DESC') sorted.reverse();
-    for (const [query, key, size, missing] of pageQueries) {
+    for (const [query, key, _size, missing] of pageQueries) {
       const expected = sorted.filter((row) => !missing || row.missing).map((row) => row.id);
       const actual = [];
-      for (let page = 0; page <= Math.ceil(expected.length / size); page++)
-        actual.push(...ids(query(page, order), key));
+      let cursor = null;
+      do {
+        const page = query(cursor, order);
+        actual.push(...ids(page.items, key));
+        cursor = page.nextCursor;
+      } while (cursor);
       assert.deepEqual(actual, expected);
       assert.equal(new Set(actual).size, actual.length);
     }
   }
 });
 
-test('sort tokens are normalized inside every query and offsets are bound and validated', () => {
+test('sort tokens are normalized inside every query and cursors are bound and validated', () => {
   reset();
   for (const id of ['a', 'b']) {
     track.run(id, `Music/${id}`, 1);
@@ -323,4 +339,82 @@ test('root replacement is atomic and rolls back deletions when an insertion fail
   assert.deepEqual(sql.getRoots().sort(), ['C:/Keep', 'F:/New']);
   assert.deepEqual(sql.updateRoots([]), [{ Deleted: 2 }]);
   assert.deepEqual(sql.getRoots(), []);
+});
+
+test('cursor pages do not skip or repeat rows when earlier rows are deleted or inserted', () => {
+  for (const sort of ['ASC', 'DESC']) {
+    reset();
+    for (let i = 0; i < 450; i++) {
+      const id = String(i).padStart(5, '0');
+      track.run(id, `C:/Music/${id}/01.flac`, i);
+      album.run(id, `C:/Music/${id}`, i, null);
+    }
+    for (const [kind, query, key] of [
+      ['tracks', (cursor) => pages.allTracksByScroll(cursor, sort), 'track_id'],
+      ['albums', (cursor) => pages.allAlbumsByScroll(cursor, sort), 'id'],
+      ['covers', (cursor) => pages.allCoversByScroll(cursor, sort), 'id']
+    ]) {
+      const first = query(null);
+      const original = Array.from({ length: 450 }, (_, i) => String(i).padStart(5, '0'));
+      if (sort === 'DESC') original.reverse();
+      const table = kind === 'tracks' ? '"audio-tracks"' : 'albums';
+      const column = kind === 'tracks' ? 'track_id' : 'id';
+      // Remove a consumed row; OFFSET would now skip one of the unread rows.
+      const consumed = first.items[0][key];
+      db.prepare(`DELETE FROM ${table} WHERE ${column} = ?`).run(consumed);
+      const ahead = sort === 'ASC' ? -1 : 99999;
+      if (kind === 'tracks') track.run('new-ahead', 'C:/New/01.flac', ahead);
+      else album.run('new-ahead', 'C:/New', ahead, null);
+      const seen = ids(first.items, key);
+      let cursor = first.nextCursor;
+      while (cursor) {
+        const page = query(cursor);
+        seen.push(...ids(page.items, key));
+        cursor = page.nextCursor;
+      }
+      // Other query variants may have previously mutated this same table; compare
+      // the original rows still present before this variant's first page below.
+      assert.equal(new Set(seen).size, seen.length);
+      assert.deepEqual(
+        seen.filter((id) => id !== 'new-ahead'),
+        original
+      );
+      db.prepare(`DELETE FROM ${table} WHERE ${column} = 'new-ahead'`).run();
+      if (kind === 'tracks') track.run(consumed, `C:/Music/${consumed}/01.flac`, Number(consumed));
+      else album.run(consumed, `C:/Music/${consumed}`, Number(consumed), null);
+    }
+  }
+});
+
+test('cursor traversal retains legacy null timestamps and IDs across page boundaries', () => {
+  reset();
+  for (let i = 0; i < 450; i++) track.run(i % 3 ? `id-${i}` : null, `file-${i}`, i % 2 ? 1 : null);
+  for (const sort of ['ASC', 'DESC']) {
+    const expected = db
+      .prepare(
+        `SELECT audiotrack FROM "audio-tracks" ORDER BY birthtime ${sort}, track_id ${sort}, rowid ${sort}`
+      )
+      .all()
+      .map((row) => row.audiotrack);
+    const actual = [];
+    let cursor = null;
+    do {
+      const page = pages.allTracksByScroll(cursor, sort);
+      actual.push(...page.items.map((row) => row.audiotrack));
+      cursor = page.nextCursor;
+    } while (cursor);
+    assert.deepEqual(actual, expected);
+  }
+});
+
+test('cursors cannot be reused for another query and exact final pages have no next cursor', () => {
+  reset();
+  for (let i = 0; i < 201; i++) track.run(`id-${i}`, `Music/${i}`, i);
+  const first = pages.allTracksByScroll(null, 'ASC');
+  assert(first.nextCursor);
+  assert.throws(() => pages.allTracksByScroll(first.nextCursor, 'DESC'), RangeError);
+  assert.throws(() => pages.allTracksBySearchTerm(first.nextCursor, 'Music', 'ASC'), RangeError);
+  assert.throws(() => pages.allAlbumsByScroll(first.nextCursor, 'ASC'), RangeError);
+  db.prepare('DELETE FROM "audio-tracks" WHERE track_id = ?').run('id-200');
+  assert.equal(pages.allTracksByScroll(null, 'ASC').nextCursor, null);
 });

@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { isLibraryCursor } from '../shared/libraryCursor.js';
 import { childDefinitions } from './childWindowDefinitions.js';
 
 const text = (value, max = 8192) =>
@@ -263,8 +264,8 @@ Object.assign(validators, {
   'artwork-view': argsOf(bool),
   'update-roots': argsOf((value) => list(value, location)),
   'get-folder-path': argsOf((value) => text(value)),
-  'get-tracks': argsOf(page, (value) => text(value, 4096), oneOf('ASC', 'DESC')),
-  'get-albums': argsOf(page, (value) => text(value, 4096), oneOf('ASC', 'DESC')),
+  'get-tracks': argsOf(isLibraryCursor, (value) => text(value, 4096), oneOf('ASC', 'DESC')),
+  'get-albums': argsOf(isLibraryCursor, (value) => text(value, 4096), oneOf('ASC', 'DESC')),
   'get-album-tracks': argsOf(locations),
   'check-track-availability': argsOf(location),
   'get-cover': argsOf(location),
@@ -285,7 +286,7 @@ Object.assign(validators, {
   'get-albums-by-root': argsOf(strings),
   'save-playlist': argsOf((value) => list(value, track)),
   'get-covers': argsOf(
-    page,
+    isLibraryCursor,
     (value) => text(value, 4096),
     oneOf('ASC', 'DESC'),
     oneOf('not-requested', 'missing-covers')

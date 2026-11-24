@@ -1,195 +1,35 @@
 /* import { is } from '@electron-toolkit/utils'; */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
+import useLibraryPages from './useLibraryPages';
 import { requestMusicTracks } from '../utility/musicRequests';
 import { sortAlbumTracks } from '../utility/albumTrackOrder';
 
-const useTracks = (
-  tracksPageNumber,
-  tracksSearchTerm,
-  sortType,
-  resetKey,
-  state,
-  dispatch,
-  tracksShuffle
-) => {
-  const [tracksLoading, setTracksLoading] = useState(true);
-  const [tracksError, setTracksError] = useState(false);
-  const [hasMoreTracks, setHasMoreTracks] = useState(false);
-
-  const isSubBoolean = useCallback(() => {
-    if (state.pendingAdvance) return true;
-    if (tracksPageNumber === 0 && state.tracks.length === 200) {
-      /*       console.log('case #: ', 1); */
-      return false;
-    } else if (state.tracksShuffle && state.tracks.length === 0) {
-      /* console.log('case #: ', 2); */
-      return true;
-    } else if (tracksPageNumber === 1 && state.tracks.length === 400) {
-      /* console.log('case #: ', 3); */
-      return false;
-    } else if (tracksPageNumber > 1 && tracksPageNumber * 200 === state.tracks.length - 200) {
-      /* console.log('case #: ', 4); */
-      return false;
-    } else if (state.listType === 'albums') {
-      /*  console.log('case #: ', 5); */
-      return false;
-    } else {
-      /* console.log('case #: ', 6); */
-      return true;
-    }
-  }, [
-    tracksPageNumber,
-    state.tracks.length,
-    state.tracksShuffle,
-    state.listType,
-    state.pendingAdvance
-  ]);
-
-  useEffect(() => {
-    //let isSubscribed = true;
-
-    let isSubscribed = isSubBoolean();
-
-    const loadTracks = async () => {
-      setTracksLoading(true);
-      setTracksError(false);
-
-      let trackRequest = await window.ipcApi.getTracks(
-        tracksPageNumber,
-        tracksSearchTerm,
-        sortType
-      );
-      if (trackRequest && isSubscribed) {
-        if (tracksPageNumber === 0) {
-          dispatch({
-            type: 'add-tracks',
-            tracks: trackRequest
-          });
-
-          setTracksLoading(false);
-          setHasMoreTracks(trackRequest.length === 200);
-        }
-        if (tracksPageNumber > 0) {
-          dispatch({
-            type: 'tracks-playlist',
-            tracks: trackRequest
-          });
-
-          setTracksLoading(false);
-          setHasMoreTracks(trackRequest.length === 200);
-        }
-      }
-    };
-
-    const loadShuffledTracks = async () => {
-      setTracksLoading(true);
-      setTracksError(false);
-      if (tracksPageNumber === 0) {
-        await window.ipcApi.setShuffledTracksArray();
-      }
-
-      if (!isSubscribed) return;
-
-      const shuffledTracks = await window.ipcApi.getShuffledTracks(tracksPageNumber);
-      if (shuffledTracks && isSubscribed) {
-        if (tracksPageNumber === 0) {
-          dispatch({
-            type: 'add-tracks',
-            tracks: shuffledTracks
-          });
-          setHasMoreTracks(shuffledTracks.length === 200);
-          setTracksLoading(false);
-        }
-
-        if (tracksPageNumber > 0) {
-          dispatch({
-            type: 'tracks-playlist',
-            tracks: shuffledTracks
-          });
-          setHasMoreTracks(shuffledTracks.length === 200);
-          setTracksLoading(false);
-        }
-      }
-    };
-
-    const request = tracksShuffle ? loadShuffledTracks() : loadTracks();
-    request.catch((error) => {
-      if (!isSubscribed) return;
-      setTracksLoading(false);
-      setTracksError(error.message);
-      dispatch({
-        type: 'tracks-load-failed',
-        error: {
-          message:
-            'The next library page could not be loaded. Reload the list or select another track.'
-        }
-      });
-    });
-    return () => (isSubscribed = false);
-  }, [
-    tracksPageNumber,
-    tracksSearchTerm,
-    sortType,
+const useTracks = (page, term, sort, resetKey, state, dispatch, shuffle) => {
+  const result = useLibraryPages(
+    'tracks',
+    page,
+    term,
+    sort,
     resetKey,
-    tracksShuffle,
     dispatch,
-    state.listType
-  ]);
+    state.tracksRevision || 0,
+    shuffle
+  );
   return {
-    tracksLoading,
-    hasMoreTracks,
-    tracksError,
-    tracksShuffle,
+    tracksLoading: result.loading,
+    tracksError: result.error,
+    hasMoreTracks: result.hasMore,
+    tracksShuffle: shuffle,
     resetKey
   };
 };
-
-const useAlbums = (albumsPageNumber, albumsSearchTerm, sortType, resetKey, dispatch) => {
-  const [albumsLoading, setAlbumsLoading] = useState(true);
-  const [albumsError, setAlbumsError] = useState(false);
-  const [hasMoreAlbums, setHasMoreAlbums] = useState(false);
-
-  useEffect(() => {
-    let isSubscribed = true;
-    let resultTimer;
-
-    const loadAlbums = async () => {
-      try {
-        setAlbumsLoading(true);
-        setAlbumsError(false);
-        const albumRequest = await window.ipcApi.getAlbums(
-          albumsPageNumber,
-          albumsSearchTerm,
-          sortType
-        );
-
-        if (albumRequest && isSubscribed) {
-          resultTimer = setTimeout(() => {
-            if (!isSubscribed) return;
-            dispatch({
-              type: 'albums-playlist',
-              albums: albumRequest
-            });
-            setHasMoreAlbums(albumRequest.length === 200);
-            setAlbumsLoading(false);
-          }, 500);
-        }
-      } catch (error) {
-        if (isSubscribed) {
-          setAlbumsError(true);
-          setAlbumsLoading(false);
-        }
-      }
-    };
-
-    loadAlbums();
-    return () => {
-      isSubscribed = false;
-      clearTimeout(resultTimer);
-    };
-  }, [albumsPageNumber, albumsSearchTerm, sortType, resetKey, dispatch]);
-
-  return { albumsLoading, hasMoreAlbums, albumsError };
+const useAlbums = (page, term, sort, resetKey, dispatch, revision = 0) => {
+  const result = useLibraryPages('albums', page, term, sort, resetKey, dispatch, revision);
+  return {
+    albumsLoading: result.loading,
+    albumsError: result.error,
+    hasMoreAlbums: result.hasMore
+  };
 };
 
 const useAlbumTracks = (pattern, dispatch, cache) => {
@@ -272,76 +112,23 @@ const useGenres = (setGenres) => {
   /* return genres; */
 };
 
-const useAllAlbumsCovers = (
-  coversPageNumber,
-  coversSearchTerm,
-  coversDateSort,
-  coversMissingReq,
-  dispatch,
-  /* resetKey, */
-  coverslength
-) => {
-  /*   console.log('reset key: ', resetKey); */
-  const [coversLoading, setCoversLoading] = useState(true);
-  const [coversError, setCoversError] = useState(false);
-  const [hasMoreCovers, setHasMoreCovers] = useState(false);
-
-  useEffect(() => {
-    let isSubscribed = true;
-    let resultTimer;
-
-    const loadCovers = async () => {
-      try {
-        setCoversLoading(true);
-        setCoversError(false);
-
-        const coversRequest = await window.ipcApi.getCovers(
-          coversPageNumber,
-          coversSearchTerm,
-          coversDateSort,
-          coversMissingReq
-        );
-
-        if (coversRequest && isSubscribed) {
-          resultTimer = setTimeout(() => {
-            if (!isSubscribed) return;
-            dispatch({
-              type: 'set-covers',
-              covers: coversRequest
-            });
-
-            setHasMoreCovers(coversRequest.length >= 100);
-            setCoversLoading(false);
-          }, 250); // Adjust the delay time (500ms) as needed
-        }
-      } catch (error) {
-        if (isSubscribed) {
-          setCoversError(true);
-          setCoversLoading(false);
-        }
-      }
-    };
-
-    // Condition to decide when to load covers
-    if ((coversPageNumber === 0 && coverslength === 0) || coversPageNumber * 100 === coverslength) {
-      loadCovers();
-    }
-
-    return () => {
-      isSubscribed = false;
-      clearTimeout(resultTimer);
-    };
-  }, [
-    coversPageNumber,
-    coversSearchTerm,
-    coversDateSort,
-    coversMissingReq,
+const useAllAlbumsCovers = (page, term, sort, missing, dispatch, _length, revision = 0) => {
+  const result = useLibraryPages(
+    'covers',
+    page,
+    term,
+    sort,
+    '',
     dispatch,
-    /*  resetKey, */
-    coverslength
-  ]);
-
-  return { coversLoading, hasMoreCovers, coversError };
+    revision,
+    false,
+    missing
+  );
+  return {
+    coversLoading: result.loading,
+    coversError: result.error,
+    hasMoreCovers: result.hasMore
+  };
 };
 
 const usePlaylistDialog = (req, playlistTracks, dispatch, setPlaylistReq) => {

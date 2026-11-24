@@ -1,5 +1,6 @@
 import db from './connection';
 import { registerLibrarySearch } from './librarySearch.js';
+import { readLibraryPage } from './libraryPages.js';
 
 const createAlbumsTable = `CREATE TABLE IF NOT EXISTS albums ( 
     id PRIMARY KEY, 
@@ -123,63 +124,17 @@ const getAllTracks = (rows) => {
   return ids.map((id) => map.get(id)).filter(Boolean);
 };
 
-const sortDirection = (sort) => (sort === 'ASC' ? 'ASC' : 'DESC');
 const escapeLike = (text) => text.replace(/[%_^]/g, '^$&');
-const pageOffset = (page, size) => {
-  if (!Number.isSafeInteger(page) || page < 0 || !Number.isSafeInteger(page * size))
-    throw new RangeError('Invalid library page.');
-  return page * size;
-};
-
-const allTracksByScroll = (offsetNum, sort) => {
-  const order = sortDirection(sort);
-  const query = `SELECT track_id, like, audiotrack, performers, title, album FROM "audio-tracks" ORDER BY birthtime ${order}, track_id ${order}, rowid ${order} LIMIT 200 OFFSET ?`;
-  return db.prepare(query).all(pageOffset(offsetNum, 200));
-};
-
-const allTracksBySearchTerm = (offsetNum, text, sort) => {
-  const order = sortDirection(sort);
-  const query = `SELECT track_id, like, audiotrack, performers, title, album FROM "audio-tracks" WHERE library_search(audiotrack, ?) ORDER BY birthtime ${order}, track_id ${order}, rowid ${order} LIMIT 200 OFFSET ?`;
-  return db.prepare(query).all(text, pageOffset(offsetNum, 200));
-};
-
-const allAlbumsByScroll = (offsetNum, sort) => {
-  const order = sortDirection(sort);
-  const query = `SELECT * FROM albums ORDER BY birthtime ${order}, id ${order}, rowid ${order} LIMIT 200 OFFSET ?`;
-  return db.prepare(query).all(pageOffset(offsetNum, 200));
-};
-
-const allAlbumsBySearchTerm = (offsetNum, text, sort) => {
-  const order = sortDirection(sort);
-  const query = `SELECT * FROM albums WHERE library_search(fullpath, ?) ORDER BY birthtime ${order}, id ${order}, rowid ${order} LIMIT 200 OFFSET ?`;
-  return db.prepare(query).all(text, pageOffset(offsetNum, 200));
-};
-
-const allCoversByScroll = (offsetNum, sort, term = '') => {
-  const order = sortDirection(sort);
-  const offset = pageOffset(offsetNum, 100);
-  if (!term) {
-    return db
-      .prepare(
-        `SELECT id, foldername, fullpath, img FROM albums ORDER BY birthtime ${order}, id ${order}, rowid ${order} LIMIT 100 OFFSET ?`
-      )
-      .all(offset);
-  }
-  return db
-    .prepare(
-      `SELECT id, foldername, fullpath, img FROM albums WHERE library_search(fullpath, ?) ORDER BY birthtime ${order}, id ${order}, rowid ${order} LIMIT 100 OFFSET ?`
-    )
-    .all(term, offset);
-};
-
-const allMissingCoversByScroll = (offsetNum, sort) => {
-  const order = sortDirection(sort);
-  return db
-    .prepare(
-      `SELECT id, foldername, fullpath, img FROM albums WHERE img IS NULL ORDER BY birthtime ${order}, id ${order}, rowid ${order} LIMIT 100 OFFSET ?`
-    )
-    .all(pageOffset(offsetNum, 100));
-};
+const allTracksByScroll = (cursor, sort) => readLibraryPage(db, { kind: 'tracks', cursor, sort });
+const allTracksBySearchTerm = (cursor, term, sort) =>
+  readLibraryPage(db, { kind: 'tracks', cursor, term, sort });
+const allAlbumsByScroll = (cursor, sort) => readLibraryPage(db, { kind: 'albums', cursor, sort });
+const allAlbumsBySearchTerm = (cursor, term, sort) =>
+  readLibraryPage(db, { kind: 'albums', cursor, term, sort });
+const allCoversByScroll = (cursor, sort, term = '') =>
+  readLibraryPage(db, { kind: 'covers', cursor, sort, term });
+const allMissingCoversByScroll = (cursor, sort) =>
+  readLibraryPage(db, { kind: 'covers', cursor, sort, missing: true });
 
 const filesByAlbum = (albumPath) => {
   const paths = Array.isArray(albumPath) ? albumPath : [albumPath];

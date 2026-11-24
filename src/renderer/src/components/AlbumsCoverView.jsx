@@ -29,7 +29,8 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
     state.coversMissingReq,
     dispatch,
     /* resetKey, */
-    state.covers.length
+    state.covers.length,
+    state.coversRevision || 0
   );
 
   const parentRef = useRef(null);

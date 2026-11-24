@@ -132,9 +132,9 @@ test('overlapping roots compare each discovered path once and preserve offline r
   assert.deepEqual(scan.compare([oldOffline]), { added: [audio], missing: [] });
 });
 
-function startWorker(t, dbPath, kind, rows) {
+function startWorker(t, dbPath, kind, rows, timeout = 5000) {
   const worker = new Worker(new URL('./scanWriteWorker.mjs', import.meta.url), {
-    workerData: { dbPath, kind, rows }
+    workerData: { dbPath, kind, rows, timeout }
   });
   let readyResolve, readyReject, doneResolve, doneReject, added;
   const ready = new Promise((resolve, reject) => {
@@ -323,6 +323,82 @@ test(
       assert.equal(db.prepare('SELECT count(*) AS n FROM albums').get().n, 4);
     } finally {
       await Promise.all(workers.map((worker) => worker.terminate()));
+      db.close();
+      fs.rmSync(temporary, { recursive: true, force: true });
+    }
+  }
+);
+
+test(
+  'a blocked scan times out without partial writes and can retry after the lock is released',
+  { timeout: 10000 },
+  async (t) => {
+    const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'music-scan-lock-'));
+    const filename = path.join(temporary, 'catalog.db');
+    const db = new Database(filename);
+    try {
+      db.pragma('journal_mode = WAL');
+      db.exec(schema);
+      const row = { track_id: 'candidate', audiotrack: 'C:/Music/Artist - Album/01.flac', like: 1 };
+      const blocked = startWorker(t, filename, 'files', [row], 100);
+      await blocked.ready;
+      db.exec('BEGIN IMMEDIATE');
+      blocked.commit();
+      await assert.rejects(
+        blocked.done,
+        (error) => error.code === 'SQLITE_BUSY' || /locked/.test(error.message)
+      );
+      assert.equal(db.prepare('SELECT count(*) AS n FROM "audio-tracks"').get().n, 0);
+      db.exec('ROLLBACK');
+      const retry = startWorker(t, filename, 'files', [row]);
+      await retry.ready;
+      retry.commit();
+      assert.equal(await retry.done, 1);
+      assert.equal(db.prepare('SELECT like FROM "audio-tracks"').get().like, 1);
+    } finally {
+      if (db.inTransaction) db.exec('ROLLBACK');
+      db.close();
+      fs.rmSync(temporary, { recursive: true, force: true });
+    }
+  }
+);
+
+test(
+  'terminating a worker during root replacement exposes no partial roots and rolls back',
+  { timeout: 10000 },
+  async (t) => {
+    const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'music-root-interruption-'));
+    const filename = path.join(temporary, 'catalog.db');
+    const db = new Database(filename);
+    let worker;
+    try {
+      db.pragma('journal_mode = WAL');
+      db.exec(
+        "CREATE TABLE roots (id INTEGER PRIMARY KEY, root TEXT UNIQUE); INSERT INTO roots (root) VALUES ('C:/Original');"
+      );
+      db.exec(
+        'CREATE TRIGGER pause_root_write BEFORE INSERT ON roots BEGIN SELECT pause_root_write(); END;'
+      );
+      worker = new Worker(new URL('./rootUpdateWorker.mjs', import.meta.url), {
+        workerData: filename
+      });
+      t.after(() => worker.terminate());
+      await new Promise((resolve, reject) => {
+        worker.once('message', resolve);
+        worker.once('error', reject);
+      });
+      assert.deepEqual(
+        db.prepare('SELECT root FROM roots').all(),
+        [{ root: 'C:/Original' }],
+        'Another handle saw uncommitted root changes'
+      );
+      await worker.terminate();
+      assert.deepEqual(db.prepare('SELECT root FROM roots').all(), [{ root: 'C:/Original' }]);
+      db.exec('DROP TRIGGER pause_root_write');
+      db.prepare('INSERT INTO roots(root) VALUES (?)').run('D:/After interruption');
+      assert.equal(db.prepare('SELECT count(*) AS n FROM roots').get().n, 2);
+    } finally {
+      if (worker) await worker.terminate();
       db.close();
       fs.rmSync(temporary, { recursive: true, force: true });
     }

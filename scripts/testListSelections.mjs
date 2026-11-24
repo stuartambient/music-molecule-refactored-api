@@ -72,3 +72,49 @@ test('sorting and scoped resets clear Tracks selection while preserving the othe
   const stopped = reducer(state, { type: 'reset', pause: true });
   assert.deepEqual(stopped.listSelections, {});
 });
+
+test('catalog refresh invalidates affected pages without restarting playback or losing selections', () => {
+  let state = select(initial(), b, 'tracklistActive', [a, b, c], 1);
+  const request = state.playbackRequest,
+    selection = state.listSelections;
+  state = reducer(state, { type: 'catalog-changed', kind: 'files' });
+  assert.deepEqual(state.tracks, []);
+  assert.equal(state.tracksPageNumber, 0);
+  assert.equal(state.tracksRevision, 1);
+  assert.deepEqual(state.playbackQueue, [a, b, c]);
+  assert.equal(state.playbackRequest, request);
+  assert.equal(state.listSelections, selection);
+  assert.equal(state.pause, false);
+  state = reducer(
+    { ...state, albums: [{}], covers: [{}], albumsPageNumber: 3, coversPageNumber: 4 },
+    { type: 'catalog-changed', kind: 'folders' }
+  );
+  assert.deepEqual(state.albums, []);
+  assert.deepEqual(state.covers, []);
+  assert.equal(state.albumsPageNumber, 0);
+  assert.equal(state.coversPageNumber, 0);
+  assert.equal(state.albumsRevision, 1);
+  assert.equal(state.coversRevision, 1);
+  assert.equal(state.playbackRequest, request);
+  assert.equal(state.pause, false);
+});
+
+test('a pre-refresh page arriving before effect cleanup cannot restore obsolete rows or errors', () => {
+  const files = reducer(initial(), { type: 'catalog-changed', kind: 'files' });
+  for (const type of ['add-tracks', 'tracks-playlist', 'tracks-load-failed']) {
+    assert.equal(
+      reducer(files, { type, revision: 0, tracks: [a], error: { message: 'obsolete' } }),
+      files
+    );
+  }
+  assert.deepEqual(
+    reducer(files, { type: 'add-tracks', revision: 1, tracks: [b], hasMore: false }).tracks,
+    [b]
+  );
+  const folders = reducer(
+    { ...initial(), albums: [], covers: [] },
+    { type: 'catalog-changed', kind: 'folders' }
+  );
+  assert.equal(reducer(folders, { type: 'albums-playlist', revision: 0, albums: [a] }), folders);
+  assert.equal(reducer(folders, { type: 'set-covers', revision: 0, covers: [a] }), folders);
+});

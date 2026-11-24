@@ -1,0 +1,651 @@
+{
+  "generatedAt": "2026-11-24T00:29:10.479Z",
+  "platform": "win32 10.0.19045 x64",
+  "cpu": "AMD Ryzen 5 2600 Six-Core Processor            ",
+  "runtime": {
+    "electron": "37.4.0",
+    "node": "22.18.0",
+    "sqlite": "3.50.2"
+  },
+  "methodology": "Temporary on-disk WAL catalogs, 32 MiB SQLite cache, deterministic paths, ten tracks per album, equal album timestamps, accented names, and 256 bytes of metadata padding per track. Query timings include JS materialization and use warm-up plus three samples. Cursor anchors are located outside measured query time. Comparison uses the former OFFSET query shape. Scan timings measure catalog/path comparison and the transactional recheck only.",
+  "limitations": [
+    "Synthetic data is not a real-library or cold-cache benchmark.",
+    "Disk traversal, network/offline drive latency, audio metadata parsing, IPC and rendering are not included.",
+    "Search remains a substring scan; paging does not create a text index.",
+    "Single-machine timings vary with load and cache state."
+  ],
+  "results": [
+    {
+      "tracks": 10000,
+      "albums": 1000,
+      "populateMs": 148.473,
+      "queries": {
+        "tracks": {
+          "firstPage": {
+            "medianMs": 0.742,
+            "maxMs": 0.763,
+            "samples": 3
+          },
+          "deepCursorPage": {
+            "medianMs": 0.893,
+            "maxMs": 0.916,
+            "samples": 3
+          },
+          "deepOffsetBaseline": {
+            "medianMs": 0.733,
+            "maxMs": 0.748,
+            "samples": 3
+          },
+          "offsetDepth": 9000,
+          "cursorPlan": [
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH audio-tracks USING INDEX idx_audio_tracks_birthtime_id (birthtime<?)",
+            "RIGHT",
+            "SEARCH audio-tracks USING INDEX idx_audio_tracks_birthtime_id (birthtime=?)",
+            "RIGHT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH audio-tracks USING INDEX idx_audio_tracks_birthtime_id (birthtime=? AND track_id<?)",
+            "RIGHT",
+            "SEARCH audio-tracks USING INDEX idx_audio_tracks_birthtime_id (birthtime=? AND track_id=?)",
+            "RIGHT",
+            "SEARCH audio-tracks USING INDEX idx_audio_tracks_birthtime_id (birthtime=? AND track_id=? AND rowid<?)"
+          ]
+        },
+        "albums": {
+          "firstPage": {
+            "medianMs": 0.648,
+            "maxMs": 1.008,
+            "samples": 3
+          },
+          "deepCursorPage": {
+            "medianMs": 0.771,
+            "maxMs": 0.776,
+            "samples": 3
+          },
+          "deepOffsetBaseline": {
+            "medianMs": 0.384,
+            "maxMs": 0.384,
+            "samples": 3
+          },
+          "offsetDepth": 800,
+          "cursorPlan": [
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime<?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=?)",
+            "RIGHT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id<?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id=?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id=? AND rowid<?)"
+          ]
+        },
+        "covers": {
+          "firstPage": {
+            "medianMs": 0.302,
+            "maxMs": 0.306,
+            "samples": 3
+          },
+          "deepCursorPage": {
+            "medianMs": 0.407,
+            "maxMs": 0.41,
+            "samples": 3
+          },
+          "deepOffsetBaseline": {
+            "medianMs": 0.176,
+            "maxMs": 0.18,
+            "samples": 3
+          },
+          "offsetDepth": 900,
+          "cursorPlan": [
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime<?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=?)",
+            "RIGHT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id<?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id=?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id=? AND rowid<?)"
+          ]
+        }
+      },
+      "scans": {
+        "enumerationOfSuppliedPathsMs": 15.305,
+        "compareUnchanged": {
+          "medianMs": 15.894,
+          "maxMs": 15.894,
+          "samples": 1
+        },
+        "changedEnumerationOfSuppliedPathsMs": 8.2,
+        "added": 100,
+        "missing": 100,
+        "compareOnePercentChange": {
+          "medianMs": 17.252,
+          "maxMs": 17.252,
+          "samples": 1
+        },
+        "transactionalRecheck": {
+          "medianMs": 14.127,
+          "maxMs": 14.127,
+          "samples": 1
+        }
+      },
+      "catalogBytes": 5726208,
+      "searches": {
+        "artist 42": {
+          "medianMs": 16.007,
+          "maxMs": 16.159,
+          "samples": 3
+        },
+        "helene": {
+          "medianMs": 14.286,
+          "maxMs": 14.511,
+          "samples": 3
+        },
+        "no-such-benchmark-token": {
+          "medianMs": 13.895,
+          "maxMs": 13.902,
+          "samples": 3
+        }
+      },
+      "rssBytes": 130564096
+    },
+    {
+      "tracks": 100000,
+      "albums": 10000,
+      "populateMs": 1596.693,
+      "queries": {
+        "tracks": {
+          "firstPage": {
+            "medianMs": 0.689,
+            "maxMs": 0.698,
+            "samples": 3
+          },
+          "deepCursorPage": {
+            "medianMs": 0.853,
+            "maxMs": 0.863,
+            "samples": 3
+          },
+          "deepOffsetBaseline": {
+            "medianMs": 3.725,
+            "maxMs": 4.687,
+            "samples": 3
+          },
+          "offsetDepth": 90000,
+          "cursorPlan": [
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH audio-tracks USING INDEX idx_audio_tracks_birthtime_id (birthtime<?)",
+            "RIGHT",
+            "SEARCH audio-tracks USING INDEX idx_audio_tracks_birthtime_id (birthtime=?)",
+            "RIGHT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH audio-tracks USING INDEX idx_audio_tracks_birthtime_id (birthtime=? AND track_id<?)",
+            "RIGHT",
+            "SEARCH audio-tracks USING INDEX idx_audio_tracks_birthtime_id (birthtime=? AND track_id=?)",
+            "RIGHT",
+            "SEARCH audio-tracks USING INDEX idx_audio_tracks_birthtime_id (birthtime=? AND track_id=? AND rowid<?)"
+          ]
+        },
+        "albums": {
+          "firstPage": {
+            "medianMs": 0.609,
+            "maxMs": 0.622,
+            "samples": 3
+          },
+          "deepCursorPage": {
+            "medianMs": 0.741,
+            "maxMs": 0.745,
+            "samples": 3
+          },
+          "deepOffsetBaseline": {
+            "medianMs": 0.641,
+            "maxMs": 0.649,
+            "samples": 3
+          },
+          "offsetDepth": 9000,
+          "cursorPlan": [
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime<?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=?)",
+            "RIGHT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id<?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id=?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id=? AND rowid<?)"
+          ]
+        },
+        "covers": {
+          "firstPage": {
+            "medianMs": 0.294,
+            "maxMs": 0.299,
+            "samples": 3
+          },
+          "deepCursorPage": {
+            "medianMs": 0.406,
+            "maxMs": 0.436,
+            "samples": 3
+          },
+          "deepOffsetBaseline": {
+            "medianMs": 0.453,
+            "maxMs": 0.466,
+            "samples": 3
+          },
+          "offsetDepth": 9000,
+          "cursorPlan": [
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime<?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=?)",
+            "RIGHT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id<?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id=?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id=? AND rowid<?)"
+          ]
+        }
+      },
+      "scans": {
+        "enumerationOfSuppliedPathsMs": 115.299,
+        "compareUnchanged": {
+          "medianMs": 181.636,
+          "maxMs": 181.636,
+          "samples": 1
+        },
+        "changedEnumerationOfSuppliedPathsMs": 100.074,
+        "added": 1000,
+        "missing": 1000,
+        "compareOnePercentChange": {
+          "medianMs": 189.545,
+          "maxMs": 189.545,
+          "samples": 1
+        },
+        "transactionalRecheck": {
+          "medianMs": 147.314,
+          "maxMs": 147.314,
+          "samples": 1
+        }
+      },
+      "catalogBytes": 57241600,
+      "searches": {
+        "artist 42": {
+          "medianMs": 17.182,
+          "maxMs": 17.885,
+          "samples": 3
+        },
+        "helene": {
+          "medianMs": 192.316,
+          "maxMs": 194.382,
+          "samples": 3
+        },
+        "no-such-benchmark-token": {
+          "medianMs": 193.41,
+          "maxMs": 200.789,
+          "samples": 3
+        }
+      },
+      "rssBytes": 256348160
+    },
+    {
+      "tracks": 500000,
+      "albums": 50000,
+      "populateMs": 8161.443,
+      "queries": {
+        "tracks": {
+          "firstPage": {
+            "medianMs": 0.711,
+            "maxMs": 0.722,
+            "samples": 3
+          },
+          "deepCursorPage": {
+            "medianMs": 0.873,
+            "maxMs": 0.897,
+            "samples": 3
+          },
+          "deepOffsetBaseline": {
+            "medianMs": 21.159,
+            "maxMs": 21.327,
+            "samples": 3
+          },
+          "offsetDepth": 450000,
+          "cursorPlan": [
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH audio-tracks USING INDEX idx_audio_tracks_birthtime_id (birthtime<?)",
+            "RIGHT",
+            "SEARCH audio-tracks USING INDEX idx_audio_tracks_birthtime_id (birthtime=?)",
+            "RIGHT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH audio-tracks USING INDEX idx_audio_tracks_birthtime_id (birthtime=? AND track_id<?)",
+            "RIGHT",
+            "SEARCH audio-tracks USING INDEX idx_audio_tracks_birthtime_id (birthtime=? AND track_id=?)",
+            "RIGHT",
+            "SEARCH audio-tracks USING INDEX idx_audio_tracks_birthtime_id (birthtime=? AND track_id=? AND rowid<?)"
+          ]
+        },
+        "albums": {
+          "firstPage": {
+            "medianMs": 0.693,
+            "maxMs": 0.728,
+            "samples": 3
+          },
+          "deepCursorPage": {
+            "medianMs": 0.792,
+            "maxMs": 0.795,
+            "samples": 3
+          },
+          "deepOffsetBaseline": {
+            "medianMs": 2.392,
+            "maxMs": 2.711,
+            "samples": 3
+          },
+          "offsetDepth": 45000,
+          "cursorPlan": [
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime<?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=?)",
+            "RIGHT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id<?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id=?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id=? AND rowid<?)"
+          ]
+        },
+        "covers": {
+          "firstPage": {
+            "medianMs": 0.309,
+            "maxMs": 0.311,
+            "samples": 3
+          },
+          "deepCursorPage": {
+            "medianMs": 0.426,
+            "maxMs": 0.427,
+            "samples": 3
+          },
+          "deepOffsetBaseline": {
+            "medianMs": 1.823,
+            "maxMs": 2.488,
+            "samples": 3
+          },
+          "offsetDepth": 45000,
+          "cursorPlan": [
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime<?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=?)",
+            "RIGHT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id<?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id=?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id=? AND rowid<?)"
+          ]
+        }
+      },
+      "scans": {
+        "enumerationOfSuppliedPathsMs": 627.98,
+        "compareUnchanged": {
+          "medianMs": 1187.405,
+          "maxMs": 1187.405,
+          "samples": 1
+        },
+        "changedEnumerationOfSuppliedPathsMs": 609.879,
+        "added": 5000,
+        "missing": 5000,
+        "compareOnePercentChange": {
+          "medianMs": 1072.031,
+          "maxMs": 1072.031,
+          "samples": 1
+        },
+        "transactionalRecheck": {
+          "medianMs": 864.446,
+          "maxMs": 864.446,
+          "samples": 1
+        }
+      },
+      "catalogBytes": 288129024,
+      "searches": {
+        "artist 42": {
+          "medianMs": 17.084,
+          "maxMs": 17.918,
+          "samples": 3
+        },
+        "helene": {
+          "medianMs": 976.134,
+          "maxMs": 998.543,
+          "samples": 3
+        },
+        "no-such-benchmark-token": {
+          "medianMs": 992.095,
+          "maxMs": 1105.64,
+          "samples": 3
+        }
+      },
+      "rssBytes": 460988416
+    },
+    {
+      "tracks": 1000000,
+      "albums": 100000,
+      "populateMs": 15703.712,
+      "queries": {
+        "tracks": {
+          "firstPage": {
+            "medianMs": 0.847,
+            "maxMs": 0.855,
+            "samples": 3
+          },
+          "deepCursorPage": {
+            "medianMs": 1.02,
+            "maxMs": 1.046,
+            "samples": 3
+          },
+          "deepOffsetBaseline": {
+            "medianMs": 93.938,
+            "maxMs": 97.7,
+            "samples": 3
+          },
+          "offsetDepth": 900000,
+          "cursorPlan": [
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH audio-tracks USING INDEX idx_audio_tracks_birthtime_id (birthtime<?)",
+            "RIGHT",
+            "SEARCH audio-tracks USING INDEX idx_audio_tracks_birthtime_id (birthtime=?)",
+            "RIGHT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH audio-tracks USING INDEX idx_audio_tracks_birthtime_id (birthtime=? AND track_id<?)",
+            "RIGHT",
+            "SEARCH audio-tracks USING INDEX idx_audio_tracks_birthtime_id (birthtime=? AND track_id=?)",
+            "RIGHT",
+            "SEARCH audio-tracks USING INDEX idx_audio_tracks_birthtime_id (birthtime=? AND track_id=? AND rowid<?)"
+          ]
+        },
+        "albums": {
+          "firstPage": {
+            "medianMs": 0.637,
+            "maxMs": 0.654,
+            "samples": 3
+          },
+          "deepCursorPage": {
+            "medianMs": 0.776,
+            "maxMs": 0.78,
+            "samples": 3
+          },
+          "deepOffsetBaseline": {
+            "medianMs": 4.41,
+            "maxMs": 4.689,
+            "samples": 3
+          },
+          "offsetDepth": 90000,
+          "cursorPlan": [
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime<?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=?)",
+            "RIGHT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id<?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id=?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id=? AND rowid<?)"
+          ]
+        },
+        "covers": {
+          "firstPage": {
+            "medianMs": 0.307,
+            "maxMs": 0.32,
+            "samples": 3
+          },
+          "deepCursorPage": {
+            "medianMs": 0.418,
+            "maxMs": 0.515,
+            "samples": 3
+          },
+          "deepOffsetBaseline": {
+            "medianMs": 3.614,
+            "maxMs": 3.999,
+            "samples": 3
+          },
+          "offsetDepth": 90000,
+          "cursorPlan": [
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime<?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=?)",
+            "RIGHT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "MERGE (UNION ALL)",
+            "LEFT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id<?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id=?)",
+            "RIGHT",
+            "SEARCH albums USING INDEX idx_albums_birthtime_id (birthtime=? AND id=? AND rowid<?)"
+          ]
+        }
+      },
+      "scans": {
+        "enumerationOfSuppliedPathsMs": 1324.029,
+        "compareUnchanged": {
+          "medianMs": 2381.914,
+          "maxMs": 2381.914,
+          "samples": 1
+        },
+        "changedEnumerationOfSuppliedPathsMs": 1236.126,
+        "added": 10000,
+        "missing": 10000,
+        "compareOnePercentChange": {
+          "medianMs": 2406.176,
+          "maxMs": 2406.176,
+          "samples": 1
+        },
+        "transactionalRecheck": {
+          "medianMs": 1876.18,
+          "maxMs": 1876.18,
+          "samples": 1
+        }
+      },
+      "catalogBytes": 574738432,
+      "searches": {
+        "artist 42": {
+          "medianMs": 17.429,
+          "maxMs": 17.864,
+          "samples": 3
+        },
+        "helene": {
+          "medianMs": 1748.38,
+          "maxMs": 1754.895,
+          "samples": 3
+        },
+        "no-such-benchmark-token": {
+          "medianMs": 1922.904,
+          "maxMs": 1925.704,
+          "samples": 3
+        }
+      },
+      "rssBytes": 728915968
+    }
+  ]
+}

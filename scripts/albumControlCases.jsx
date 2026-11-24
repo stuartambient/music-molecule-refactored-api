@@ -70,8 +70,8 @@ function fixture() {
   pending = null;
   pendingAlbum = null;
   window.ipcApi = {
-    getTracks: async () => trackRows,
-    getAlbums: async () => [],
+    getTracks: async () => ({ items: trackRows, nextCursor: null }),
+    getAlbums: async (_cursor, term) => ({ items: term ? [] : albumRows, nextCursor: null }),
     prepareMusicTracks: async (request) => {
       if (request.album) albumRequests++;
       if (request.album && pendingAlbum) return pendingAlbum.promise;
@@ -284,7 +284,10 @@ window.albumTests = (async () => {
       dispatch({ type: 'set-list-type', listType: 'albums' });
     });
     await act(async () => {
-      for (let attempt = 0; attempt < 12; attempt++) await frame();
+      for (let attempt = 0; attempt < 60; attempt++) {
+        await frame();
+        if (document.querySelector('#album-b .albumtrack')) break;
+      }
     });
     assert(
       document.querySelector('#album-b .albumtrack'),

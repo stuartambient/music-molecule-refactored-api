@@ -1,0 +1,24 @@
+Library scale measurements (synthetic catalogs)
+
+Tracks | Deep cursor page (ms) | Deep OFFSET baseline (ms) | No-match search (ms) | Unchanged path comparison (ms)
+10,000 | 0.893 | 0.733 | 13.895 | 15.894
+100,000 | 0.853 | 3.725 | 193.410 | 181.636
+500,000 | 0.873 | 21.159 | 992.095 | 1187.405
+1,000,000 | 1.020 | 93.938 | 1922.904 | 2381.914
+
+Method: Temporary on-disk WAL catalogs, 32 MiB SQLite cache, deterministic paths, ten tracks per album, equal album timestamps, accented names, and 256 bytes of metadata padding per track. Query timings include JS materialization and use warm-up plus three samples. Cursor anchors are located outside measured query time. Comparison uses the former OFFSET query shape. Scan timings measure catalog/path comparison and the transactional recheck only.
+
+Limits:
+- Synthetic data is not a real-library or cold-cache benchmark.
+- Disk traversal, network/offline drive latency, audio metadata parsing, IPC and rendering are not included.
+- Search remains a substring scan; paging does not create a text index.
+- Single-machine timings vary with load and cache state.
+
+Interpretation:
+- Cursor paging removes the increasing deep-page offset cost.
+- Rare/no-match substring searches remain linear and are a candidate for a separate search-index design.
+- Catalog path comparisons and the current full-catalog insertion recheck remain linear; the report includes their timings.
+- These results do not predict a full real-drive scan time. Real filesystem enumeration and metadata parsing still require separate measurements.
+
+Reproduce:
+node scripts/benchmarkLibrary.mjs --sizes=10000,100000,500000,1000000 --output=docs/benchmarks/library-scale-2026-11-23.json

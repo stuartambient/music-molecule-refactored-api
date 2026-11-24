@@ -64,7 +64,8 @@ const InfiniteList = () => {
     albumsSearchTerm,
     albumsSortType,
     albumsResetKey,
-    dispatch
+    dispatch,
+    state.albumsRevision || 0
   );
 
   const [contSize, setContSize] = useState(0);
@@ -74,10 +75,16 @@ const InfiniteList = () => {
   const albumSnapshot = useRef(null);
   const albumView = useMemo(
     () => ({
-      key: JSON.stringify([albumsSearchTerm, albumsSortType, albumsResetKey]),
+      key: JSON.stringify([
+        albumsSearchTerm,
+        albumsSortType,
+        albumsResetKey,
+        state.albumsRevision,
+        state.tracksRevision
+      ]),
       tracks: new Map()
     }),
-    [albumsSearchTerm, albumsSortType, albumsResetKey]
+    [albumsSearchTerm, albumsSortType, albumsResetKey, state.albumsRevision, state.tracksRevision]
   );
   const albumViewKey = albumView.key;
   const albumTrackCache = albumView.tracks;
@@ -264,7 +271,7 @@ const InfiniteList = () => {
   const getKey = () => uuidv4();
 
   const loadMoreTracks = () => {
-    if (!hasMoreTracks) return;
+    if (tracksLoading || !hasMoreTracks) return;
 
     dispatch({
       type: 'tracks-pagenumber',
@@ -273,7 +280,7 @@ const InfiniteList = () => {
   };
 
   const loadMoreAlbums = () => {
-    if (!hasMoreAlbums) return;
+    if (albumsLoading || !hasMoreAlbums) return;
     dispatch({
       type: 'albums-pagenumber',
       albumsPageNumber: state.albumsPageNumber + 1

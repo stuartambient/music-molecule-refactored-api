@@ -3,7 +3,8 @@ import {
   selectPlaybackTrack,
   rememberPlaybackPosition,
   rememberedPlaybackTime,
-  getAdjacentTrack
+  getAdjacentTrack,
+  getPlaybackQueue
 } from './utility/playbackState.js';
 import { recordTrackProblem, clearTrackProblem } from './utility/trackProblems.js';
 import { withoutListSelection } from './utility/listSelection.js';
@@ -28,7 +29,22 @@ function setPlaylistGapless(state, enabled) {
   };
 }
 
+const pageRevisionFields = {
+  'add-tracks': 'tracksRevision',
+  'tracks-playlist': 'tracksRevision',
+  'tracks-load-failed': 'tracksRevision',
+  'albums-playlist': 'albumsRevision',
+  'set-covers': 'coversRevision'
+};
+
 const audioPlayerReducer = (state, action) => {
+  const revisionField = pageRevisionFields[action.type];
+  if (
+    revisionField &&
+    action.revision !== undefined &&
+    action.revision !== (state[revisionField] || 0)
+  )
+    return state;
   if (
     [
       'select-track',
@@ -49,6 +65,29 @@ const audioPlayerReducer = (state, action) => {
     console.log('action: ', action);
   }
   switch (action.type) {
+    case 'catalog-changed': {
+      if (action.kind === 'files')
+        return {
+          ...state,
+          tracksRevision: (state.tracksRevision || 0) + 1,
+          tracks: [],
+          tracksPageNumber: 0,
+          tracksHasMore: false,
+          playbackQueue:
+            state.activeList === 'tracklistActive' ? getPlaybackQueue(state) : state.playbackQueue
+        };
+      if (action.kind === 'folders')
+        return {
+          ...state,
+          albumsRevision: (state.albumsRevision || 0) + 1,
+          coversRevision: (state.coversRevision || 0) + 1,
+          albums: [],
+          albumsPageNumber: 0,
+          covers: [],
+          coversPageNumber: 0
+        };
+      return state;
+    }
     case 'set-playback-backend':
     case 'hydrate-playback-backend': {
       if (action.type === 'hydrate-playback-backend' && state.backendPreferenceRevision)
@@ -347,7 +386,7 @@ const audioPlayerReducer = (state, action) => {
       const next = {
         ...state,
         tracks: [...state.tracks, ...action.tracks],
-        tracksHasMore: action.tracks.length === 200
+        tracksHasMore: action.hasMore ?? action.tracks.length === 200
       };
       return state.pendingAdvance
         ? advancePlayback(
@@ -357,7 +396,11 @@ const audioPlayerReducer = (state, action) => {
         : next;
     }
     case 'add-tracks': {
-      return { ...state, tracks: action.tracks, tracksHasMore: action.tracks.length === 200 };
+      return {
+        ...state,
+        tracks: action.tracks,
+        tracksHasMore: action.hasMore ?? action.tracks.length === 200
+      };
     }
     case 'tracks-load-failed': {
       if (!state.pendingAdvance) return state;
@@ -381,7 +424,7 @@ const audioPlayerReducer = (state, action) => {
     case 'albums-playlist': {
       return {
         ...state,
-        albums: [...state.albums, ...action.albums]
+        albums: action.replace ? action.albums : [...state.albums, ...action.albums]
       };
     }
     case 'sort-tracks': {
@@ -535,7 +578,7 @@ const audioPlayerReducer = (state, action) => {
       /* const key = 'fullpath'; */
       return {
         ...state,
-        covers: [...state.covers, ...action.covers]
+        covers: action.replace ? action.covers : [...state.covers, ...action.covers]
       };
     }
 
@@ -616,6 +659,7 @@ const audioPlayerReducer = (state, action) => {
     case 'covers-date-sort': {
       return {
         ...state,
+        coversRevision: (state.coversRevision || 0) + 1,
         coversDateSort: action.coversDateSort,
         covers: action.covers,
         coversPageNumber: action.coversPageNumber
@@ -625,6 +669,7 @@ const audioPlayerReducer = (state, action) => {
     case 'covers-refresh': {
       return {
         ...state,
+        coversRevision: (state.coversRevision || 0) + 1,
         coversMissingReq: action.coversMissingReq,
         covers: action.covers,
         coversPageNumber: action.coversPageNumber,
@@ -643,6 +688,7 @@ const audioPlayerReducer = (state, action) => {
     case 'covers-missing-request': {
       return {
         ...state,
+        coversRevision: (state.coversRevision || 0) + 1,
         covers: action.covers,
         coversPageNumber: action.coversPageNumber,
         coversMissingReq: action.coversMissingReq
@@ -652,6 +698,7 @@ const audioPlayerReducer = (state, action) => {
     case 'covers-search-term': {
       return {
         ...state,
+        coversRevision: (state.coversRevision || 0) + 1,
         coversSearchTerm: action.coversSearchTerm,
         covers: action.covers,
         coversPageNumber: action.coversPageNumber

@@ -2,6 +2,7 @@ import { useReducer, useRef, useCallback, useEffect, useLayoutEffect } from 'rea
 import { MainAudioContext } from './mainAudioContext';
 import usePlayback from './hooks/usePlayback';
 import usePlaybackPreferences from './hooks/usePlaybackPreferences';
+import useIpcEvent from './hooks/useIpcEvent';
 import { PlaybackAudio } from './utility/playbackAudio';
 import audioPlayerReducer from './audioPlayerReducer';
 import { mainThemes, normalizeMainTheme } from '../../shared/themePreferences';
@@ -107,6 +108,7 @@ export const AudioPlayerProvider = ({ children }) => {
       send(action);
     }
   }, []);
+  useIpcEvent('catalog-changed', (kind) => dispatch({ type: 'catalog-changed', kind }));
   usePlayback(state, dispatch, playbackSnapshot);
   usePlaybackPreferences(state, dispatch);
 

@@ -50,7 +50,7 @@ window.ipcApi = {
     savedPreferences = { ...savedPreferences, ...patch };
     return true;
   },
-  getCovers: async () => [],
+  getCovers: async () => ({ items: [], nextCursor: null }),
   on: () => () => {},
   prepareMusicTracks: async ({ album }) => {
     const tracks = window.gaplessFixtures.playlist
