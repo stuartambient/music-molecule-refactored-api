@@ -7,6 +7,7 @@ import Database from 'better-sqlite3';
 import { fileExtensions } from '../constant/constants.js';
 import { insertFiles, parseMeta } from './utility/utils.js';
 import { findScanRoot, scanRoots } from './utility/scanRoots.js';
+import { commitScanChanges } from './utility/scanWrites.js';
 
 const mode = import.meta.env.MODE;
 const dbPath =
@@ -36,16 +37,6 @@ const getFiles = () => {
   return files;
 };
 
-const deleteFiles = (files) => {
-  const deleteFile = db.prepare('DELETE FROM "audio-tracks" WHERE audiotrack = ?');
-
-  const deleteMany = db.transaction((files) => {
-    for (const f of files) deleteFile.run(f);
-  });
-
-  deleteMany(files);
-};
-
 async function listFiles(root) {
   const files = await fg(`**/*.${fileExtensions}`, {
     cwd: root,
@@ -68,18 +59,16 @@ async function processFiles() {
   const scan = await scanRoots(newestRoots, listFiles);
   const { added, missing } = scan.compare(getFiles().map((row) => row.audiotrack));
 
-  if (added.length) {
-    const parsed = await parseMeta(added, 'new', findRoot);
-    const result = insertFiles(db, parsed);
+  const parsed = added.length ? await parseMeta(added, 'new', findRoot) : [];
+  const committed = commitScanChanges(db, 'files', parsed, missing, (rows) => {
+    const result = insertFiles(db, rows);
     if (!result.success) throw new Error(result.message);
-  }
-
-  if (missing.length) deleteFiles(missing);
+  });
 
   return {
-    new: added,
-    deleted: missing,
-    nochange: !added.length && !missing.length,
+    new: committed.added.map((row) => row.audiotrack),
+    deleted: committed.deleted,
+    nochange: !committed.added.length && !committed.deleted.length,
     skippedRoots: scan.skippedRoots
   };
 }

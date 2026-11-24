@@ -49,3 +49,5 @@ export async function scanRoots(roots, listEntries) {
     }
   };
 }
+
+export { pathKey as scanPathKey };

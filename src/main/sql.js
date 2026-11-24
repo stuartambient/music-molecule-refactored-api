@@ -239,32 +239,35 @@ const getRoots = () => {
   return roots.all().map((row) => row.root);
 };
 
-const updateRoots = (roots) => {
-  const result = [];
-  if (roots.length === 0) {
-    const deleteAllQuery = `DELETE FROM roots`;
-    const empty = db.prepare(deleteAllQuery).run();
-    result.push({ Deleted: empty.changes });
-    return result;
-  }
-  const placeholders = roots.map(() => '?').join(',');
+const updateRoots = (roots) =>
+  db
+    .transaction(() => {
+      const result = [];
+      if (roots.length === 0) {
+        const deleteAllQuery = `DELETE FROM roots`;
+        const empty = db.prepare(deleteAllQuery).run();
+        result.push({ Deleted: empty.changes });
+        return result;
+      }
+      const placeholders = roots.map(() => '?').join(',');
 
-  const deleteQuery = `
+      const deleteQuery = `
     DELETE FROM roots
     WHERE root NOT IN (${placeholders})
   `;
-  const info = db.prepare(deleteQuery).run(...roots);
-  result.push({ Deleted: info.changes });
+      const info = db.prepare(deleteQuery).run(...roots);
+      result.push({ Deleted: info.changes });
 
-  const insertQuery = `
+      const insertQuery = `
     INSERT OR IGNORE INTO roots (root)
     VALUES ${roots.map(() => '(?)').join(',')}
   `;
-  const info2 = db.prepare(insertQuery).run(...roots);
-  result.push({ Inserted: info2.changes });
+      const info2 = db.prepare(insertQuery).run(...roots);
+      result.push({ Inserted: info2.changes });
 
-  return result;
-};
+      return result;
+    })
+    .immediate();
 
 export {
   getAllPkeys,

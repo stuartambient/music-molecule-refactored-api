@@ -307,3 +307,20 @@ test('legacy null IDs have a rowid tie-breaker without forcing identity migratio
     ['third', 'second', 'first']
   );
 });
+
+test('root replacement is atomic and rolls back deletions when an insertion fails', () => {
+  db.exec('DELETE FROM roots');
+  sql.updateRoots(['C:/Keep', 'D:/Existing']);
+  db.exec(`CREATE TRIGGER reject_root BEFORE INSERT ON roots
+    WHEN NEW.root = 'E:/Reject' BEGIN SELECT RAISE(ABORT, 'root rejected'); END;`);
+  try {
+    assert.throws(() => sql.updateRoots(['C:/Keep', 'F:/New', 'E:/Reject']), /root rejected/);
+    assert.deepEqual(sql.getRoots().sort(), ['C:/Keep', 'D:/Existing']);
+  } finally {
+    db.exec('DROP TRIGGER reject_root');
+  }
+  assert.deepEqual(sql.updateRoots(['C:/Keep', 'F:/New']), [{ Deleted: 1 }, { Inserted: 1 }]);
+  assert.deepEqual(sql.getRoots().sort(), ['C:/Keep', 'F:/New']);
+  assert.deepEqual(sql.updateRoots([]), [{ Deleted: 2 }]);
+  assert.deepEqual(sql.getRoots(), []);
+});

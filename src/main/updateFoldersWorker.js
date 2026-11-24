@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import Database from 'better-sqlite3';
 import searchCover from './utility/searchCover.js';
 import { findScanRoot, scanRoots } from './utility/scanRoots.js';
+import { commitScanChanges } from './utility/scanWrites.js';
 
 const mode = import.meta.env.MODE;
 const dbPath =
@@ -41,14 +42,6 @@ export const insertAlbums = (data) => {
   });
 
   insertMany(data);
-};
-
-export const deleteAlbums = async (data) => {
-  const deleteA = db.prepare('DELETE FROM albums WHERE fullpath = ?');
-  const deleteMany = db.transaction((data) => {
-    for (const d of data) deleteA.run(d);
-  });
-  deleteMany(data);
 };
 
 export const getAlbums = () => {
@@ -117,13 +110,13 @@ async function processFolders() {
   const scan = await scanRoots(newestRoots, listFolders);
   const { added, missing } = scan.compare(getAlbums().map((row) => row.fullpath));
 
-  if (added.length) insertAlbums(await parseNewEntries(added));
-  if (missing.length) await deleteAlbums(missing);
+  const parsed = added.length ? await parseNewEntries(added) : [];
+  const committed = commitScanChanges(db, 'folders', parsed, missing, insertAlbums);
 
   return {
-    new: added.length,
-    deleted: missing.length,
-    nochange: !added.length && !missing.length,
+    new: committed.added.length,
+    deleted: committed.deleted.length,
+    nochange: !committed.added.length && !committed.deleted.length,
     skippedRoots: scan.skippedRoots
   };
 }

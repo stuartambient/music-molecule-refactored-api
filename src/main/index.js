@@ -51,6 +51,7 @@ import {
 } from './ipcAccess.js';
 import { childDefinitions } from './childWindowDefinitions.js';
 import { runUpdateWorker } from './updateWorkerDelivery.js';
+import { createScanCoordinator } from './scanCoordinator.js';
 import { createCoverDownloads } from './coverDownloads.js';
 import { downloadCoverFile } from './coverDownloader.js';
 /* import { simulateCorruption } from './simulateDbCorruption.js'; */
@@ -332,56 +333,32 @@ async function changeSemicolonDelimeter() {
 }
 /* setTimeout(() => changeSemicolonDelimeter(), 3000); */
 
+const coordinateScan = createScanCoordinator();
+
+function runCatalogScan(kind, target) {
+  return coordinateScan({
+    kind,
+    createWorker: kind === 'files' ? createUpdateFilesWorker : createUpdateFoldersWorker,
+    workerData: dbPath,
+    target,
+    formatResult: kind === 'files' ? getObjectWithLengths : (result) => result
+  });
+}
+
 async function updateFolders() {
   try {
-    const workerPath = paths.db;
-    await createUpdateFoldersWorker({ workerData: workerPath })
-      .on('message', (message) => {
-        if (message.error) console.error('Scheduled folder update failed:', message.error);
-        else console.log('updateFolders Message: ', message.result);
-      })
-      .on('error', (err) => {
-        console.error('updateFoldera Worker error:', err);
-      })
-      .on('exit', (code) => {
-        if (code !== 0) {
-          const errorMessage = `Worker stopped with exit code ${code}`;
-          console.error(errorMessage);
-        }
-      })
-      .postMessage('');
+    console.log('Scheduled folder update:', await runCatalogScan('folders'));
   } catch (error) {
-    console.error('Worker encountered an error:', error);
-
-    console.log('Handling subsequent code after worker error.');
+    console.error('Scheduled folder update failed:', error);
   }
 }
 
 async function updateFiles() {
   try {
-    /* console.log('createUpdateFilesWorker', createUpdateFilesWorker()); */
-    const workerPath = paths.db;
-    await createUpdateFilesWorker({ workerData: workerPath })
-      .on('message', (message) => {
-        if (message.error) console.error('Scheduled file update failed:', message.error);
-        else console.log('updateFiles Message: ', getObjectWithLengths(message.result));
-      })
-      .on('error', (err) => {
-        console.error('Worker error:', err);
-      })
-      .on('exit', (code) => {
-        if (code !== 0) {
-          const errorMessage = `Worker stopped with exit code ${code}`;
-          console.error(errorMessage);
-        }
-      })
-      .postMessage('');
+    console.log('Scheduled file update:', getObjectWithLengths(await runCatalogScan('files')));
   } catch (error) {
-    console.error('Worker encountered an error:', error);
-
-    console.log('Handling subsequent code after worker error.');
+    console.error('Scheduled file update failed:', error);
   }
-  return;
 }
 
 const capitalizeDriveLetter = (str) => {
@@ -766,34 +743,10 @@ guardedIpc.handle('get-folder-path', (event, folderName) => {
   }
 }); */
 
-guardedIpc.handle('update-folders', async () => {
-  try {
-    const workerPath = paths.db;
-    await createUpdateFoldersWorker({ workerData: workerPath })
-      .on('message', (message) => {
-        if (message.error) {
-          mainWindow.webContents.send('update-error', 'folders-error', { result: message.error });
-          return;
-        }
-        mainWindow.webContents.send('update-complete', 'folders', message.result);
-      })
-      .on('error', (err) => {
-        console.error('Worker error:', err);
-        mainWindow.webContents.send('update-error', 'folders-error', { result: err.message });
-      })
-      .on('exit', (code) => {
-        if (code !== 0) {
-          const errorMessage = `Worker stopped with exit code ${code}`;
-          console.error(errorMessage);
-          mainWindow.webContents.send('update-error', 'folders-error', { result: errorMessage });
-        }
-      })
-      .postMessage('');
-  } catch (error) {
-    console.error('Worker encountered an error:', error);
-
-    console.log('Handling subsequent code after worker error.');
-  }
+guardedIpc.handle('update-folders', () => {
+  void runCatalogScan('folders', mainWindow?.webContents).catch((error) =>
+    console.error('Folder update failed:', error)
+  );
 });
 
 function getObjectWithLengths(obj) {
@@ -805,40 +758,10 @@ function getObjectWithLengths(obj) {
   };
 }
 
-guardedIpc.handle('update-files', async () => {
-  try {
-    /* console.log('createUpdateFilesWorker', createUpdateFilesWorker()); */
-    const workerPath = paths.db;
-    await createUpdateFilesWorker({ workerData: workerPath })
-      .on('message', (message) => {
-        if (message.error) {
-          mainWindow.webContents.send('update-error', 'files-error', { result: message.error });
-          return;
-        }
-        mainWindow.webContents.send(
-          'update-complete',
-          'files',
-          getObjectWithLengths(message.result)
-        );
-      })
-      .on('error', (err) => {
-        console.error('Worker error:', err);
-        mainWindow.webContents.send('update-error', 'files-error', { result: err.message });
-      })
-      .on('exit', (code) => {
-        if (code !== 0) {
-          const errorMessage = `Worker stopped with exit code ${code}`;
-          console.error(errorMessage);
-          mainWindow.webContents.send('update-error', 'files-error', { result: errorMessage });
-        }
-      })
-      .postMessage('');
-  } catch (error) {
-    console.error('Worker encountered an error:', error);
-
-    console.log('Handling subsequent code after worker error.');
-  }
-  return;
+guardedIpc.handle('update-files', () => {
+  void runCatalogScan('files', mainWindow?.webContents).catch((error) =>
+    console.error('File update failed:', error)
+  );
 });
 
 guardedIpc.handle('update-meta', () => {
