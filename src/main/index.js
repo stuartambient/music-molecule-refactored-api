@@ -1341,7 +1341,7 @@ guardedIpc.on('show-context-menu', (event, id, type, path = undefined) => {
         click: () => event.sender.send('hamburger-menu-command', 'update-covers')
       },
       {
-        label: 'Update Meta',
+        label: 'Catalog report',
         click: () => event.sender.send('hamburger-menu-command', 'update-meta')
       }
     );

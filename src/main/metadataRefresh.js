@@ -15,7 +15,7 @@ export async function refreshMetadata(files, { parse, save }) {
     if (!res?.success) throw new Error(res?.message || 'No save confirmation received.');
   } catch (cause) {
     const error = new Error(
-      `Database metadata refresh failed. ${cause.message || String(cause)} Run Update Meta to retry.`
+      `Database metadata refresh failed. ${cause.message || String(cause)} Run Catalog report to retry.`
     );
     error.refreshFailed = failed;
     error.unsaved = valid;
@@ -46,6 +46,15 @@ export async function updateChangedMetadata(tracks, { stat, parse, save }) {
     try {
       const stats = await stat(track.audiotrack);
       if (stats.mtimeMs > track.modified) changed.push({ ...track, id: track.audiotrack });
+      else if (track.error) {
+        // Unchanged files are not reread, but their saved Track Errors still belong in the report.
+        details.bad.push({
+          track_id: track.track_id,
+          id: track.audiotrack,
+          error: track.error,
+          source: 'catalog'
+        });
+      }
     } catch (error) {
       addFailure({
         track_id: track.track_id,
@@ -56,13 +65,20 @@ export async function updateChangedMetadata(tracks, { stat, parse, save }) {
     }
   }
   try {
+    const previous = new Map(changed.map((file) => [file.track_id, file]));
     const result = await refreshMetadata(changed, { parse, save });
     result.failed.forEach(addFailure);
     const paths = new Map(changed.map((file) => [file.track_id, file.id]));
-    details.modified = result.res.files.map((file) => ({
-      track_id: file.track_id,
-      id: file.audiotrack || paths.get(file.track_id)
-    }));
+    details.modified = result.res.files.map((file) => {
+      const before = previous.get(file.track_id);
+      return {
+        track_id: file.track_id,
+        id: file.audiotrack || paths.get(file.track_id),
+        previousModified: before?.modified,
+        modified: file.modified,
+        reason: 'Refreshed because the file modification time is newer than the catalog'
+      };
+    });
     return summary();
   } catch (error) {
     (error.refreshFailed || []).forEach(addFailure);

@@ -216,6 +216,113 @@ test('failed database report preserves file failures and does not claim rolled-b
   );
 });
 
+test('unchanged files report every stored Track Error without rereading or writing tags', async () => {
+  const files = ['one', 'two', 'three'].map((track_id) => ({
+    track_id,
+    audiotrack: `${track_id}.flac`,
+    modified: 2,
+    error: `Stored error ${track_id}`
+  }));
+  let parsed = 0,
+    saved = 0;
+  const result = await updateChangedMetadata(files, {
+    stat: async () => ({ mtimeMs: 2 }),
+    parse: async (files) => {
+      parsed += files.length;
+      return [];
+    },
+    save: async () => {
+      saved++;
+      throw new Error('Should not save');
+    }
+  });
+  assert.equal(result.modified, 0);
+  assert.equal(result.failed, 3);
+  assert.equal(result.nochange, false);
+  assert.deepEqual(
+    result.details.bad.map((file) => [file.track_id, file.error, file.source]),
+    files.map((file) => [file.track_id, file.error, 'catalog'])
+  );
+  assert.equal(parsed, 0);
+  assert.equal(saved, 0);
+});
+
+test('current results replace stored errors; missing and freshly failing files appear once', async () => {
+  const files = ['missing', 'failed', 'fixed', 'unchanged'].map((track_id) => ({
+    track_id,
+    audiotrack: `${track_id}.flac`,
+    modified: 1,
+    error: 'Old error'
+  }));
+  const result = await updateChangedMetadata(files, {
+    stat: async (path) => {
+      if (path === 'missing.flac') throw Object.assign(new Error('Missing'), { code: 'ENOENT' });
+      return { mtimeMs: path === 'unchanged.flac' ? 1 : 2 };
+    },
+    parse: async (input) =>
+      input.map((file) => ({
+        track_id: file.track_id,
+        audiotrack: file.id,
+        error: file.track_id === 'failed' ? 'New parse error' : null
+      })),
+    save: async (input) => ({ success: true, files: input })
+  });
+  assert.equal(result.failed, 3);
+  assert.deepEqual(
+    result.details.missing.map((file) => file.track_id),
+    ['missing']
+  );
+  assert.deepEqual(
+    result.details.bad.map((file) => [file.track_id, file.error]),
+    [
+      ['unchanged', 'Old error'],
+      ['failed', 'New parse error']
+    ]
+  );
+  assert.deepEqual(
+    result.details.modified.map((file) => file.track_id),
+    ['fixed']
+  );
+  assert.equal(
+    new Set(
+      [...result.details.missing, ...result.details.bad, ...result.details.modified].map(
+        (file) => file.track_id
+      )
+    ).size,
+    4
+  );
+});
+
+test('updated entries explain the timestamp trigger without making tag-edit claims', async () => {
+  const result = await updateChangedMetadata(
+    [
+      { track_id: 'edited', audiotrack: 'edited.flac', modified: 1 },
+      { track_id: 'untouched', audiotrack: 'untouched.flac', modified: 2 }
+    ],
+    {
+      stat: async () => ({ mtimeMs: 2 }),
+      parse: async (files) =>
+        files.map((file) => ({
+          track_id: file.track_id,
+          audiotrack: file.id,
+          modified: 2,
+          title: 'New title'
+        })),
+      save: async (files) => ({ success: true, files })
+    }
+  );
+  assert.equal(result.modified, 1);
+  const entry = result.details.modified[0];
+  assert.equal(entry.id, 'edited.flac');
+  assert.equal(entry.previousModified, 1);
+  assert.equal(entry.modified, 2);
+  assert.equal(
+    entry.reason,
+    'Refreshed because the file modification time is newer than the catalog'
+  );
+  assert.equal(Object.hasOwn(entry, 'changes'), false);
+});
+
 test('tag worker reports database failure, parse failure, and committed success accurately', async () => {
   const { build } = await import('esbuild');
   const { isBuiltin } = await import('node:module');

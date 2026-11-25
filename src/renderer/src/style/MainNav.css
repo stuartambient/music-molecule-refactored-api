@@ -245,12 +245,12 @@
 }
 
 .metadata-update-report h2 {
-  font-size: 1.1rem;
-  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  margin: 0 0 0.4rem;
 }
 .metadata-update-report h3 {
-  font-size: 1rem;
-  margin: 0.75rem 0 0.25rem;
+  font-size: 0.85rem;
+  margin: 0.5rem 0 0.25rem;
 }
 .metadata-update-report p {
   margin: 0.25rem 0;
@@ -258,21 +258,44 @@
 .metadata-report-section {
   border-top: 1px solid currentColor;
 }
-.metadata-report-section ul {
+.main-nav .metadata-report-section ul {
+  display: block;
   list-style: none;
   padding: 0;
   margin: 0;
 }
 .metadata-report-section li {
-  margin: 0.5rem 0 0.75rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.2fr);
+  align-items: baseline;
+  gap: 0;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 4px 0;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  font-size: 12px;
+  line-height: 1.35;
 }
-.metadata-report-section strong,
-.metadata-report-section small {
-  display: block;
-  overflow-wrap: anywhere;
+.metadata-report-file,
+.metadata-report-location,
+.metadata-report-error {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 6px;
 }
-.metadata-report-section small {
-  font-size: 0.85em;
+.metadata-report-file {
+  padding-left: 0;
+}
+.metadata-report-location,
+.metadata-report-error {
+  border-left: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  font-size: 11px;
+}
+.main-nav .metadata-report-section li:hover {
+  cursor: default;
 }
 .metadata-report-section button {
   color: inherit;
@@ -281,4 +304,36 @@
   border-radius: 3px;
   padding: 4px 8px;
   cursor: pointer;
+}
+
+.scan-result:has(.metadata-update-report) {
+  width: min(54rem, calc(100% - 1.5rem));
+}
+.scan-result-message:has(.metadata-update-report) {
+  max-height: 65vh;
+}
+
+.metadata-report-section .metadata-report-info {
+  margin-left: 6px;
+  padding: 0 3px;
+  border: 0;
+  font: inherit;
+  cursor: help;
+}
+.metadata-report-info:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+.metadata-update-report .metadata-report-tooltip {
+  display: none;
+  margin: 4px 0 8px;
+  padding: 6px 8px;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: normal;
+}
+.metadata-report-section:has(.metadata-report-info:hover, .metadata-report-info:focus)
+  > .metadata-report-tooltip {
+  display: block;
 }

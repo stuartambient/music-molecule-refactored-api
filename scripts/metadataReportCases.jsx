@@ -46,17 +46,81 @@ window.metadataReportTests = (async () => {
     nochange: false,
     details: {
       missing: [{ id: 'I:/Music/Old/missing.flac', error: 'File not found' }],
-      bad: [{ id: 'D:\\Music\\broken.flac', error: 'Invalid FLAC stream info' }],
-      modified: [{ id: 'I:/Music/New/updated.flac' }]
+      bad: [{ id: 'D:\\Music\\broken.flac', error: 'Invalid FLAC stream info', source: 'catalog' }],
+      modified: [
+        {
+          id: 'I:/Music/New/updated.flac',
+          reason: 'Refreshed because the file modification time is newer than the catalog',
+          previousModified: 1000,
+          modified: 2000,
+          changes: [{ field: 'title', before: 'Old title', after: 'New title' }]
+        }
+      ]
     }
   };
   await emit('update-complete', 'metadata', report);
   assert(document.querySelectorAll('.metadata-report-section').length === 3, 'Three sections');
+  assert(
+    !document.body.textContent.includes('files with errors'),
+    'No repeated error total beneath title'
+  );
+  assert(
+    document.querySelector('.metadata-report-section').getAttribute('aria-label') ===
+      'Catalog entries updated',
+    'Updated filenames and paths appear first'
+  );
+  assert(
+    document.querySelector('[aria-label="Catalog entries updated"] .metadata-report-location')
+      .textContent === 'I:/Music/New/updated.flac',
+    'Updated file path is visible'
+  );
   assert(document.body.textContent.includes('Missing files (1)'), 'Missing count');
   assert(document.body.textContent.includes('Bad / unreadable files (1)'), 'Bad count');
-  assert(document.body.textContent.includes('Modified files (1)'), 'Modified count');
-  assert(document.body.textContent.includes('I:/Music/Old/missing.flac'), 'Full path visible');
+  assert(document.body.textContent.includes('Catalog entries updated (1)'), 'Modified count');
+  assert(
+    document.querySelector('[aria-label="Missing files"] .metadata-report-file').title ===
+      'I:/Music/Old/missing.flac',
+    'Full path available on hover'
+  );
   assert(document.body.textContent.includes('Invalid FLAC stream info'), 'Reason visible');
+  assert(
+    document.querySelector('[title^="Previously recorded Track Error:"]'),
+    'Stored errors are identified'
+  );
+  await emit('update-complete', 'metadata', {
+    ...report,
+    details: Object.fromEntries(
+      Object.entries(report.details).map(([kind, files]) => [
+        kind,
+        [...files, { ...files[0], id: `I:/Music/Second ${kind}.flac` }]
+      ])
+    )
+  });
+  for (const section of document.querySelectorAll('.metadata-report-section')) {
+    const [first, second] = section.querySelectorAll('li');
+    assert(
+      second.getBoundingClientRect().top >= first.getBoundingClientRect().bottom,
+      'Files stack in rows in every section'
+    );
+    assert(first.children.length === 3, 'Each row contains file, location and reason');
+    const [name, location, reason] = first.children;
+    assert(name.textContent.trim().startsWith('1 -'), 'Rows are numbered');
+    assert(location.title === location.textContent, 'Location tooltip has the full path');
+    assert(
+      Math.abs(name.getBoundingClientRect().top - location.getBoundingClientRect().top) <= 2 &&
+        Math.abs(location.getBoundingClientRect().top - reason.getBoundingClientRect().top) <= 2,
+      'File, location and reason share one line'
+    );
+    assert(getComputedStyle(location).textOverflow === 'ellipsis', 'Long locations are shortened');
+  }
+  assert(
+    !document.querySelector('[title*="Old title → New title"]'),
+    'No edited-field claims in the report'
+  );
+  assert(
+    document.querySelector('[title*="Previous catalog timestamp:"]'),
+    'Updated row explains timestamp trigger'
+  );
   assert(timeouts === 0, 'Detailed results do not expire');
   await act(async () => document.querySelector('[aria-label="Dismiss scan result"]').click());
   assert(!document.querySelector('.scan-result'), 'Dismiss works');
@@ -68,7 +132,7 @@ window.metadataReportTests = (async () => {
     }
   };
   await emit('update-complete', 'metadata', large);
-  const section = document.querySelector('.metadata-report-section');
+  const section = document.querySelector('[aria-label="Missing files"]');
   assert(section.querySelectorAll('li').length === 100, 'Large list initially bounded');
   await act(async () => section.querySelector('button').click());
   assert(section.querySelectorAll('li').length === 117, 'All paths accessible');
@@ -85,7 +149,10 @@ window.metadataReportTests = (async () => {
     document.querySelector('[role="alert"]').textContent === 'Database locked',
     'Database failure detail survives IPC'
   );
-  assert(document.body.textContent.includes('Modified files (0)'), 'No false successful saves');
+  assert(
+    document.body.textContent.includes('Catalog entries updated (0)'),
+    'No false successful saves'
+  );
   await emit('update-complete', 'metadata', {
     modified: 0,
     failed: 0,

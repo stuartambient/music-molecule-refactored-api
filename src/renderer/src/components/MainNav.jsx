@@ -50,7 +50,7 @@ const MainNav = ({ onClick }) => {
       case 'metadata':
         if (result.details) return <MetadataUpdateReport report={result} />;
         if (result.failed)
-          return `metadata modified: ${result.modified}, failed: ${result.failed}. Run Update Meta to retry failed files.`;
+          return `metadata modified: ${result.modified}, failed: ${result.failed}. Run Catalog report to retry failed files.`;
         return result.nochange
           ? `${type} update completed, no changes`
           : `${type} modified: ${result.modified}`;

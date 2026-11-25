@@ -28,7 +28,7 @@ const findRoot = (file) => {
 };
 
 const allTracks = () => {
-  const alltracks = db.prepare('SELECT track_id, audiotrack, modified FROM "audio-tracks"');
+  const alltracks = db.prepare('SELECT track_id, audiotrack, modified, error FROM "audio-tracks"');
   const tracks = alltracks.all();
   return tracks;
 };
