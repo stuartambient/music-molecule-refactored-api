@@ -1,0 +1,56 @@
+.tag-save-report {
+  width: min(520px, 85vw);
+  max-height: 75vh;
+  box-sizing: border-box;
+  padding: 20px;
+  border: 1px solid var(--ui-border, #758392);
+  border-radius: 8px;
+  background: var(--ui-surface, #20262d);
+  color: var(--ui-text, #f2f2f2);
+  font: inherit;
+}
+.tag-save-report::backdrop {
+  background: var(--ui-scrim, #00000080);
+}
+.tag-save-report h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+.tag-save-report p {
+  overflow-wrap: anywhere;
+}
+.tag-save-report ul {
+  max-height: 35vh;
+  overflow-y: auto;
+  padding: 0;
+  margin: 12px 0;
+  list-style: none;
+}
+.tag-save-report li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ui-border, #758392);
+}
+.tag-save-report li span {
+  overflow-wrap: anywhere;
+}
+.tag-save-report strong {
+  font-size: 0.85em;
+  font-weight: 500;
+}
+.tag-save-report small {
+  grid-column: 1 / -1;
+  color: var(--ui-danger, #ff9aa9);
+  overflow-wrap: anywhere;
+}
+.tag-save-report button {
+  float: right;
+  padding: 6px 16px;
+  cursor: pointer;
+  color: inherit;
+  background: var(--ui-raised, #293c50);
+  border: 1px solid var(--ui-border, #758392);
+  border-radius: 4px;
+}

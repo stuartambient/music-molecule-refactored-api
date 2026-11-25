@@ -13,6 +13,8 @@ const useColumnDefinitions = (/* failedIds, failedErrorMap */) => {
       {
         colId: '#',
         headerName: '#',
+        headerClass: 'tag-row-number-header',
+        resizable: true,
         valueGetter: (params) => params.node.rowIndex + 1,
         width: 60,
         pinned: 'left',

@@ -1,76 +1,59 @@
-import { useCallback } from 'react';
+import { useState } from 'react';
 import useIpcEvent from '../../hooks/useIpcEvent';
 import StatusTagLoader from './StatusTagLoader';
+import TagSaveReport from './TagSaveReport';
 
-const TagUpdateState = ({
-  updateStatus,
-  setUpdateStatus,
-  rescanStatus,
-  setRescanStatus,
-  setViewUpdate,
-  tagReport,
-  setTagReport,
-  undos,
-  setUndos
-}) => {
-  /* const [tagReport, setTagReport] = useState({ result: '', passed: [], failed: [] }); */
-  /*   useEffect(() => {
-    if (updateStatus && updateStatus !== 'starting') {
-      setTimeout(() => setUpdateStatus(''), 30000);
-    }
-  }, [updateStatus, setUpdateStatus]); */
+const TagUpdateState = ({ updateStatus, setUpdateStatus, setTagReport }) => {
+  const [report, setReport] = useState(null);
+  const [showReport, setShowReport] = useState(false);
 
   const handleUpdateTagsStatus = (msg) => {
-    console.log('handleUpdateTagsStatus hit');
+    if (!msg?.status) return;
     setUpdateStatus(msg.status);
-    if (!Array.isArray(msg?.res?.files)) return;
-    const { status, passed = [], failed = [] } = msg;
-    const trackIds = msg.res.files.map((file) => file.track_id);
-    setTagReport({ status, passed, failed, trackIds });
-    return;
+    setShowReport(false);
+    if (msg.status === 'starting') {
+      setReport(null);
+      return;
+    }
+    const { status, passed = [], failed = [], affected = [] } = msg;
+    const nextReport = {
+      status,
+      passed,
+      failed,
+      affected,
+      error: msg.error || (status === 'error' ? msg.message || 'Tag update failed.' : ''),
+      trackIds: (msg.res?.files || []).map((file) => file.track_id)
+    };
+    setReport(nextReport);
+    setTagReport(nextReport);
   };
-
   useIpcEvent('updated-tags', handleUpdateTagsStatus, 'tagEditApi');
 
-  /*  const handleTagStatusRequest = () => {
-    console.log('status request');
-  }; */
-
-  const handleView = () => {
-    setViewUpdate(true);
-  };
-
-  const dismissHandler = useCallback(() => {
-    setTagReport({ result: '', passed: [], failed: [] });
-    /* setUndos([]); */
-    console.log('dismiss handler: ', undos);
-  }, [setTagReport, setUndos]);
-
   const handleDismiss = () => {
-    console.log('dismiss');
+    setShowReport(false);
+    setReport(null);
     setUpdateStatus('');
-    dismissHandler();
+    setTagReport({ result: '', passed: [], failed: [] });
   };
-
-  const tagUpdateStatuses = ['success', 'failed', 'partial_status'];
 
   return (
     <>
       {updateStatus === 'starting' && <StatusTagLoader config="status-tag-loader" />}
-
-      {tagUpdateStatuses.includes(updateStatus) && (
+      {['success', 'failed', 'partial_status', 'error'].includes(updateStatus) && (
         <div className="tag-update-status-notice">
-          <span className="status">{updateStatus}</span>
-          <span className="status-view" onClick={handleView}>
+          <span className="status">{report?.error || updateStatus}</span>
+          <button type="button" className="status-view" onClick={() => setShowReport(true)}>
             View
-          </span>
-          <span className="status-dismiss" onClick={handleDismiss}>
+          </button>
+          <button type="button" className="status-dismiss" onClick={handleDismiss}>
             Dismiss
-          </span>
+          </button>
         </div>
+      )}
+      {showReport && report && (
+        <TagSaveReport report={report} onClose={() => setShowReport(false)} />
       )}
     </>
   );
 };
-
 export default TagUpdateState;

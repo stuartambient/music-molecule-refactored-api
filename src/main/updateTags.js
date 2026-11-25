@@ -385,6 +385,7 @@ const updateTags = async (db, arr) => {
       myFile.dispose();
     } catch (e) {
       console.log('updateTags final catch: ', e);
+      errors.push({ track_id: a.track_id, id: a.id, error: e.message || String(e) });
       /*   errors.push({
         track_id: a.track_id,
         id: a.id,
@@ -414,7 +415,7 @@ const updateTags = async (db, arr) => {
       /* console.log({ track_id: a.track_id, id: a.id, error: errMessage }); */
       /* errors.push({ track_id: a.track_id, id: a.id, error: errMessage }); */
     } finally {
-      if (writeState.status === 'changed-to-writable') {
+      if (writeState?.status === 'changed-to-writable') {
         /* console.log('write-state finally called: ', writeState.status); */
         await restoreReadOnlyWindows(a.id);
       }

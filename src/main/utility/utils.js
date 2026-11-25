@@ -126,6 +126,7 @@ RETURNING *`;
         /*  stmt.run(cleaned); */
 
         const updatedRow = stmt.get(cleaned);
+        if (!updatedRow) throw new Error(`Track no longer exists in the catalog: ${cleaned.track_id}`);
         updatedRows.push(updatedRow);
       }
     });
