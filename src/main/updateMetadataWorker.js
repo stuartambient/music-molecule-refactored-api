@@ -48,7 +48,7 @@ parentPort.on('message', async (message) => {
     console.log('meta worker result: ', result);
     parentPort.postMessage({ result });
   } catch (error) {
-    parentPort.postMessage({ error: error.message || String(error) });
+    parentPort.postMessage({ error: error.message || String(error), report: error.report });
   } finally {
     db.close();
     process.exit(0);

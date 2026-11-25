@@ -4,14 +4,18 @@ export function runUpdateWorker(createWorker, workerData, target, kind, errorKin
     if (finished) return;
     finished = true;
     if (!target || target.isDestroyed()) return;
-    if (error) target.send('update-error', errorKind, { result: error.message || String(error) });
+    if (error)
+      target.send('update-error', errorKind, {
+        result: error.message || String(error),
+        ...(result ? { report: result } : {})
+      });
     else target.send('update-complete', kind, result);
   };
   try {
     const worker = createWorker({ workerData });
     worker.on('message', (message) => {
       if (message && Object.hasOwn(message, 'error'))
-        finish(new Error(message.error || 'The update worker reported an error.'));
+        finish(new Error(message.error || 'The update worker reported an error.'), message.report);
       else if (message?.result && typeof message.result === 'object') finish(null, message.result);
       else
         finish(

@@ -10,6 +10,7 @@ import { IoMdHelpCircleOutline } from 'react-icons/io';
 import { VscChromeMaximize, VscChromeMinimize, VscChromeClose } from 'react-icons/vsc';
 
 import '../style/MainNav.css';
+import MetadataUpdateReport from './MetadataUpdateReport';
 
 const MainNav = ({ onClick }) => {
   const { state, dispatch } = useAudioPlayer();
@@ -43,9 +44,11 @@ const MainNav = ({ onClick }) => {
         return `Cover update failed. ${result?.result || 'Please try again.'}`;
 
       case 'meta-error':
+        if (result.report) return <MetadataUpdateReport report={result.report} />;
         return `Metadata update failed. ${result?.result || 'Please try again.'}`;
 
       case 'metadata':
+        if (result.details) return <MetadataUpdateReport report={result} />;
         if (result.failed)
           return `metadata modified: ${result.modified}, failed: ${result.failed}. Run Update Meta to retry failed files.`;
         return result.nochange
@@ -76,7 +79,9 @@ const MainNav = ({ onClick }) => {
     clearTimeout(resultTimer.current);
     setUpdateResults(parseUpdateType(type, result));
     setUpdateOption(null);
-    resultTimer.current = setTimeout(() => setUpdateResults(null), 15000);
+    if (type !== 'metadata' && type !== 'meta-error') {
+      resultTimer.current = setTimeout(() => setUpdateResults(null), 15000);
+    }
   }
 
   /*   useEffect(() => {
@@ -181,7 +186,7 @@ const MainNav = ({ onClick }) => {
     <nav className={mainNav}>
       {updateResults && !state.minimalmode && (
         <div className="scan-result" role="status" aria-live="polite">
-          <span className="scan-result-message">{updateResults}</span>
+          <div className="scan-result-message">{updateResults}</div>
           <button
             type="button"
             className="scan-result-dismiss"

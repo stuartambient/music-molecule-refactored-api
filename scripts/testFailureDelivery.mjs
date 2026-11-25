@@ -38,6 +38,20 @@ test('an error message followed by a normal exit is failure, never success', () 
     ['update-error', 'meta-error', { result: 'Drive unavailable' }]
   ]);
 });
+test('metadata database failure forwards its detailed report exactly once', () => {
+  const { worker, target } = update();
+  const report = {
+    modified: 0,
+    failed: 1,
+    details: { missing: [], bad: [{ id: 'file.flac', error: 'Database locked' }], modified: [] }
+  };
+  worker.emit('message', { error: 'Database locked', report });
+  worker.emit('exit', 0);
+  assert.deepEqual(target.messages, [
+    ['update-error', 'meta-error', { result: 'Database locked', report }]
+  ]);
+});
+
 test('worker errors and exits cannot produce duplicate terminal notifications', () => {
   const { worker, target } = update();
   worker.emit('error', Error('Cannot open catalog'));

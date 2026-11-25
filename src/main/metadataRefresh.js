@@ -9,32 +9,71 @@ export async function refreshMetadata(files, { parse, save }) {
       error: file.error
     }));
   const valid = parsed.filter((file) => !file.error);
-  const res = valid.length ? await save(valid) : { success: true, files: [] };
-  if (!res?.success) {
-    throw new Error(
-      `Database metadata refresh failed. ${res?.message || 'No save confirmation received.'} Run Update Meta to retry.`
+  let res;
+  try {
+    res = valid.length ? await save(valid) : { success: true, files: [] };
+    if (!res?.success) throw new Error(res?.message || 'No save confirmation received.');
+  } catch (cause) {
+    const error = new Error(
+      `Database metadata refresh failed. ${cause.message || String(cause)} Run Update Meta to retry.`
     );
+    error.refreshFailed = failed;
+    error.unsaved = valid;
+    throw error;
   }
   return { res, failed };
 }
 
+const isMissing = (error) =>
+  ['ENOENT', 'ENOTDIR'].includes(error.code) ||
+  /^(?:Error: )?(?:ENOENT|ENOTDIR):/.test(error.error || '');
+
 export async function updateChangedMetadata(tracks, { stat, parse, save }) {
   const changed = [];
-  let failed = 0;
-  const failures = [];
+  const details = { missing: [], bad: [], modified: [] };
+  const addFailure = (file) => details[isMissing(file) ? 'missing' : 'bad'].push(file);
+  const summary = () => {
+    const failed = details.missing.length + details.bad.length;
+    return {
+      modified: details.modified.length,
+      failed,
+      failures: [...details.missing, ...details.bad].slice(0, 10),
+      nochange: !details.modified.length && !failed,
+      details
+    };
+  };
   for (const track of tracks) {
     try {
       const stats = await stat(track.audiotrack);
       if (stats.mtimeMs > track.modified) changed.push({ ...track, id: track.audiotrack });
     } catch (error) {
-      failed++;
-      if (failures.length < 10)
-        failures.push({ id: track.audiotrack, error: error.message || String(error) });
+      addFailure({
+        track_id: track.track_id,
+        id: track.audiotrack,
+        code: error.code,
+        error: error.message || String(error)
+      });
     }
   }
-  const result = await refreshMetadata(changed, { parse, save });
-  failed += result.failed.length;
-  failures.push(...result.failed.slice(0, 10 - failures.length));
-  const modified = result.res.files.length;
-  return { modified, failed, failures, nochange: modified === 0 && failed === 0 };
+  try {
+    const result = await refreshMetadata(changed, { parse, save });
+    result.failed.forEach(addFailure);
+    const paths = new Map(changed.map((file) => [file.track_id, file.id]));
+    details.modified = result.res.files.map((file) => ({
+      track_id: file.track_id,
+      id: file.audiotrack || paths.get(file.track_id)
+    }));
+    return summary();
+  } catch (error) {
+    (error.refreshFailed || []).forEach(addFailure);
+    for (const file of error.unsaved || changed) {
+      details.bad.push({
+        track_id: file.track_id,
+        id: file.audiotrack || file.id,
+        error: error.message
+      });
+    }
+    error.report = { ...summary(), error: error.message, nochange: false };
+    throw error;
+  }
 }

@@ -243,3 +243,42 @@
   stroke: var(--button-on);
   color: var(--button-on);
 }
+
+.metadata-update-report h2 {
+  font-size: 1.1rem;
+  margin: 0 0 0.5rem;
+}
+.metadata-update-report h3 {
+  font-size: 1rem;
+  margin: 0.75rem 0 0.25rem;
+}
+.metadata-update-report p {
+  margin: 0.25rem 0;
+}
+.metadata-report-section {
+  border-top: 1px solid currentColor;
+}
+.metadata-report-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.metadata-report-section li {
+  margin: 0.5rem 0 0.75rem;
+}
+.metadata-report-section strong,
+.metadata-report-section small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.metadata-report-section small {
+  font-size: 0.85em;
+}
+.metadata-report-section button {
+  color: inherit;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  padding: 4px 8px;
+  cursor: pointer;
+}

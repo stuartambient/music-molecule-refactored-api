@@ -115,7 +115,8 @@ test('no changes and failed checks have different results and bounded failure ex
     modified: 0,
     failed: 0,
     failures: [],
-    nochange: true
+    nochange: true,
+    details: { missing: [], bad: [], modified: [] }
   });
   const result = await updateChangedMetadata(
     Array.from({ length: 100 }, (_, i) => ({ audiotrack: String(i) })),
@@ -130,6 +131,91 @@ test('no changes and failed checks have different results and bounded failure ex
   assert.equal(result.failures.length, 10);
   assert.equal(result.nochange, false);
 });
+test('detailed report retains every path and separates missing, unreadable, parsed and saved files', async () => {
+  const files = ['missing', 'denied', 'malformed', 'vanished', 'saved'].map((id) => ({
+    track_id: id,
+    audiotrack: `I:/Music/${id}.flac`,
+    modified: 1
+  }));
+  const result = await updateChangedMetadata(files, {
+    stat: async (path) => {
+      if (path.includes('missing'))
+        throw Object.assign(new Error('File missing'), { code: 'ENOENT' });
+      if (path.includes('denied'))
+        throw Object.assign(new Error('Access denied'), { code: 'EACCES' });
+      return { mtimeMs: 2 };
+    },
+    parse: async (input) =>
+      input.map((file) => ({
+        track_id: file.track_id,
+        audiotrack: file.id,
+        error:
+          file.track_id === 'malformed'
+            ? 'Invalid FLAC header'
+            : file.track_id === 'vanished'
+              ? 'Error: ENOENT: no such file'
+              : null
+      })),
+    save: async (input) => ({ success: true, files: input })
+  });
+  assert.equal(result.modified, 1);
+  assert.equal(result.failed, 4);
+  assert.deepEqual(
+    result.details.missing.map((file) => file.track_id),
+    ['missing', 'vanished']
+  );
+  assert.deepEqual(
+    result.details.bad.map((file) => file.track_id),
+    ['denied', 'malformed']
+  );
+  assert.equal(result.details.modified[0].id, 'I:/Music/saved.flac');
+  const many = await updateChangedMetadata(
+    Array.from({ length: 117 }, (_, i) => ({ audiotrack: `${i}.flac` })),
+    {
+      ...options,
+      stat: async () => {
+        throw Object.assign(new Error('Missing'), { code: 'ENOENT' });
+      }
+    }
+  );
+  assert.equal(many.details.missing.length, 117);
+});
+
+test('failed database report preserves file failures and does not claim rolled-back rows as modified', async () => {
+  await assert.rejects(
+    updateChangedMetadata(
+      [
+        { track_id: 'missing', audiotrack: 'missing.flac', modified: 1 },
+        { track_id: 'invalid', audiotrack: 'invalid.flac', modified: 1 },
+        { track_id: 'good', audiotrack: 'good.flac', modified: 1 }
+      ],
+      {
+        stat: async (path) => {
+          if (path === 'missing.flac')
+            throw Object.assign(new Error('Missing'), { code: 'ENOENT' });
+          return { mtimeMs: 2 };
+        },
+        parse: async (files) =>
+          files.map((file) => ({
+            track_id: file.track_id,
+            audiotrack: file.id,
+            error: file.track_id === 'invalid' ? 'Invalid tags' : null
+          })),
+        save: async () => ({ success: false, message: 'SQLITE_BUSY' })
+      }
+    ),
+    (error) => {
+      assert.equal(error.report.modified, 0);
+      assert.equal(error.report.failed, 3);
+      assert.equal(error.report.details.missing.length, 1);
+      assert.equal(error.report.details.bad.length, 2);
+      assert.deepEqual(error.report.details.modified, []);
+      assert.match(error.report.error, /SQLITE_BUSY/);
+      return true;
+    }
+  );
+});
+
 test('tag worker reports database failure, parse failure, and committed success accurately', async () => {
   const { build } = await import('esbuild');
   const { isBuiltin } = await import('node:module');
