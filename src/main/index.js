@@ -28,7 +28,7 @@ import {
 } from './windowManager.js';
 import { normalizeMainTheme, normalizeEditorTheme } from '../shared/themePreferences.js';
 import mime from 'mime-types';
-import { File } from 'node-taglib-sharp';
+import { getTrackCover } from './trackCover.js';
 import createUpdateTagsWorker from './updateTagsWorker?nodeWorker';
 import { pendingTagSaveSummary } from './tagSaveJournal.js';
 import { createTagSaveQueue } from './tagSaveDelivery.js';
@@ -856,30 +856,7 @@ const getRoot = (currentDir) => {
   return allPaths;
 };
 
-guardedIpc.handle('get-cover', async (event, arg) => {
-  const trackDirectory = path.dirname(arg);
-  const trackRoot = getRoot(trackDirectory);
-
-  const myFile = await File.createFromPath(arg);
-
-  if (myFile.tag.pictures?.[0]?.data) {
-    return myFile.tag.pictures[0].data._bytes;
-  }
-
-  const folderCover = await searchCover(trackDirectory);
-  if (folderCover) {
-    return folderCover;
-  }
-
-  if (trackRoot.length > 0) {
-    const coverResults = await searchCover(trackRoot);
-    if (coverResults) {
-      return coverResults;
-    }
-  }
-
-  return 0;
-});
+guardedIpc.handle('get-cover', (_event, track) => getTrackCover(track, { getRoot, searchCover }));
 
 guardedIpc.on('screen-mode', (event, ...args) => {
   if (event.sender === mainWindow?.webContents) windowPresentation.setMode(args[0]);
