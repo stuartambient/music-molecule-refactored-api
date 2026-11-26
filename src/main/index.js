@@ -54,6 +54,7 @@ import {
 import { childDefinitions } from './childWindowDefinitions.js';
 import { runUpdateWorker } from './updateWorkerDelivery.js';
 import { createScanCoordinator } from './scanCoordinator.js';
+import { createScanSchedule } from './scanSchedule.js';
 import { createCoverDownloads } from './coverDownloads.js';
 import { downloadCoverFile } from './coverDownloader.js';
 /* import { simulateCorruption } from './simulateDbCorruption.js'; */
@@ -99,6 +100,7 @@ let closingMpv = false;
 app.on('before-quit', (event) => {
   if (closingMpv) return;
   closingMpv = true;
+  scanSchedule.close();
   event.preventDefault();
   void mpvService.close().finally(() => app.quit());
 });
@@ -241,47 +243,15 @@ const getTheme = () => {
   global.currentTheme = mainTheme;
 };
 
-let currentSchedule;
-let cronSchedule = [];
+const scanSchedule = createScanSchedule({
+  cron,
+  run: () => Promise.all([updateFolders(), updateFiles()]),
+  onError: (error) => console.error('Scheduled catalog update failed:', error)
+});
 
 const getCurrentSchedule = async () => {
-  console.log('get-current-schedule');
-  const sched = await getPreferences();
-  currentSchedule = sched.schedule || {};
-  cronSchedule = [];
-  //console.log('current Schedule: ', currentSchedule);
-  if (typeof currentSchedule === 'string' && currentSchedule.startsWith('everyday')) {
-    const timeOfDay = currentSchedule.split('@')[1];
-    const [hourStr, minuteStr] = timeOfDay.split(':');
-    const hour = parseInt(hourStr, 10);
-    const minute = parseInt(minuteStr, 10);
-    const cronExp = `${minute} ${hour} * * *`;
-    /* return  */ cronSchedule.push(cronExp);
-  } else {
-    for (const [key, value] of Object.entries(currentSchedule)) {
-      if (value) {
-        //console.log(key, '..', value);
-        const [hourStr, minuteStr] = value.split(':');
-        const hour = parseInt(hourStr, 10);
-        const minute = parseInt(minuteStr, 10);
-
-        const cronExpr = `${minute} ${hour} * * ${key}`;
-        cronSchedule.push(cronExpr);
-      }
-    }
-    cronSchedule.forEach((expr) => {
-      cron.schedule(
-        expr,
-        () => {
-          updateFolders();
-          updateFiles();
-          console.log(`Running job schedule: ${expr}`);
-        },
-        { maxExecutions: 1 }
-      );
-    });
-    return cronSchedule;
-  }
+  // Read the persisted snapshot without an async read racing a later schedule save.
+  return scanSchedule.replace(getPreferencesSync().schedule ?? {});
 };
 
 /* async function backfillTags() {
@@ -1500,8 +1470,8 @@ guardedIpc.handle('save-preferences', async (event, preferences) => {
   try {
     const saveResults = await savePreferences(preferences);
     if (!saveResults) throw new Error('Preferences could not be saved.');
-    if (preferences.schedule) {
-      getCurrentSchedule();
+    if (Object.hasOwn(preferences, 'schedule')) {
+      await getCurrentSchedule();
     }
     if (preferences.theme || preferences.mainTheme || preferences.editorTheme) {
       getTheme();
