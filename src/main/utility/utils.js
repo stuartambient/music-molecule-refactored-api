@@ -228,9 +228,10 @@ export async function parseMeta(files, op, findRoot) {
   const filesMetadata = [];
 
   for (const file of files) {
+    let myFile;
     try {
       const filePath = op === 'new' ? file : file.id;
-      const myFile = await File.createFromPath(filePath);
+      myFile = await File.createFromPath(filePath);
 
       const mmInfo = await getTagInfo(filePath); // { warnings, tags: meta.native }
       const tagWarnings = mmInfo.warnings ? true : undefined;
@@ -312,6 +313,8 @@ export async function parseMeta(files, op, findRoot) {
         ...(op === 'new' ? { like: 0 } : {}),
         error: error.toString()
       });
+    } finally {
+      myFile?.dispose();
     }
   }
   return filesMetadata;

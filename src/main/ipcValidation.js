@@ -222,7 +222,9 @@ const emptyChannels = [
   'show-text-input-menu',
   'get-preferences',
   'get-preferences-sync',
-  'child-ready'
+  'child-ready',
+  'get-pending-tag-saves',
+  'retry-tag-saves'
 ];
 const validators = Object.fromEntries(emptyChannels.map((channel) => [channel, noArgs]));
 Object.assign(validators, {
@@ -293,6 +295,13 @@ Object.assign(validators, {
   ),
   'get-shuffled-tracks': argsOf(page),
   'update-tags': argsOf(tagEdits),
+  'forget-tag-save': argsOf(
+    (value) =>
+      keys(value, ['track_id', 'revision']) &&
+      id(value.track_id) &&
+      typeof value.revision === 'string' &&
+      /^[a-f0-9]{64}$/.test(value.revision)
+  ),
   'rescan-track-error': argsOf(location, id),
   'show-album-cover-menu': argsOf(location, (value) => text(value)),
   'show-child': (args, role) => args.length === 1 && childRequest(args[0], role),

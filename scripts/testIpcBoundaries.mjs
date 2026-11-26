@@ -283,3 +283,23 @@ test('library cursor envelopes accept bounded keys and reject malformed payloads
     assert.throws(() => allow(main, 'get-tracks', [malformed, '', 'ASC']));
   }
 });
+
+test('forgetting a recovery record is editor-only and requires a reviewed record revision', () => {
+  assert.equal(canRequest('editor', 'invoke', 'forget-tag-save'), true);
+  assert.equal(canRequest('main', 'invoke', 'forget-tag-save'), false);
+  validateIpcArguments(
+    'forget-tag-save',
+    [{ track_id: 'one', revision: 'a'.repeat(64) }],
+    'editor'
+  );
+  for (const record of [
+    { track_id: 'one' },
+    { track_id: 'one', revision: 'invalid' },
+    { track_id: 'one', revision: 'a'.repeat(64), path: 'C:/unrelated' }
+  ]) {
+    assert.throws(
+      () => validateIpcArguments('forget-tag-save', [record], 'editor'),
+      /Invalid arguments/
+    );
+  }
+});

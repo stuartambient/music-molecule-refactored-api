@@ -329,7 +329,11 @@ test('tag worker reports database failure, parse failure, and committed success 
   const { Worker } = await import('node:worker_threads');
   const workerFile = path.join(temporaryRoot, 'tag-worker.cjs');
   const catalog = path.join(temporaryRoot, 'tags.db');
-  new Database(catalog).close();
+  const workerDB = new Database(catalog);
+  workerDB.exec(
+    `CREATE TABLE "audio-tracks" (track_id TEXT PRIMARY KEY, audiotrack TEXT); INSERT INTO "audio-tracks" VALUES ('one','fixture');`
+  );
+  workerDB.close();
   await build({
     entryPoints: [path.join(sourceRoot, 'updateTagsWorker.js')],
     outfile: workerFile,
@@ -340,6 +344,16 @@ test('tag worker reports database failure, parse failure, and committed success 
       {
         name: 'isolated-tag-test',
         setup(builder) {
+          builder.onLoad({ filter: /tagVerification\.js$/ }, () => ({
+            contents: `export const expectedTagValues = () => ({ title: 'New' }); export const verifyTagValues = async () => ({ status: 'confirmed' });`
+          }));
+          builder.onLoad({ filter: /updateTagsWorker\.js$/ }, (args) => ({
+            contents: fs
+              .readFileSync(args.path, 'utf8')
+              .replace('inspect: file => fs.stat(file)', '')
+              .replace('inspect: (file) => fs.stat(file)', ''),
+            loader: 'js'
+          }));
           builder.onLoad({ filter: /updateTags\.js$/ }, () => ({
             contents: `export default async () => ({ errors: [] });`
           }));
@@ -394,8 +408,9 @@ test('tag worker reports database failure, parse failure, and committed success 
     });
   }
   const failed = await run('save');
-  assert.equal(failed.status, 'error');
-  assert.match(failed.error, /Database metadata refresh failed.*SQLITE_BUSY.*retry/);
+  assert.equal(failed.status, 'failed');
+  assert.equal(failed.outcomes[0].outcome, 'Tags saved; catalog refresh failed');
+  assert.match(failed.failed[0].error, /SQLITE_BUSY/);
   const unreadable = await run('parse');
   assert.equal(unreadable.status, 'failed');
   assert.equal(unreadable.failed.length, 1);

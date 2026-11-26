@@ -30,6 +30,8 @@ import { normalizeMainTheme, normalizeEditorTheme } from '../shared/themePrefere
 import mime from 'mime-types';
 import { File } from 'node-taglib-sharp';
 import createUpdateTagsWorker from './updateTagsWorker?nodeWorker';
+import { pendingTagSaveSummary } from './tagSaveJournal.js';
+import { createTagSaveQueue } from './tagSaveDelivery.js';
 import createUpdateFilesWorker from './updateFilesWorker?nodeWorker';
 import createUpdateFoldersWorker from './updateFoldersWorker?nodeWorker';
 import createUpdateCoversWorker from './updateCoversWorker?nodeWorker';
@@ -1139,39 +1141,28 @@ guardedIpc.handle('get-shuffled-tracks', async (_, args) => {
   }
 });
 
-guardedIpc.handle('update-tags', async (event, arr) => {
-  /* console.log('update tags handler: ', arr); */
-  const senderWebContents = event.sender;
-  const sendToEditor = (value) => {
-    if (!senderWebContents.isDestroyed()) senderWebContents.send('updated-tags', value);
-  };
-  sendToEditor({ status: 'starting' });
-  try {
-    const workerPath = dbPath;
-    await createUpdateTagsWorker({ workerData: { workerPath: workerPath, data: arr, logDir } })
-      .on('message', (message) => {
-        /* console.log('message: ', message); */
-        /*  console.log('update tags: ', message); */
-        /* console.log('message: ', message); */
-        sendToEditor(message);
-        if (mainWindow && !mainWindow.isDestroyed())
-          mainWindow.webContents.send('updated-tags', 'updated-tags');
-      })
-      .on('error', (err) => {
-        console.error('Tags worker error: ', err);
-        sendToEditor({ status: 'error', error: err.message });
-      })
-      .on('exit', (code) => {
-        if (code !== 0) {
-          const errorMessage = `Worker stopped with exit code ${code}`;
-          console.error(errorMessage);
-        }
-      })
-      .postMessage('');
-  } catch (error) {
-    console.error('Error on tag update: ', error.message);
+const tagSaveQueue = createTagSaveQueue({
+  createWorker: createUpdateTagsWorker,
+  onChange: () => {
+    if (mainWindow && !mainWindow.isDestroyed())
+      mainWindow.webContents.send('updated-tags', 'updated-tags');
   }
 });
+const queueTagSave = (event, data, mode = 'save') =>
+  tagSaveQueue({
+    workerPath: dbPath,
+    data,
+    mode,
+    logDir,
+    target: event.sender
+  });
+
+guardedIpc.handle('get-pending-tag-saves', () => pendingTagSaveSummary(getDB()));
+guardedIpc.handle('update-tags', (event, data) => queueTagSave(event, data));
+guardedIpc.handle('retry-tag-saves', (event) => queueTagSave(event, [], 'recover'));
+guardedIpc.handle('forget-tag-save', (_event, record) =>
+  tagSaveQueue({ workerPath: dbPath, data: [record], mode: 'forget', logDir, target: null })
+);
 
 guardedIpc.handle('rescan-track-error', (event, track, id) => {
   const sender = event.sender;

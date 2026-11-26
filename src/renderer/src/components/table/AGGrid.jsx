@@ -18,6 +18,7 @@ import { themeQuartz } from 'ag-grid-community';
 import useIpcEvent from '../../hooks/useIpcEvent';
 import PlayButtonRenderer from './PlayButtonRenderer';
 import RescanButtonRenderer from './RescanButtonRenderer';
+import { reconcileTagSaveResult } from '../../utility/tagSaveResults.js';
 import { debounce } from './helper';
 import './styles/AGGrid.css';
 import { useTheme } from '../../editorThemeContext';
@@ -42,6 +43,8 @@ const AGGrid = () => {
   const [pendingPictureEdit, setPendingPictureEdit] = useState({});
 
   const gridRef = useRef(null);
+  const submittedUndos = useRef(new Set());
+  const tagSaveInProgress = useRef(false);
   const [undos, setUndos] = useState([]);
   const [redos, setRedos] = useState([]);
 
@@ -333,26 +336,14 @@ const AGGrid = () => {
   const handleTagUpdateStatus = (val) => {
     console.log('handleTagUpdateStatus hit');
     const gridApi = gridRef.current?.api;
-    switch (val.status) {
-      case 'success':
-        gridApi.applyTransaction({
-          update: val.res.files
-        });
-        return setUndos([]);
-
-      case 'partial_status':
-        gridApi.applyTransaction({
-          update: val.res.files
-        });
-        break;
-      case 'failed': {
-        gridApi.applyTransaction({
-          update: val.res.files
-        });
-        break;
-      }
-      default:
-        break;
+    if (Array.isArray(val.res?.files)) {
+      const { rows } = reconcileTagSaveResult(undos, submittedUndos.current, val);
+      gridApi?.applyTransaction({
+        update: rows.filter((file) => gridApi.getRowNode(file.track_id))
+      });
+    }
+    if (val.passed?.length) {
+      setUndos((current) => reconcileTagSaveResult(current, submittedUndos.current, val).remaining);
     }
   };
 
@@ -609,7 +600,14 @@ const AGGrid = () => {
   };
 
   const updateTags = async (arr) => {
-    await window.tagEditApi.updateTags(arr);
+    if (tagSaveInProgress.current) return;
+    tagSaveInProgress.current = true;
+    submittedUndos.current = new Set(undos);
+    try {
+      await window.tagEditApi.updateTags(arr);
+    } finally {
+      tagSaveInProgress.current = false;
+    }
   };
 
   const handleGridMenu = (e) => {

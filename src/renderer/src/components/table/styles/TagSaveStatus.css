@@ -1,0 +1,183 @@
+.column-panel fieldset .tag-save-panel,
+.tag-save-panel {
+  flex: 1 1 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--ui-border, #758392);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--ui-surface, #101214);
+  color: var(--ui-text, #f2f2f2);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.tag-save-panel-heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 9px 12px;
+  background: var(--ui-raised, #20262d);
+}
+.tag-save-panel-heading h3 {
+  font-size: 13px;
+  margin: 0;
+}
+.tag-save-panel-heading > span {
+  color: var(--ui-muted, #b1bbc8);
+  font-size: 11px;
+}
+.tag-save-row {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+}
+.tag-save-row + .tag-save-row {
+  border-top: 1px solid var(--ui-border, #758392);
+}
+.tag-save-row.is-attention {
+  background: color-mix(in srgb, var(--ui-warning-bg, #493600) 40%, var(--ui-surface, #101214));
+}
+.tag-save-mark {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ui-warning, #ffe08a);
+  border: 1px solid currentColor;
+}
+.is-confirmed .tag-save-mark {
+  color: var(--ui-accent, #26b0ff);
+}
+.is-busy .tag-save-mark {
+  color: var(--ui-accent, #26b0ff);
+}
+.column-panel fieldset .tag-save-panel .tag-save-copy,
+.tag-save-panel .tag-save-copy {
+  display: block;
+  min-width: 0;
+}
+.tag-save-eyebrow {
+  display: block;
+  color: var(--ui-muted, #b1bbc8);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.tag-save-copy strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+.tag-save-copy p {
+  margin: 3px 0 0;
+}
+.tag-save-copy small {
+  display: block;
+  color: var(--ui-muted, #b1bbc8);
+  font-size: 11px;
+  margin-top: 3px;
+}
+.column-panel fieldset .tag-save-panel .tag-save-actions,
+.tag-save-panel .tag-save-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
+}
+.column-panel .tag-save-panel button,
+.tag-save-panel button {
+  font: inherit;
+  font-weight: 500;
+  border: 1px solid var(--ui-border, #758392);
+  border-radius: 5px;
+  padding: 6px 10px;
+  color: inherit;
+  background: var(--ui-raised, #20262d);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: none;
+}
+.column-panel .tag-save-panel .tag-save-quiet,
+.tag-save-panel .tag-save-quiet {
+  background: transparent;
+  color: var(--ui-muted, #b1bbc8);
+}
+.column-panel .tag-save-panel .tag-save-primary,
+.tag-save-panel .tag-save-primary {
+  background: var(--ui-action, #0064d3);
+  color: var(--ui-on-action, #ffffff);
+  border-color: var(--ui-action, #0064d3);
+}
+.tag-save-panel button:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+.tag-save-panel button:focus-visible {
+  outline: 2px solid var(--ui-focus, #ff80bf);
+  outline-offset: 2px;
+}
+.tag-save-panel button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+.tag-save-action-error {
+  margin: 0;
+  padding: 8px 12px;
+  color: var(--ui-danger, #ff9aa9);
+}
+.is-spinning {
+  animation: tag-save-spin 1.5s linear infinite;
+}
+@keyframes tag-save-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (max-width: 700px) {
+  .tag-save-row {
+    grid-template-columns: 26px minmax(0, 1fr);
+  }
+  .tag-save-actions {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+  .column-panel fieldset .tag-save-panel .tag-save-actions {
+    justify-content: flex-start;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .is-spinning {
+    animation: none;
+  }
+}
+
+.column-panel .tag-save-panel .tag-save-attention-toggle,
+.tag-save-panel .tag-save-attention-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  padding: 4px 9px;
+  border: 1px solid var(--ui-warning, #ffe08a);
+  border-radius: 20px;
+  color: var(--ui-warning, #ffe08a);
+  background: var(--ui-warning-bg, #493600);
+  font-size: 11px;
+}
+.tag-save-attention-toggle > span:first-child {
+  display: inline-grid;
+  place-items: center;
+  width: 13px;
+  height: 13px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 10px;
+}

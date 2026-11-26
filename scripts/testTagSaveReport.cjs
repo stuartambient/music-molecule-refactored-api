@@ -1,12 +1,12 @@
 /* global process, __filename, __dirname, console */
-// Run with node scripts/testRendererLifecycle.cjs. Uses a hidden, isolated Electron window.
+// Run with node scripts/testTagSaveReport.cjs. Uses a hidden, isolated Electron window.
 const { app, BrowserWindow } = require('electron');
 
 if (!process.versions.electron) {
   const { spawnSync } = require('node:child_process');
   const env = { ...process.env };
   delete env.ELECTRON_RUN_AS_NODE;
-  const result = spawnSync(require('electron'), [__filename], {
+  const result = spawnSync(require('electron'), [__filename, ...process.argv.slice(2)], {
     env,
     stdio: 'inherit',
     windowsHide: true
@@ -22,6 +22,8 @@ if (!process.versions.electron) {
   app.disableHardwareAcceleration();
   app.whenReady().then(async () => {
     const window = new BrowserWindow({
+      width: 1100,
+      height: 720,
       show: false,
       webPreferences: { sandbox: true, backgroundThrottling: false }
     });
@@ -43,6 +45,18 @@ if (!process.versions.electron) {
       await window.webContents.executeJavaScript(result.outputFiles[0].text);
       const results = await window.webContents.executeJavaScript('window.tagSaveReportTests');
       results.forEach((result) => console.log(result));
+      if (process.argv.includes('--preview')) {
+        for (const theme of ['light', 'dark']) {
+          console.log(
+            await window.webContents.executeJavaScript(`window.previewTagSaveStatus('${theme}')`)
+          );
+          await new Promise((resolve) => setTimeout(resolve, 200));
+          const image = await window.webContents.capturePage();
+          const file = join(app.getPath('userData'), `tag-save-${theme}.png`);
+          writeFileSync(file, image.toPNG());
+          console.log(file);
+        }
+      }
       app.exit(0);
     } catch (error) {
       console.error(error);

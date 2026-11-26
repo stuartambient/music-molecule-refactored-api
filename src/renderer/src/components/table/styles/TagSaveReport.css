@@ -54,3 +54,40 @@
   border: 1px solid var(--ui-border, #758392);
   border-radius: 4px;
 }
+
+.tag-save-stages {
+  grid-column: 1 / -1;
+  font-size: 12px;
+}
+
+.tag-save-report .tag-save-forget {
+  grid-column: 1 / -1;
+  justify-self: start;
+  float: none;
+  font-size: 11px;
+  padding: 3px 7px;
+  background: transparent;
+}
+.tag-save-forget-confirm {
+  grid-column: 1 / -1;
+  padding: 8px;
+  background: var(--ui-raised, #20262d);
+  border-radius: 5px;
+}
+.tag-save-forget-confirm p {
+  font-size: 12px;
+  margin: 0 0 8px;
+}
+.tag-save-forget-confirm button {
+  float: none;
+  margin-right: 6px;
+  font-size: 12px;
+}
+.tag-save-report .tag-save-forget-confirm-button {
+  color: var(--ui-danger, #ff9aa9);
+  border-color: var(--ui-danger, #ff9aa9);
+}
+.tag-save-report button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}

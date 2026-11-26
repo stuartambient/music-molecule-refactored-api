@@ -22,6 +22,7 @@ window.metadataReportTests = (async () => {
   const host = document.createElement('div');
   document.body.append(host);
   const root = createRoot(host);
+  window.ipcApi.getPendingTagSaves = async () => [{ track_id: 'pending', id: 'pending.flac' }];
   const timer = window.setTimeout;
   let timeouts = 0;
   window.setTimeout = (...args) => {
@@ -39,6 +40,10 @@ window.metadataReportTests = (async () => {
         <MainNav onClick={() => {}} />
       </MainAudioContext.Provider>
     )
+  );
+  assert(
+    !document.querySelector('.scan-result'),
+    'Startup does not show tag-save recovery notifications'
   );
   const report = {
     modified: 1,

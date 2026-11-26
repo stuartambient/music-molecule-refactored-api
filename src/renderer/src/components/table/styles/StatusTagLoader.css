@@ -34,36 +34,3 @@
     transform: translateX(0%);
   }
 }
-
-.tag-update-status-notice {
-  border: 1px solid blue;
-  display: flex;
-  flex-basis: 20%;
-}
-
-.tag-update-status-notice > * {
-  /* margin-left: 25%; */
-  flex-grow: 2;
-  font-size: 1.2em;
-}
-
-.status-view,
-.status-dismiss {
-  display: flex;
-  justify-content: center;
-  cursor: pointer;
-  background-color: transparent;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 0.9em;
-  transition:
-    background-color 0.2s,
-    border-color 0.2s;
-}
-.status-view:hover,
-.status-dismiss:hover {
-  background-color: #f0f0f0;
-  border-color: #999;
-  color: black;
-}

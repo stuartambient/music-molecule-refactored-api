@@ -1,12 +1,10 @@
-const fs = require('fs');
-const path = require('path');
+import path from 'node:path';
+import { tagKeys, deleteKeys } from './tagEditValues.js';
 
 import {
   Picture,
   File,
   TagTypes,
-  PictureType,
-  ByteVector,
   MpegAudioFileSettings,
   FlacFileSettings
 } from 'node-taglib-sharp';
@@ -15,18 +13,13 @@ import {
   ensureWritableWithStatus,
   restoreReadOnlyWindows
 } from './utility/ensureWritableWithStatus';
-import {
-  isValidImageFile,
-  markTrackWriteError,
-  removeNullUndefinedWithReduce
-} from './utility/utils.js';
+import { isValidImageFile, removeNullUndefinedWithReduce } from './utility/utils.js';
 
 import {
   sanitizeFlacPicture,
   sanitizeMp3Picture,
   extractPictures
 } from './utility/repairPictures.js';
-import { getRow } from './updateTagsWorker.js';
 
 /* function logBadFrame(logDir, filePath, count) {
   try {
@@ -62,92 +55,39 @@ import { getRow } from './updateTagsWorker.js';
 
 /* console.log('ENTER updateTags'); */
 
-const deleteKeys = {
-  albumArtists: () => [],
-  album: () => '',
-  beatsPerMinute: () => 0,
-  composers: () => [],
-  conductor: () => '',
-  comment: () => '',
-  copyright: () => '',
-  disc: () => 0,
-  discCount: () => 0,
-  description: () => '',
-  genres: () => [],
-  isCompilation: () => false,
-  isrc: () => '',
-  lyrics: () => '',
-  performers: () => [],
-  performersRole: () => [],
-  pictures: () => [],
-  publisher: () => '',
-  remixedBy: () => '',
-  replayGainAlbumGain: () => 0,
-  replayGainAlbumPeak: () => 0,
-  replayGainTrackGain: () => 0,
-  replayGainTrackPeak: () => 0,
-  title: () => '',
-  track: () => 0,
-  trackCount: () => 0,
-  year: () => 0
-};
-
-const tagKeys = {
-  albumArtists: (param) => param?.trim()?.split(', ') || null,
-  album: (param) => param?.trim() || null,
-  beatsPerMinute: (param) => (param?.toString().trim() ? Number(param) : null),
-  composers: (param) => param?.trim()?.split(', ') || [],
-  conductor: (param) => param?.trim() || null,
-  comment: (param) => param || null,
-  copyright: (param) => param?.trim() || null,
-  disc: (param) => (param?.toString().trim() ? Number(param) : null),
-  discCount: (param) => (param?.toString().trim() ? Number(param) : null),
-  description: (param) => param?.trim() || null,
-  encoder: (param) => param?.trim() || null,
-  encoderSettings: (param) => param?.trim() || null,
-  encodedBy: (param) => param?.trim() || null,
-  genres: (param) => param?.trim()?.split(', ') || [],
-  isCompilation: (param) => (param === 1 ? 1 : 0),
-  like: (param) => (param === 1 ? 1 : 0),
-  isrc: (param) => param?.trim() || null,
-  lyrics: (param) => param?.trim() || null,
-  /*  performers: (param) => param?.trim()?.split(', ') || [], */
-  performers: (param) =>
-    typeof param === 'string'
-      ? param
-          .split(/[;,]/)
-          .map((s) => s.trim())
-          .filter(Boolean)
-      : [],
-  performersRole: (param) =>
-    typeof param === 'string'
-      ? param
-          .split(/[;,]/)
-          .map((s) => s.trim())
-          .filter(Boolean)
-      : [],
-  /* performersRole: (param) => param?.trim()?.split(', ') || [], */
-  pictures: (param) => {
-    Picture.fromFullData(
-      ByteVector.fromByteArray(param.data),
-      param.type ? (PictureType[param.type] ?? PictureType.FrontCover) : PictureType.FrontCover,
-      param.format || 'image/jpeg',
-      param.description ?? ''
-    );
-  },
-  'picture-location': (param) => String(param),
-  publisher: (param) => param?.trim() || null,
-  remixedBy: (param) => param?.trim() || null,
-  replayGainAlbumGain: (param) => (param?.toString().trim() ? Number(param) : null),
-  replayGainAlbumPeak: (param) => (param?.toString().trim() ? Number(param) : null),
-  replayGainTrackGain: (param) => (param?.toString().trim() ? Number(param) : null),
-  replayGainTrackPeak: (param) => (param?.toString().trim() ? Number(param) : null),
-  tagTypes: (param) => param,
-  title: (param) => param?.trim() || null,
-  track: (param) => (param?.toString().trim() ? Number(param) : null),
-  trackCount: (param) => (param?.toString().trim() ? Number(param) : null),
-  year: (param) => (param?.toString().trim() ? Number(param) : null)
-};
+function getRow(db, rowId) {
+  const row = db.prepare(`SELECT albumArtists,
+                                 album,
+                                 beatsPerMinute,
+                                 composers,
+                                 conductor,
+                                 copyright,
+                                 comment,
+                                 disc,
+                                 discCount,
+                                 description,
+                                 genres,
+                                 isCompilation,
+                                 isrc,
+                                 lyrics,
+                                 performers,
+                                 pictures,
+                                 publisher,
+                                 remixedBy,
+                                 replayGainAlbumGain,
+                                 replayGainAlbumPeak,
+                                 replayGainTrackGain,
+                                 replayGainTrackPeak,
+                                 title,
+                                 track,
+                                 trackCount,
+                                 year,
+                                 encoder,
+                                 encoderSettings,
+                                 encodedBy FROM "audio-tracks" WHERE track_id = ?`);
+  const rowData = row.get(rowId);
+  return rowData;
+}
 
 const updateTags = async (db, arr) => {
   console.log('update tags, # of tags: ', arr);
@@ -157,6 +97,7 @@ const updateTags = async (db, arr) => {
 
   for (const a of arr) {
     let writeState;
+    let myFile;
     try {
       /* try {
         const acc = await fs.promises.access(a.id);
@@ -202,9 +143,8 @@ const updateTags = async (db, arr) => {
           message: writeState.error?.message
         });
       }
-      if (writeState.status === 'unwritable') {
+      if (writeState.status === 'unwritable' || writeState.status === 'locked') {
         console.log('unwritable', a.id);
-        markTrackWriteError(db, a.track_id, 'file is not writeable');
         errors.push({
           track_id: a.track_id,
           id: a.id,
@@ -222,7 +162,6 @@ const updateTags = async (db, arr) => {
       }
 
       let id3v2 = null;
-      let myFile;
       try {
         myFile = File.createFromPath(a.id);
         /* console.log('createFromPath: ', a.id); */
@@ -233,14 +172,15 @@ const updateTags = async (db, arr) => {
           id: a.id,
           error: err.toString()
         });
+        continue;
       }
       if (path.extname(a.id).toLowerCase() === '.mp3') {
         sanitizeMp3Picture(myFile);
         try {
           myFile.save();
-        } catch (e) {
+        } catch {
           /* dumpSemantic(myFile); */
-          const row = getRow(a.track_id);
+          const row = getRow(db, a.track_id);
           const rowValuesOnly = removeNullUndefinedWithReduce(row);
           if (rowValuesOnly.pictures && rowValuesOnly.pictures === 1) {
             /* rowValuesOnly.pictures = myFile.tag.pictures; */
@@ -314,7 +254,9 @@ const updateTags = async (db, arr) => {
       for (const [key, value] of Object.entries(allUpdates)) {
         /* console.log('Key: ', key, 'value: ', value); */
         /* console.log('a.updates ', a.updates); */
-        if (key === 'picture-location') {
+        if (key === 'picture-location' && value === '-') {
+          myFile.tag.pictures = [];
+        } else if (key === 'picture-location') {
           if (isValidImageFile(value)) {
             const pic = Picture.fromPath(value);
             myFile.tag.pictures = [pic];
@@ -322,6 +264,8 @@ const updateTags = async (db, arr) => {
             console.warn(`⚠️ Invalid image:`, value);
             errors.push({ track_id: a.track_id, id: a.id, error: 'Invalid image' });
           }
+        } else if (key === 'pictures' && value === '-') {
+          myFile.tag.pictures = [];
         } else if (key === 'pictures') {
           /* if (value && value.data) {
             const pic = Picture.fromFullData(
@@ -377,12 +321,16 @@ const updateTags = async (db, arr) => {
               '\n   stack:',
               err.stack
             );
-            /*  throw err */ // rethrow if you want to stop execution
+            errors.push({
+              track_id: a.track_id,
+              id: a.id,
+              field: key,
+              error: `${key}: ${err.message || String(err)}`
+            });
           }
         }
       }
       myFile.save();
-      myFile.dispose();
     } catch (e) {
       console.log('updateTags final catch: ', e);
       errors.push({ track_id: a.track_id, id: a.id, error: e.message || String(e) });
@@ -415,9 +363,21 @@ const updateTags = async (db, arr) => {
       /* console.log({ track_id: a.track_id, id: a.id, error: errMessage }); */
       /* errors.push({ track_id: a.track_id, id: a.id, error: errMessage }); */
     } finally {
+      try {
+        myFile?.dispose();
+      } catch (error) {
+        errors.push({ track_id: a.track_id, id: a.id, error: `Closing file: ${error.message}` });
+      }
       if (writeState?.status === 'changed-to-writable') {
-        /* console.log('write-state finally called: ', writeState.status); */
-        await restoreReadOnlyWindows(a.id);
+        try {
+          await restoreReadOnlyWindows(a.id);
+        } catch (error) {
+          errors.push({
+            track_id: a.track_id,
+            id: a.id,
+            error: `Restoring read-only attribute: ${error.message}`
+          });
+        }
       }
     }
   }

@@ -81,9 +81,12 @@ export const ipcContracts = {
     [
       'get-preferences-sync',
       'get-preferences',
+      'get-pending-tag-saves',
       'save-preferences',
       'show-child',
       'update-tags',
+      'retry-tag-saves',
+      'forget-tag-save',
       'rescan-track-error',
       'select-image-from-folder'
     ],
