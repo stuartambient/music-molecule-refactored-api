@@ -21,29 +21,24 @@ const FLAGS = [
   ['FlacPictures', TagTypes.FlacPictures]
 ];
 
-export async function inspectTags(input) {
-  /* console.log('inspectTags: ', input); */
-  const f = typeof input === 'string' ? await File.createFromPath(input) : input; // can accept File instance directly
-
-  const path = typeof input === 'string' ? input : f.name;
-  /* console.log('f name from inspect tags: ', f.name); */
-  const kind = fileType(path);
-  const mask = f.tagTypesOnDisk;
-
-  const typesList = FLAGS.filter(([, bit]) => (mask & bit) !== 0).map(([name]) => name);
-
-  const activeMask = FLAGS.filter(([, bit]) => (mask & bit) !== 0).reduce(
-    (acc, [, bit]) => acc | bit,
-    0
-  );
-
-  return {
-    file: path,
-    fileType: kind,
-    mask, // raw bitmask from taglib
-    typesList, // ["Id3v2", "Xiph"]
-    activeMask // e.g. 10 (2 | 8)
-  };
+// A borrowed file belongs to the caller; a file opened here must be closed here.
+export async function inspectTags(input, openFile = (file) => File.createFromPath(file)) {
+  const ownsFile = typeof input === 'string';
+  let file;
+  try {
+    file = ownsFile ? await openFile(input) : input;
+    const filename = ownsFile ? input : file.name;
+    const kind = fileType(filename);
+    const mask = file.tagTypesOnDisk;
+    const typesList = FLAGS.filter(([, bit]) => (mask & bit) !== 0).map(([name]) => name);
+    const activeMask = FLAGS.filter(([, bit]) => (mask & bit) !== 0).reduce(
+      (acc, [, bit]) => acc | bit,
+      0
+    );
+    return { file: filename, fileType: kind, mask, typesList, activeMask };
+  } finally {
+    if (ownsFile) file?.dispose();
+  }
 }
 
 export async function extraneousTags(fileType, tags) {

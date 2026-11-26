@@ -437,6 +437,32 @@ test('a recovery record can be forgotten after both its file and catalog entry w
   assert.equal(fs.existsSync(file.id), false);
 });
 
+test('a failed reopen after clearing performer roles does not dispose the old file twice', async () => {
+  const file = await track('failed-reopen');
+  const open = File.createFromPath;
+  let opened = 0,
+    disposed = 0;
+  try {
+    File.createFromPath = (...args) => {
+      if (++opened === 2) throw new Error('Simulated reopen failure');
+      const handle = open(...args),
+        close = handle.dispose.bind(handle);
+      handle.dispose = () => {
+        disposed++;
+        close();
+      };
+      return handle;
+    };
+    const result = await updateTags(db, [{ ...file, updates: { performersRole: '-' } }]);
+    assert.ok(result.errors.some((item) => item.error.includes('Simulated reopen failure')));
+    assert.equal(result.errors.length, 1, 'Only the original reopen failure is reported');
+    assert.equal(opened, 2);
+    assert.equal(disposed, 1);
+  } finally {
+    File.createFromPath = open;
+  }
+});
+
 process.on('exit', () => {
   closeDB();
   hooks.deregister();

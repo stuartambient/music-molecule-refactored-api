@@ -1,5 +1,3 @@
-import { File, TagTypes } from 'node-taglib-sharp';
-
 export function flattenTagValue(entry) {
   if (entry == null) return '';
   if (typeof entry === 'string' || typeof entry === 'number' || typeof entry === 'boolean')
@@ -22,42 +20,6 @@ export function flattenTagValue(entry) {
   }
   return String(entry);
 }
-
-/* import { File, TagTypes } from 'node-taglib-sharp'; */
-
-/* function upsertId3TextFrame(id3, id, text) {
-  if (text == null) return;
-  const frames = id3.getFrames?.() ?? [];
-  for (const fr of frames) {
-    const fid = String(fr.identifier || fr.id || '').toUpperCase();
-    if (
-      (id === 'TENC' && (fid === 'TENC' || fid === 'TEN')) ||
-      (id === 'TSSE' && (fid === 'TSSE' || fid === 'TSS'))
-    ) {
-      id3.removeFrame?.(fr);
-    }
-  }
-  id3.addFrame?.({ identifier: id, value: { text: String(text) } });
-} */
-
-/* export function writeId3EncoderFields(filePath, { encodedBy, encoder }) {
-  const f = File.createFromPath(filePath);
-  const id3 = f.getTag(TagTypes.Id3v2, true);
-  upsertId3TextFrame(id3, 'TENC', encodedBy); // person/org
-  upsertId3TextFrame(id3, 'TSSE', encoder); // tool + settings
-  f.save();
-  f.dispose();
-} */
-
-/* export function writeXiphEncoderFields(filePath, { encodedBy, encoder, encoderSettings }) {
-  const f = File.createFromPath(filePath);
-  const x = f.getTag(TagTypes.Xiph, true);
-  if (encoder != null) x.setFieldAsStrings('ENCODER', [String(encoder)]);
-  if (encoderSettings != null) x.setFieldAsStrings('ENCODER_SETTINGS', [String(encoderSettings)]);
-  if (encodedBy != null) x.setFieldAsStrings('ENCODED_BY', [String(encodedBy)]);
-  f.save();
-  f.dispose();
-} */
 
 export function getEncoderFieldsFromNative(native) {
   const takeText = (v) => (v && typeof v === 'object' ? (v.text ?? v.value ?? v) : v);

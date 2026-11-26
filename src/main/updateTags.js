@@ -296,6 +296,7 @@ const updateTags = async (db, arr) => {
               myFile.tag.performersRole = [];
               myFile.save();
               myFile.dispose();
+              myFile = null;
               myFile = File.createFromPath(a.id);
               const t = tagKeys['performers'](perfs.join(','));
               myFile.tag.performers = t;
@@ -321,6 +322,7 @@ const updateTags = async (db, arr) => {
               '\n   stack:',
               err.stack
             );
+            if (!myFile) throw new Error(`${key}: ${err.message || String(err)}`);
             errors.push({
               track_id: a.track_id,
               id: a.id,
