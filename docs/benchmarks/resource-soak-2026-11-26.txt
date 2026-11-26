@@ -1,0 +1,67 @@
+Metadata resource soak - 2026-11-26
+
+Result: no unclosed files or TagLib objects detected in this bounded synthetic run.
+Source: e5df4af on codex/development, plus the two benchmark scripts.
+Runtime: Electron 37.4.0, Node 22.18.0, SQLite 3.50.2; win32 10.0.19045 x64.
+
+Workloads (measured operations; warm-up operations):
+- metadata: 20,000; 1,500
+- artwork: 20,000; 1,500
+- saves: 2,000; 150
+- failures: 20,000; 1,500
+- workers: 160; 12
+
+The worker phase started 43 real tag-save workers (40 measured plus 3 warm-up),
+each saving four tracks, verifying file contents and refreshing the temporary catalog.
+Fixtures: 60 short MP3/FLAC files, embedded artwork, folder artwork and no artwork.
+Embedded/folder image payload: approximately 256 KiB. Failure cases: missing path,
+invalid audio, and injected secondary-reader rejection after TagLib opens a file.
+
+Measurements:
+Phase        Heap delta MiB  RSS delta MiB  Handle delta
+metadata             0.123          5.999             0
+artwork              0.092          0.466             0
+saves                0.170          1.612             0
+failures             0.040         -0.032             0
+workers              0.078        -15.963             0
+
+Deltas compare means of the first five and last five measured batches per phase.
+Each sample follows two explicit garbage collections and event-loop settling.
+All 200 measured samples reported 215 Windows process handles, zero unclosed
+parent-isolate file descriptors, and zero undisposed parent-isolate TagLib objects.
+Parent tracked opens/closes: 102,258/102,258.
+Parent tracked TagLib instances created/disposed: 56,696/56,696.
+Closing the temporary database reduced process handles from 215 to 210.
+
+RSS rose during initial workload/allocator warm-up. It settled near 129 MiB for
+artwork, near 132 MiB for failed reads, then declined during worker churn to
+about 141 MiB after worker shutdown. Small retained-heap deltas are not evidence
+of a sustained leak; the report itself retains measurement records. This run
+found no ongoing file/handle accumulation or sustained post-warm-up memory rise.
+
+Assertions passed: all successful saves verified; temporary catalog remained at
+60 tracks with all 60 likes preserved; no unfinished tag-save jobs remained.
+The 21,500 suppressed error logs are expected injected failure-fixture outcomes.
+
+Scope and limits:
+- Synthetic short MP3/FLAC files exercise tag I/O, not decoding or full-sized audio payloads.
+- Same fixture paths are reused. This is warm-cache stress, not a full real-library or network-drive scan.
+- No renderer or playback engine is running. GUI memory and decoded audio buffers are outside this test.
+- Node file accounting covers public fs open/close APIs in the parent isolate. SQLite and worker internals are checked through the Windows process handle count.
+- V8 garbage collection runs between samples to distinguish retained memory from temporary allocations. RSS/private memory can remain reserved by allocators.
+- Not an hours-long GUI soak, full 441,306-track scan, or proof of all native memory lifetimes.
+- File/object counters instrument the parent isolate; worker internals are covered indirectly
+  by whole-process handles and memory after worker exits.
+
+No user music, live catalog, preferences, production build or executable was modified.
+Temporary fixtures, worker bundle and database were removed after the test.
+
+Reproduce from the dev project directory in PowerShell:
+$env:ELECTRON_RUN_AS_NODE='1'
+& ./node_modules/electron/dist/electron.exe --expose-gc scripts/benchmarkResources.mjs --batches 40 --batch-size 500 --save-batch-size 50 --worker-batches 40 --worker-batch-size 4 --warmup-batches 3 --artwork-kib 256
+
+The default output path is docs/benchmarks/resource-soak-2026-11-26.json.
+Use --output <path> to keep another run separate. Default batch sizes are smaller
+than the command above; that command reproduces this recorded workload.
+Raw per-batch measurements are in the JSON file beside this report.
+New harness scripts pass ESLint and Prettier checks.
