@@ -1,31 +1,93 @@
 .centralControlContainer {
   display: flex;
   align-items: center;
-  grid-column: 2 / 3;
-  justify-content: flex-start;
-  height: 100%;
-}
-
-.stopButton {
-  margin-right: 10px;
-}
-
-.volumeSlider {
-  width: 20%;
-}
-
-.audioCtrl {
-  width: 20px;
-  height: 20px;
-  margin-left: 10%;
-}
-
-.audioCtrl-icon {
+  position: relative;
+  gap: 8px;
   width: 100%;
+  min-width: 0;
   height: 100%;
+  padding: 0 12px;
+  box-sizing: border-box;
+  color: var(--ui-text, #eee);
 }
-
-.audioCtrl:hover {
+.centralControlContainer button {
+  flex: 0 0 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 3px;
+  margin: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
   cursor: pointer;
-  color: lightblue;
+}
+.centralControlContainer button svg {
+  width: 19px;
+  height: 19px;
+}
+.centralControlContainer button:hover:not(:disabled) {
+  background: var(--ui-hover, #8883);
+}
+.centralControlContainer button:disabled,
+.centralControlContainer input:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.centralControlContainer :is(button, input):focus-visible {
+  outline: 2px solid var(--ui-focus, #62a9ee);
+  outline-offset: 2px;
+}
+.preview-track-name {
+  flex: 0 1 180px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 0.78rem;
+}
+.preview-time {
+  flex: 0 0 auto;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+.centralControlContainer .preview-seek {
+  flex: 1 1 180px;
+  min-width: 60px;
+}
+.centralControlContainer .preview-volume {
+  flex: 0 1 80px;
+  min-width: 40px;
+  max-width: 80px;
+}
+.centralControlContainer input[type='range'] {
+  height: 16px;
+  padding: 0;
+  margin: 0;
+  accent-color: var(--ui-accent, #62a9ee);
+  cursor: pointer;
+}
+.preview-volume-icon {
+  flex: 0 0 16px;
+}
+.preview-error {
+  position: absolute;
+  top: 100%;
+  right: 10px;
+  max-width: 420px;
+  padding: 8px 12px;
+  border: 1px solid var(--ui-danger, #e98686);
+  border-radius: 5px;
+  background: var(--ui-surface, #252830);
+  color: var(--ui-danger, #e98686);
+  font-size: 0.8rem;
+  z-index: 1001;
+}
+@media (max-width: 850px) {
+  .preview-track-name {
+    display: none;
+  }
 }

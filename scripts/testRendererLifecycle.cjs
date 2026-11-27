@@ -4,21 +4,32 @@ const { app, BrowserWindow } = require('electron');
 
 if (!process.versions.electron) {
   const { spawnSync } = require('node:child_process');
-  const env = { ...process.env };
-  delete env.ELECTRON_RUN_AS_NODE;
-  const result = spawnSync(require('electron'), [__filename], {
-    env,
-    stdio: 'inherit',
-    windowsHide: true
-  });
-  if (result.error) console.error(result.error);
-  process.exit(result.status ?? 1);
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const os = require('node:os');
+  const assert = require('node:assert/strict');
+  const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'music-preview-lifecycle-'));
+  assert.equal(path.dirname(temporary), os.tmpdir());
+  assert.ok(path.basename(temporary).startsWith('music-preview-lifecycle-'));
+  try {
+    const env = { ...process.env, LIFECYCLE_TEST_ROOT: temporary };
+    delete env.ELECTRON_RUN_AS_NODE;
+    const result = spawnSync(require('electron'), [__filename], {
+      env,
+      stdio: 'inherit',
+      windowsHide: true,
+      timeout: 60000
+    });
+    if (result.error) throw result.error;
+    process.exitCode = result.status ?? 1;
+  } finally {
+    fs.rmSync(temporary, { recursive: true, force: true });
+  }
 } else {
   const { buildSync } = require('esbuild');
   const { join } = require('node:path');
-  const { mkdtempSync, writeFileSync } = require('node:fs');
-  const { tmpdir } = require('node:os');
-  app.setPath('userData', mkdtempSync(join(tmpdir(), 'music-molecule-lifecycle-')));
+  const { writeFileSync } = require('node:fs');
+  app.setPath('userData', process.env.LIFECYCLE_TEST_ROOT);
   app.disableHardwareAcceleration();
   app.whenReady().then(async () => {
     const window = new BrowserWindow({

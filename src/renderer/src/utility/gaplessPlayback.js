@@ -1,8 +1,6 @@
-export const streamingSource = (track) =>
-  'streaming://' +
-  encodeURI(track.audiotrack).replaceAll('?', '%3F').replaceAll('#', '%23') +
-  '?playback=' +
-  crypto.randomUUID();
+import { streamingUrl } from '../../../shared/streamingUrl.js';
+
+export const streamingSource = (track) => streamingUrl(track.audiotrack, crypto.randomUUID());
 
 const sameTrack = (a, b) => a?.track_id === b?.track_id && a?.audiotrack === b?.audiotrack;
 const bufferBytes = (buffer) => buffer.length * buffer.numberOfChannels * 4;

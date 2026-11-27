@@ -3,10 +3,10 @@ import { useAudio } from './audioContext';
 import './styles/PlayButtonRenderer.css';
 
 const PlayButtonRenderer = (props) => {
-  const { currentTrack, playTrack } = useAudio();
+  const { currentTrack, isPlaying, playTrack } = useAudio();
   const track = props.node.data.audiotrack;
 
-  const playing = currentTrack === track;
+  const playing = currentTrack === track && isPlaying;
 
   const handleClick = () => {
     playTrack(track);
@@ -17,7 +17,12 @@ const PlayButtonRenderer = (props) => {
   }; */
 
   return (
-    <button className="playButton" onClick={handleClick}>
+    <button
+      type="button"
+      className="playButton"
+      onClick={handleClick}
+      aria-label={playing ? 'Pause track preview' : 'Play track preview'}
+    >
       {playing ? (
         <CiPause1 alt="Pause" className="playIcon" />
       ) : (

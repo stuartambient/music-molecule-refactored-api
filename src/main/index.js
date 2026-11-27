@@ -29,6 +29,7 @@ import {
 import { normalizeMainTheme, normalizeEditorTheme } from '../shared/themePreferences.js';
 import mime from 'mime-types';
 import { getTrackCover } from './trackCover.js';
+import { createStreamingHandler } from './streamingProtocol.js';
 import { albumCoverChoices, selectAlbumCover, pickAlbumCover } from './albumCoverSelection.js';
 import createUpdateTagsWorker from './updateTagsWorker?nodeWorker';
 import { pendingTagSaveSummary } from './tagSaveJournal.js';
@@ -339,10 +340,6 @@ async function updateFiles() {
   }
 }
 
-const capitalizeDriveLetter = (str) => {
-  return `${str.charAt(0).toUpperCase()}:${str.slice(1)}`;
-};
-
 export let mainWindow;
 const windowPresentation = createWindowPresentation(() => mainWindow);
 let recWindow;
@@ -495,89 +492,12 @@ app
     console.log('is music-molecule handled?', await protocol.isProtocolHandled('streaming'));
     console.log('is app handled?', await protocol.isProtocolHandled('cover'));
 
-    protocol.registerStreamProtocol('streaming', async (request, cb) => {
-      try {
-        // A fresh request token makes retries re-read the source instead of a cached failure.
-        const uri = decodeURIComponent(request.url.split('?')[0]);
-        const filePath = uri.replace('streaming://', '');
-        const path = capitalizeDriveLetter(filePath);
-
-        if (!fs.existsSync(path)) {
-          console.error('File not found:', path);
-          return cb({
-            statusCode: 404,
-            headers: { 'Content-Type': 'text/plain' },
-            data: 'File not found'
-          });
-        }
-
-        const fileSize = fs.statSync(path).size;
-        const range = request.headers.Range;
-
-        if (range) {
-          const parts = range.replace(/bytes=/, '').split('-');
-          const start = parseInt(parts[0], 10);
-          const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-
-          if (start >= fileSize || end >= fileSize) {
-            console.error('Invalid range request:', range);
-            return cb({
-              statusCode: 416,
-              headers: { 'Content-Range': `bytes */${fileSize}`, 'Content-Type': 'text/plain' },
-              data: 'Requested range not satisfiable'
-            });
-          }
-
-          const chunksize = end - start + 1;
-
-          const headers = {
-            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-            'Access-Control-Allow-Origin': '*',
-            'Accept-Ranges': 'bytes',
-            'Content-Length': String(chunksize),
-            'Content-Type': 'audio/mpeg'
-          };
-
-          cb({
-            statusCode: 206,
-            headers,
-            data: fs.createReadStream(path, { start, end }).on('error', (err) => {
-              console.error('Stream error:', err);
-              cb({
-                statusCode: 200,
-                headers: { 'Content-Type': 'text/plain', 'X-Stream-Error': 'true' },
-                data: 'Stream failed due to an error.'
-              });
-            })
-          });
-        } else {
-          console.log('No range header provided');
-          cb({
-            statusCode: 200,
-            headers: {
-              'Content-Length': String(fileSize),
-              'Content-Type': 'audio/mpeg',
-              'Access-Control-Allow-Origin': '*'
-            },
-            data: fs.createReadStream(path).on('error', (err) => {
-              console.error('Stream error:', err);
-              cb({
-                statusCode: 500,
-                headers: { 'Content-Type': 'text/plain', 'X-Stream-Error': 'true' },
-                data: 'Stream failed due to an error.'
-              });
-            })
-          });
-        }
-      } catch (err) {
-        console.error('Error processing streaming request:', err);
-        cb({
-          statusCode: 500,
-          headers: { 'Content-Type': 'text/plain', 'X-Stream-Error': 'true' },
-          data: 'Internal Server Error'
-        });
-      }
-    });
+    protocol.handle(
+      'streaming',
+      createStreamingHandler({
+        onError: (error) => console.error('Audio stream failed:', error.message)
+      })
+    );
 
     protocol.handle('cover', async (request) => {
       try {

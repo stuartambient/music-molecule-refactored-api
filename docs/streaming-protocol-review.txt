@@ -1,0 +1,66 @@
+Browser audio streaming robustness
+
+Applies to built-in main playback, Web Audio gapless reads and tag-editor previews.
+Mpv receives catalog file paths directly; its decoder, IPC and queue are unchanged.
+
+Changes:
+- Replace the callback-based registerStreamProtocol handler with protocol.handle.
+- Open first, then stat and stream that same descriptor to avoid a path-check race.
+- Use extension-based MIME types; normalize the old audio/x-flac alias to audio/flac.
+  Unknown extensions use application/octet-stream. This does not add new decoders.
+- GET supports closed/open/suffix single-byte ranges and clamps oversized ends.
+- Unsatisfiable/malformed byte ranges return 416 with bytes */size. Unsupported
+  units or multipart ranges are ignored and return the complete resource (200).
+- HEAD returns full headers without a body; unsupported methods return 405.
+- Missing/unreadable paths return 404/403 before sending audio. Read failures and
+  truncation fail the existing stream; they cannot send a second response.
+- Normal completion, cancellation and errors close the descriptor. The web-stream
+  queue uses byte-counted backpressure rather than accumulating the whole file.
+- No-store responses prevent stale audio after file edits.
+- Shared canonical URLs use a fixed local authority and one encoded file path.
+  This preserves percent signs, Unicode and URL punctuation in both playback and
+  previews. Existing Windows drive-as-host URLs remain accepted.
+
+Validation:
+- 14 Node protocol cases passed, including exact range bytes, MIME, HEAD, empty and
+  missing files, malformed URLs, cancellation, truncation and bounded read-ahead.
+- An isolated Electron 37.4.0 window passed real Chromium fetch/range/HEAD/legacy
+  URL/cancellation checks, HTML audio metadata and seeking, and Web Audio decoding.
+  All tracked handles closed. WAV was synthetic and silent; no music was played.
+- 32 existing gapless and playback-recovery tests passed.
+- Changed modules pass lint; main/index.js retains its existing three lint errors.
+- Temporary fixtures and isolated user profile were deleted. No user catalog,
+  music, preferences or production build was modified.
+
+Limits:
+- Codec support is still determined by Chromium; transport fixes do not make an
+  unsupported format decodable. This run used synthetic bytes and a valid WAV.
+- No live network share or all-platform codec/output matrix was exercised.
+- Catalog/source authorization and playback-engine coordination are separate work.
+
+Reproduce from dev:
+node --test scripts/testStreamingProtocol.mjs scripts/testGaplessPlayback.mjs scripts/testPlaybackRecovery.mjs
+node scripts/testStreamingProtocolElectron.cjs
+
+Manual dev check: select Built-in playback, play supported MP3/FLAC files, seek
+forward/back and near the end, change tracks, then try tag-editor audio preview.
+A filename containing percent signs or # is useful for checking URL handling.
+
+References:
+https://www.electronjs.org/docs/latest/api/protocol
+https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Range
+https://www.iana.org/assignments/media-types/audio/flac
+
+Tag-editor preview controls added to the same dev changes:
+- Seek slider with elapsed/total time, including hour-long recordings.
+- Working pause/resume, Stop, volume and selected filename.
+- Paused seeking stays paused; resume retains position; completed tracks replay
+  from zero. Row play/pause icons follow actual preview state.
+- Preview errors remain visible and retryable. Obsolete play rejections cannot
+  stop a newly selected preview. Reset/unmount release media and listeners.
+- Six new preview interaction cases and eleven existing renderer/lifecycle checks
+  passed. Controls were visually checked in both light and dark editor themes.
+- The renderer lifecycle harness now removes its own temporary profile.
+
+Preview-control tests: node scripts/testTagPreview.cjs
+Existing renderer regression checks: node scripts/testRendererLifecycle.cjs

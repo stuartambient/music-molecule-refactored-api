@@ -113,8 +113,9 @@ window.lifecycleTests = (async () => {
   const nativeAudio = window.Audio;
   let constructions = 0,
     unloads = 0;
-  window.Audio = class {
+  window.Audio = class extends globalThis.EventTarget {
     constructor() {
+      super();
       constructions++;
     }
     pause() {}
