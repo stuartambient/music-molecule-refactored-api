@@ -1,0 +1,100 @@
+.album-cover-chooser {
+  width: min(760px, 90vw);
+  max-height: 85vh;
+  padding: 22px;
+  border: 1px solid var(--covers-scrollbar-thumb, #888);
+  border-radius: 12px;
+  color: var(--ui-text, #eee);
+  background: var(--ui-surface, #252830);
+  box-shadow: 0 16px 70px #0008;
+  overflow-y: auto;
+}
+.album-cover-chooser::backdrop {
+  background: #0009;
+}
+.album-cover-chooser h2 {
+  font-size: 1.15rem;
+  margin: 0 0 8px;
+}
+.album-cover-chooser p {
+  font-size: 0.85rem;
+  margin: 8px 0;
+}
+.album-cover-folder {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.album-cover-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+.album-cover-option {
+  min-width: 0;
+  padding: 8px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: #8881;
+  color: inherit;
+  cursor: pointer;
+}
+.album-cover-option:hover {
+  background: #8883;
+}
+.album-cover-option[aria-pressed='true'] {
+  border-color: #62a9ee;
+  background: #62a9ee22;
+}
+.album-cover-option:focus-visible,
+.album-cover-chooser footer button:focus-visible {
+  outline: 2px solid #62a9ee;
+  outline-offset: 3px;
+}
+.album-cover-option img {
+  display: block;
+  width: 100%;
+  height: 130px;
+  object-fit: contain;
+  background: #0002;
+}
+.album-cover-filename {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  margin-top: 8px;
+}
+.album-cover-note {
+  display: block;
+  font-size: 0.72rem;
+  opacity: 0.75;
+  margin-top: 3px;
+}
+.album-cover-error {
+  color: #e98686;
+}
+.album-cover-chooser footer {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 20px;
+}
+.album-cover-chooser footer span {
+  flex: 1;
+}
+.album-cover-chooser footer button {
+  padding: 7px 12px;
+  border: 1px solid #8887;
+  border-radius: 5px;
+  background: #8882;
+  color: inherit;
+  cursor: pointer;
+}
+.album-cover-chooser button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

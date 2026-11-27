@@ -1,6 +1,7 @@
 import { parentPort, workerData } from 'worker_threads';
 import Database from 'better-sqlite3';
-import fg from 'fast-glob';
+import searchCover from './utility/searchCover.js';
+import { fillMissingAlbumCovers } from './albumCoverSelection.js';
 
 const db = new Database(workerData, { fileMustExist: true });
 
@@ -16,33 +17,7 @@ export const getAlbumsNullImg = () => {
   return albums;
 };
 
-export const updateCoversInDatabase = (coversArray) => {
-  const updateStmt = db.prepare(`
-      UPDATE albums
-      SET img = @img
-      WHERE fullpath = @fullpath
-    `);
-  const transaction = db.transaction((coversArray) => {
-    coversArray.forEach((cover) => {
-      if (!cover.img) return;
-      updateStmt.run(cover);
-    });
-  });
-  transaction(coversArray);
-  return { added: coversArray.length };
-};
-
-async function searchCover(folder) {
-  const cover = await fg('**/*.{jpg,jpeg,png,webp,gif}', {
-    caseSensitiveMatch: false,
-    cwd: folder
-  });
-
-  if (cover.length > 0) {
-    return `${folder}/${cover[0]}`;
-  }
-  return;
-}
+export const updateCoversInDatabase = (covers) => fillMissingAlbumCovers(db, covers);
 
 const updateCoversLink = async () => {
   console.log('updateCoversLink');

@@ -304,6 +304,9 @@ Object.assign(validators, {
   ),
   'rescan-track-error': argsOf(location, id),
   'show-album-cover-menu': argsOf(location, (value) => text(value)),
+  'get-album-cover-choices': argsOf(location),
+  'select-album-cover': argsOf(location, location),
+  'pick-album-cover': argsOf(location),
   'show-child': (args, role) => args.length === 1 && childRequest(args[0], role),
   'download-file': argsOf((value) => text(value), optional(location)),
   'download-tag-image': (args) =>

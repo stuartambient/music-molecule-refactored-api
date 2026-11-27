@@ -1,5 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import classNames from 'classnames';
+import AlbumCoverChooser from './AlbumCoverChooser';
+import { albumCoverUrl } from '../../../shared/albumCoverUrl.js';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import { useAudioPlayer } from '../mainAudioContext';
 import { useAllAlbumsCovers } from '../hooks/useDb';
@@ -18,6 +20,7 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
   const albumPlayRequest = useRef(0);
   /*  const [menu, setMenu] = useState(false); */
   const [openFolder, setOpenFolder] = useState(null);
+  const [choosingCover, setChoosingCover] = useState(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const [currentAlbum, setCurrentAlbum] = useState('');
 
@@ -218,6 +221,9 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
     const { menuoption, path, folder } = option;
 
     switch (menuoption) {
+      case 'choose album cover':
+        setChoosingCover({ path, folder });
+        return;
       case 'add album to playlist': {
         console.log('hit ablum to playlist');
         handleAlbumToPlaylist(path);
@@ -312,125 +318,135 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
   });
 
   return (
-    <div
-      ref={parentRef}
-      className={className}
-      style={{
-        width: '100%',
-        overflowY: 'auto',
-        overflowX: 'hidden',
-        maxHeight: '100vh',
-        maxWidth: '100vw'
-      }}
-    >
+    <>
+      {choosingCover && (
+        <AlbumCoverChooser
+          key={choosingCover.path}
+          album={choosingCover}
+          onClose={() => setChoosingCover(null)}
+          onSelected={(result) => dispatch({ type: 'album-cover-selected', ...result })}
+        />
+      )}
       <div
+        ref={parentRef}
+        className={className}
         style={{
-          height: `${rowVirtualizer.getTotalSize()}px`,
           width: '100%',
-          position: 'relative'
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          maxHeight: '100vh',
+          maxWidth: '100vw'
         }}
       >
-        {rowVirtualizer.getVirtualItems().map((virtualRow) => (
-          <div
-            key={virtualRow.index}
-            data-index={virtualRow.index}
-            ref={virtualRow.index === rows - 1 ? lastCoverElement : null}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: `${virtualRow.size}px`,
-              transform: `translateY(${virtualRow.start}px)`
-            }}
-          >
+        <div
+          style={{
+            height: `${rowVirtualizer.getTotalSize()}px`,
+            width: '100%',
+            position: 'relative'
+          }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => (
             <div
+              key={virtualRow.index}
+              data-index={virtualRow.index}
+              ref={virtualRow.index === rows - 1 ? lastCoverElement : null}
               style={{
-                display: 'grid',
-                gridTemplateColumns: `repeat(${columns}, ${estimatedSize}px)`,
-                gap: `${gap}px`,
-                justifyContent: 'center'
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: `${virtualRow.size}px`,
+                transform: `translateY(${virtualRow.start}px)`
               }}
             >
-              {Array.from({ length: columns }).map((_, columnIndex) => {
-                const itemIndex = virtualRow.index * columns + columnIndex;
-                const item = state.covers[itemIndex];
-                if (!item) return;
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: `repeat(${columns}, ${estimatedSize}px)`,
+                  gap: `${gap}px`,
+                  justifyContent: 'center'
+                }}
+              >
+                {Array.from({ length: columns }).map((_, columnIndex) => {
+                  const itemIndex = virtualRow.index * columns + columnIndex;
+                  const item = state.covers[itemIndex];
+                  if (!item) return;
 
-                return (
+                  return (
+                    <div
+                      className="imagediv"
+                      id={item.id}
+                      key={itemIndex}
+                      style={{
+                        width: `${estimatedSize}px`,
+                        height: `${estimatedSize}px`,
+                        position: 'relative'
+                      }}
+                    >
+                      {item.img ? (
+                        <LazyLoadImage
+                          src={albumCoverUrl(item.img)}
+                          alt={item.foldername || 'Album cover'}
+                          onError={({ currentTarget: image }) => {
+                            if (image.getAttribute('src') === NoImage) return;
+                            image.setAttribute('src', NoImage);
+                            image.alt = 'Cover unavailable';
+                            image.title =
+                              'Cover image unavailable. Refresh Covers after restoring the folder.';
+                          }}
+                          width={`${estimatedSize}px`}
+                          height={`${estimatedSize}px`}
+                        />
+                      ) : (
+                        <img className={coverImageSize} src={NoImage} alt="" />
+                      )}
+                      <Overlay
+                        //className={currentAlbum !== item.id ? 'overlay' : 'overlay active-album'}
+                        coverTextSize={coverTextSize}
+                        id={item.fullpath}
+                        album={item.foldername}
+                        currentAlbum={currentAlbum}
+                        fullpath={item.fullpath}
+                      />
+                    </div>
+                  );
+                })}
+                {coversLoading && hasMoreCovers && (
                   <div
-                    className="imagediv"
-                    id={item.id}
-                    key={itemIndex}
                     style={{
                       width: `${estimatedSize}px`,
                       height: `${estimatedSize}px`,
-                      position: 'relative'
+                      zIndex: '100',
+                      backgroundColor: 'var(--covers-loading)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
                     }}
                   >
-                    {item.img ? (
-                      <LazyLoadImage
-                        src={`cover://${item.img}`}
-                        alt={item.foldername || 'Album cover'}
-                        onError={({ currentTarget: image }) => {
-                          if (image.getAttribute('src') === NoImage) return;
-                          image.setAttribute('src', NoImage);
-                          image.alt = 'Cover unavailable';
-                          image.title =
-                            'Cover image unavailable. Refresh Covers after restoring the folder.';
-                        }}
-                        width={`${estimatedSize}px`}
-                        height={`${estimatedSize}px`}
-                      />
-                    ) : (
-                      <img className={coverImageSize} src={NoImage} alt="" />
-                    )}
-                    <Overlay
-                      //className={currentAlbum !== item.id ? 'overlay' : 'overlay active-album'}
-                      coverTextSize={coverTextSize}
-                      id={item.fullpath}
-                      album={item.foldername}
-                      currentAlbum={currentAlbum}
-                      fullpath={item.fullpath}
-                    />
+                    Loading
                   </div>
-                );
-              })}
-              {coversLoading && hasMoreCovers && (
-                <div
-                  style={{
-                    width: `${estimatedSize}px`,
-                    height: `${estimatedSize}px`,
-                    zIndex: '100',
-                    backgroundColor: 'var(--covers-loading)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  Loading
-                </div>
-              )}
-              {coversError && (
-                <div
-                  style={{
-                    width: `${estimatedSize}px`,
-                    height: `${estimatedSize}px`,
-                    zIndex: '100',
-                    backgroundColor: 'red',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  Errors loading covers
-                </div>
-              )}
+                )}
+                {coversError && (
+                  <div
+                    style={{
+                      width: `${estimatedSize}px`,
+                      height: `${estimatedSize}px`,
+                      zIndex: '100',
+                      backgroundColor: 'red',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    Errors loading covers
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

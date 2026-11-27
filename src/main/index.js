@@ -29,6 +29,7 @@ import {
 import { normalizeMainTheme, normalizeEditorTheme } from '../shared/themePreferences.js';
 import mime from 'mime-types';
 import { getTrackCover } from './trackCover.js';
+import { albumCoverChoices, selectAlbumCover, pickAlbumCover } from './albumCoverSelection.js';
 import createUpdateTagsWorker from './updateTagsWorker?nodeWorker';
 import { pendingTagSaveSummary } from './tagSaveJournal.js';
 import { createTagSaveQueue } from './tagSaveDelivery.js';
@@ -580,7 +581,7 @@ app
 
     protocol.handle('cover', async (request) => {
       try {
-        let url = decodeURI(request.url.substring(8));
+        let url = decodeURIComponent(request.url.substring(8));
         // Handle Windows drive-letter paths explicitly
         if (/^[a-zA-Z]:/.test(url)) {
           // Already an absolute path, no further changes needed
@@ -1290,6 +1291,25 @@ guardedIpc.on('show-context-menu', (event, id, type, path = undefined) => {
   menu.popup(BrowserWindow.fromWebContents(event.sender));
 });
 
+guardedIpc.handle('get-album-cover-choices', (_event, folder) =>
+  albumCoverChoices(getDB(), folder)
+);
+guardedIpc.handle('select-album-cover', (_event, folder, image) =>
+  selectAlbumCover(getDB(), folder, image)
+);
+
+guardedIpc.handle('pick-album-cover', (event, folder) =>
+  pickAlbumCover(getDB(), folder, async () => {
+    const result = await dialog.showOpenDialog(BrowserWindow.fromWebContents(event.sender), {
+      title: 'Choose local album cover',
+      defaultPath: folder,
+      properties: ['openFile'],
+      filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif'] }]
+    });
+    return result.canceled || event.sender.isDestroyed() ? null : result.filePaths[0];
+  })
+);
+
 guardedIpc.handle('show-album-cover-menu', (event, path, folder) => {
   console.log('show-album-cover-menu');
   const template = [
@@ -1311,6 +1331,11 @@ guardedIpc.handle('show-album-cover-menu', (event, path, folder) => {
       }
     },
     { type: 'separator' },
+    {
+      label: 'Choose album cover…',
+      click: () =>
+        event.sender.send('album-menu', { menuoption: 'choose album cover', path, folder })
+    },
     {
       label: 'cover search',
       click: () => {

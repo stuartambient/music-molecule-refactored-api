@@ -65,6 +65,13 @@ const audioPlayerReducer = (state, action) => {
     console.log('action: ', action);
   }
   switch (action.type) {
+    case 'album-cover-selected':
+      return {
+        ...state,
+        covers: state.covers.map((album) =>
+          album.fullpath === action.path ? { ...album, img: action.img } : album
+        )
+      };
     case 'catalog-changed': {
       if (action.kind === 'files')
         return {
