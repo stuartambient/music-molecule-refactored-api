@@ -1,0 +1,47 @@
+Explicit genre search - 2026-11-27
+
+Lists/Tracks: select Genre, type fragments and submit. Only the genres tag is
+searched. Ordinary Tracks mode searches title/artist/album/path and excludes genres.
+Covers: Folder is the default. Select Genre to find albums with at least one
+contained track whose genre tag matches every fragment. Nested disc folders are
+included, but similarly named sibling albums are excluded. Multiple matching
+tracks do not duplicate an album. Words must match the genre of the same track.
+No track title/artist/album tags are included in the Covers genre query.
+Lists/Albums and Playlist search remain unchanged.
+
+Examples: prog rock and rock prog match Progressive Rock; psy folk matches
+Psychedelic Folk. Fragments can match separate values within one genre tag.
+Matching remains case/accent insensitive. Null/blank genres do not match a term.
+An empty query clears the filter and includes albums/tracks with blank genres.
+No genre tags are edited, renamed or consolidated.
+
+Search mode is part of cursor scope and renderer page-cache identity. Switching
+modes and submitting resets paging and rejects obsolete responses. Covers Genre
+works with Missing Covers; Covers refresh resets to Folder and an empty query.
+Covers genre directory lookups use the existing non-unique track-path index.
+
+Synthetic benchmark: 500,000 tracks / 40,486 albums.
+Explicit genre-only mode; synthetic genre values include NULL, empty, Progressive Rock; Psychedelic Folk, and Ambient; Electronic. Ordinary metadata/path searches exclude genre tags.
+Warm-up plus three samples per query. Values below are medians in milliseconds.
+
+Term                          Tracks       Covers
+prog rock                         1.54         3.62
+rock prog                         1.45         4.04
+ambi elec                         1.24         3.95
+not-in-the-genre-tags           640.01       830.26
+
+Limits: synthetic warm-cache, single-machine results. SQL/JS materialization is
+included; real-library storage, IPC and rendering latency are not. Rare/no-match
+queries remain linear and can briefly delay the main thread.
+
+Validation passed: 15 search/query tests, 4 isolated renderer cases and 11 IPC
+boundary tests. Checks include missing covers, duplicate album hits, nested disc
+folders, legacy backslashes, literal path wildcards, indexed directory lookups,
+cursor scope and complete unique pagination in both directions.
+Temporary databases, renderer profiles and preview images were removed.
+No user music, live catalog, preferences or production build was modified.
+
+Reproduce:
+node scripts/benchmarkMetadataSearch.mjs --tracks=500000 --genre-only --output=docs/benchmarks/genre-search-2026-11-27.json
+node scripts/testGenreSearch.cjs
+Electron in Node mode: scripts/testMetadataSearch.mjs

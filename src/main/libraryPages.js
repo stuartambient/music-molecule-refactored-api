@@ -17,6 +17,23 @@ const definitions = {
     fields: 'id, foldername, fullpath, img'
   }
 };
+// Combine fields before normalization so query words can span path, artist and title.
+const trackSearchText = ['audiotrack', 'title', 'performers', 'albumArtists', 'album']
+  .map((column) => `COALESCE(${column}, '')`)
+  .join(' || char(10) || ');
+
+function coverGenreFilter() {
+  const directory = "rtrim(replace(albums.fullpath, char(92), '/'), '/')";
+  const windowsDirectory = `replace(${directory}, '/', char(92))`;
+  // Bound directory ranges use the existing non-unique path index, including disc subfolders.
+  return `EXISTS (SELECT 1 FROM "audio-tracks" AS genre_track WHERE
+    ((genre_track.audiotrack COLLATE NOCASE >= ${directory} || '/'
+      AND genre_track.audiotrack COLLATE NOCASE < ${directory} || '0')
+    OR (genre_track.audiotrack COLLATE NOCASE >= ${windowsDirectory} || char(92)
+      AND genre_track.audiotrack COLLATE NOCASE < ${windowsDirectory} || ']'))
+    AND library_search(genre_track.genres, @term))`;
+}
+
 const statements = new WeakMap();
 
 export function libraryPageQuery({
@@ -24,18 +41,36 @@ export function libraryPageQuery({
   cursor = null,
   sort = 'DESC',
   term = '',
-  missing = false
+  missing = false,
+  searchField = 'metadata'
 }) {
   const definition = definitions[kind];
   if (!definition || !isLibraryCursor(cursor)) throw new RangeError('Invalid library cursor.');
+  if (
+    !['metadata', 'genre'].includes(searchField) ||
+    (kind === 'albums' && searchField !== 'metadata')
+  )
+    throw new RangeError('Invalid search field.');
   const order = sort === 'ASC' ? 'ASC' : 'DESC';
-  const scope = JSON.stringify([kind, order, term, missing]);
+  const scope = JSON.stringify([
+    kind,
+    order,
+    term,
+    missing,
+    ...(searchField === 'genre' ? ['genre'] : [])
+  ]);
   if (cursor && cursor.scope !== scope)
     throw new RangeError('Library cursor belongs to another query.');
   const params = { limit: definition.size + 1 };
   const filters = [];
   if (term) {
-    filters.push(`library_search(${definition.path}, @term)`);
+    filters.push(
+      kind === 'tracks'
+        ? `library_search(${searchField === 'genre' ? 'genres' : trackSearchText}, @term)`
+        : searchField === 'genre'
+          ? coverGenreFilter()
+          : `library_search(${definition.path}, @term)`
+    );
     params.term = term;
   }
   if (missing) filters.push('img IS NULL');

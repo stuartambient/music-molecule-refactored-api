@@ -681,6 +681,7 @@ const audioPlayerReducer = (state, action) => {
         covers: action.covers,
         coversPageNumber: action.coversPageNumber,
         coversSearchTerm: action.coversSearchTerm,
+        coversSearchField: action.coversSearchField || 'metadata',
         coversDateSort: action.coversDateSort
       };
     }
@@ -707,6 +708,7 @@ const audioPlayerReducer = (state, action) => {
         ...state,
         coversRevision: (state.coversRevision || 0) + 1,
         coversSearchTerm: action.coversSearchTerm,
+        coversSearchField: action.coversSearchField || 'metadata',
         covers: action.covers,
         coversPageNumber: action.coversPageNumber
       };

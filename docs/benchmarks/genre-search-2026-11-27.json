@@ -1,0 +1,76 @@
+{
+  "generatedAt": "2026-11-27T22:10:17.860Z",
+  "tracks": 500000,
+  "albums": 40486,
+  "runtime": {
+    "electron": "37.4.0",
+    "node": "22.18.0",
+    "sqlite": "3.50.2"
+  },
+  "platform": "win32 10.0.19045",
+  "cpu": "AMD Ryzen 5 2600 Six-Core Processor            ",
+  "methodology": "On-disk temporary WAL catalog, 32 MiB cache, about 12.35 tracks per album, numeric filenames/folders, metadata absent from paths, 256 padding bytes per track. Warm-up plus three samples. Measures SQL and JS materialization, not IPC/rendering or cold disk. Only Tracks uses tag metadata; Albums and Covers retain path-only search. Dates remain the selected sort order; no persistent text index or relevance ranking.",
+  "searches": {},
+  "pathOnlyBaseline": {
+    "medianMs": 711.85,
+    "maxMs": 715.6,
+    "samples": 3
+  },
+  "genreSearches": {
+    "prog rock": {
+      "medianMs": 1.54,
+      "maxMs": 1.66,
+      "samples": 3
+    },
+    "rock prog": {
+      "medianMs": 1.45,
+      "maxMs": 1.75,
+      "samples": 3
+    },
+    "ambi elec": {
+      "medianMs": 1.24,
+      "maxMs": 1.28,
+      "samples": 3
+    },
+    "not-in-the-genre-tags": {
+      "medianMs": 640.01,
+      "maxMs": 659.36,
+      "samples": 3
+    }
+  },
+  "coverGenreSearches": {
+    "prog rock": {
+      "medianMs": 3.62,
+      "maxMs": 4.2,
+      "samples": 3
+    },
+    "rock prog": {
+      "medianMs": 4.04,
+      "maxMs": 4.47,
+      "samples": 3
+    },
+    "ambi elec": {
+      "medianMs": 3.95,
+      "maxMs": 4.46,
+      "samples": 3
+    },
+    "not-in-the-genre-tags": {
+      "medianMs": 830.26,
+      "maxMs": 889.49,
+      "samples": 3
+    }
+  },
+  "coverGenrePlan": [
+    "SCAN albums USING INDEX albums_date",
+    "CORRELATED SCALAR SUBQUERY 1",
+    "MULTI-INDEX OR",
+    "INDEX 1",
+    "SEARCH genre_track USING INDEX idx_audio_tracks_audiotrack (audiotrack>? AND audiotrack<?)",
+    "INDEX 2",
+    "SEARCH genre_track USING INDEX idx_audio_tracks_audiotrack (audiotrack>? AND audiotrack<?)"
+  ],
+  "genreMethodology": "Explicit genre-only mode; synthetic genre values include NULL, empty, Progressive Rock; Psychedelic Folk, and Ambient; Electronic. Ordinary metadata/path searches exclude genre tags.",
+  "albumPlan": [
+    "SCAN albums USING INDEX albums_date"
+  ]
+}

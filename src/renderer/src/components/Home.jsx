@@ -12,6 +12,7 @@ const Home = () => {
   const { state, dispatch } = useAudioPlayer();
   const [homepage /* setHomePage */] = useState('albums-cover-view');
   const [coversSortOrder, setCoversSortOrder] = useState('DESC');
+  const [coversSearchField, setCoversSearchField] = useState(state.coversSearchField || 'metadata');
   const [coverSize, setCoverSize] = useState(1);
   /* const getKey = () => uuidv4(); */
 
@@ -57,6 +58,7 @@ const Home = () => {
     dispatch({
       type: 'covers-search-term',
       coversSearchTerm: coverSearchRef.current.value,
+      coversSearchField,
       covers: [],
       coversPageNumber: 0
     });
@@ -66,12 +68,14 @@ const Home = () => {
     console.log(e.currentTarget.id);
     setCoversSortOrder('DESC');
     coverSearchRef.current.value = '';
+    setCoversSearchField('metadata');
     dispatch({
       type: 'covers-refresh',
       coversMissingReq: 'not-requested',
       covers: [],
       coversPageNumber: 0,
       coversSearchTerm: '',
+      coversSearchField: 'metadata',
       coversDateSort: 'DESC'
     });
   };
@@ -87,13 +91,23 @@ const Home = () => {
           <>
             <li className="covers-search-container">
               <SearchField
-                label="Search covers"
-                placeholder="Search covers"
+                label={coversSearchField === 'genre' ? 'Search covers by genre' : 'Search covers'}
+                placeholder={coversSearchField === 'genre' ? 'e.g. prog rock' : 'Search folders'}
                 id="covers-search-term"
                 name="covers-search-term"
                 inputRef={coverSearchRef}
                 onSubmit={handleCoversSearchTerm}
-              />
+              >
+                <select
+                  aria-label="Search covers by"
+                  value={coversSearchField}
+                  onChange={(event) => setCoversSearchField(event.target.value)}
+                  title="Genre matches albums with at least one track whose genre contains all search fragments."
+                >
+                  <option value="metadata">Folder</option>
+                  <option value="genre">Genre</option>
+                </select>
+              </SearchField>
             </li>
             <li className="covers-gapless">
               <GaplessToggle />

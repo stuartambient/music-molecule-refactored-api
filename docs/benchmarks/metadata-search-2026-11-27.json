@@ -1,0 +1,104 @@
+{
+  "generatedAt": "2026-11-27T21:42:23.106Z",
+  "tracks": 500000,
+  "albums": 40486,
+  "runtime": {
+    "electron": "37.4.0",
+    "node": "22.18.0",
+    "sqlite": "3.50.2"
+  },
+  "platform": "win32 10.0.19045",
+  "cpu": "AMD Ryzen 5 2600 Six-Core Processor            ",
+  "methodology": "On-disk temporary WAL catalog, 32 MiB cache, about 12.35 tracks per album, numeric filenames/folders, metadata absent from paths, 256 padding bytes per track. Warm-up plus three samples. Measures SQL and JS materialization, not IPC/rendering or cold disk. Only Tracks uses tag metadata; Albums and Covers retain path-only search. Dates remain the selected sort order; no persistent text index or relevance ranking.",
+  "searches": {
+    "tracks": {
+      "hidden title 9": {
+        "medianMs": 1.27,
+        "maxMs": 1.53,
+        "samples": 3
+      },
+      "ensemble 42": {
+        "medianMs": 3.69,
+        "maxMs": 4.27,
+        "samples": 3
+      },
+      "helene": {
+        "medianMs": 394.7,
+        "maxMs": 398.81,
+        "samples": 3
+      },
+      "folder-000000": {
+        "medianMs": 967.41,
+        "maxMs": 982.05,
+        "samples": 3
+      },
+      "not-in-this-catalog": {
+        "medianMs": 968.32,
+        "maxMs": 983.72,
+        "samples": 3
+      }
+    },
+    "albums": {
+      "hidden title 9": {
+        "medianMs": 31.04,
+        "maxMs": 32.26,
+        "samples": 3
+      },
+      "ensemble 42": {
+        "medianMs": 30.47,
+        "maxMs": 36.01,
+        "samples": 3
+      },
+      "helene": {
+        "medianMs": 33.18,
+        "maxMs": 34.57,
+        "samples": 3
+      },
+      "folder-000000": {
+        "medianMs": 30.48,
+        "maxMs": 30.62,
+        "samples": 3
+      },
+      "not-in-this-catalog": {
+        "medianMs": 28.79,
+        "maxMs": 29.02,
+        "samples": 3
+      }
+    },
+    "covers": {
+      "hidden title 9": {
+        "medianMs": 30.59,
+        "maxMs": 32.63,
+        "samples": 3
+      },
+      "ensemble 42": {
+        "medianMs": 30.65,
+        "maxMs": 32.91,
+        "samples": 3
+      },
+      "helene": {
+        "medianMs": 30.15,
+        "maxMs": 31.87,
+        "samples": 3
+      },
+      "folder-000000": {
+        "medianMs": 29.68,
+        "maxMs": 29.97,
+        "samples": 3
+      },
+      "not-in-this-catalog": {
+        "medianMs": 28.89,
+        "maxMs": 29.07,
+        "samples": 3
+      }
+    }
+  },
+  "pathOnlyBaseline": {
+    "medianMs": 647.86,
+    "maxMs": 652.1,
+    "samples": 3
+  },
+  "albumPlan": [
+    "SCAN albums USING INDEX albums_date"
+  ]
+}

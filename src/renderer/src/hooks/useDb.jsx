@@ -4,7 +4,16 @@ import useLibraryPages from './useLibraryPages';
 import { requestMusicTracks } from '../utility/musicRequests';
 import { sortAlbumTracks } from '../utility/albumTrackOrder';
 
-const useTracks = (page, term, sort, resetKey, state, dispatch, shuffle) => {
+const useTracks = (
+  page,
+  term,
+  sort,
+  resetKey,
+  state,
+  dispatch,
+  shuffle,
+  searchField = 'metadata'
+) => {
   const result = useLibraryPages(
     'tracks',
     page,
@@ -13,7 +22,9 @@ const useTracks = (page, term, sort, resetKey, state, dispatch, shuffle) => {
     resetKey,
     dispatch,
     state.tracksRevision || 0,
-    shuffle
+    shuffle,
+    'not-requested',
+    searchField
   );
   return {
     tracksLoading: result.loading,
@@ -112,7 +123,16 @@ const useGenres = (setGenres) => {
   /* return genres; */
 };
 
-const useAllAlbumsCovers = (page, term, sort, missing, dispatch, _length, revision = 0) => {
+const useAllAlbumsCovers = (
+  page,
+  term,
+  sort,
+  missing,
+  dispatch,
+  _length,
+  revision = 0,
+  searchField = 'metadata'
+) => {
   const result = useLibraryPages(
     'covers',
     page,
@@ -122,7 +142,8 @@ const useAllAlbumsCovers = (page, term, sort, missing, dispatch, _length, revisi
     dispatch,
     revision,
     false,
-    missing
+    missing,
+    searchField
   );
   return {
     coversLoading: result.loading,

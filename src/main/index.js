@@ -764,10 +764,10 @@ guardedIpc.handle('update-covers', () => {
 
 guardedIpc.handle('get-tracks', async (event, ...args) => {
   if (args[1] === '') {
-    const alltracks = await allTracksByScroll(args[0], args[2]);
+    const alltracks = await allTracksByScroll(args[0], args[2], args[3]);
     return alltracks;
   } else if (args[1]) {
-    const alltracks = await allTracksBySearchTerm(args[0], args[1], args[2]);
+    const alltracks = await allTracksBySearchTerm(args[0], args[1], args[2], args[3]);
     return alltracks;
   }
 });
@@ -1051,9 +1051,9 @@ guardedIpc.handle('get-covers', async (_, ...args) => {
   let albums;
 
   if (args[3] === 'missing-covers') {
-    albums = await allMissingCoversByScroll(args[0], args[2]);
+    albums = await allMissingCoversByScroll(args[0], args[2], args[1], args[4]);
   } else {
-    albums = await allCoversByScroll(args[0], args[2], args[1]);
+    albums = await allCoversByScroll(args[0], args[2], args[1], args[4]);
   }
   return albums;
 });

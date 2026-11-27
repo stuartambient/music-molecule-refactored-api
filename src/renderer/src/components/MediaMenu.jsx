@@ -10,6 +10,8 @@ const MediaMenu = ({
   /*  isAlbumsSortSelected, */
   handleSortClick,
   handleTextSearch,
+  tracksSearchField = 'metadata',
+  onTracksSearchFieldChange,
   handlePlaylistFiles,
   filesSortType,
   albumsSortType
@@ -100,11 +102,21 @@ const MediaMenu = ({
       {!state.tracksShuffle && state.listType === 'files' && (
         <li className="form">
           <SearchField
-            label="Search tracks"
-            placeholder="Search tracks"
+            label={tracksSearchField === 'genre' ? 'Search genres' : 'Search tracks'}
+            placeholder={tracksSearchField === 'genre' ? 'e.g. prog rock' : 'Search tracks'}
             id="textsearch"
             onSubmit={handleTextSearch}
-          />
+          >
+            <select
+              aria-label="Search tracks by"
+              value={tracksSearchField}
+              onChange={(event) => onTracksSearchFieldChange(event.target.value)}
+              title="Genre searches only the genre tag. Partial words can appear in any order."
+            >
+              <option value="metadata">Tracks</option>
+              <option value="genre">Genre</option>
+            </select>
+          </SearchField>
         </li>
       )}
       {state.listType === 'albums' && (

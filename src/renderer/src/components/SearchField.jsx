@@ -7,10 +7,12 @@ export default function SearchField({
   onSubmit,
   inputRef,
   id,
-  name = 'textsearch'
+  name = 'textsearch',
+  children
 }) {
   return (
     <form className="search-field" role="search" aria-label={label} onSubmit={onSubmit}>
+      {children}
       <input
         type="search"
         ref={inputRef}

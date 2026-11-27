@@ -64,6 +64,7 @@ export const AudioPlayerProvider = ({ children }) => {
     covers: [],
     coversPageNumber: 0,
     coversSearchTerm: '',
+    coversSearchField: 'metadata',
     coversDateSort: 'DESC',
     coversMissingReq: 'not-requested',
     playlistTracks: [],

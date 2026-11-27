@@ -1,6 +1,7 @@
 // Synthetic, disposable catalogs. No music files are read or modified.
 // node scripts/benchmarkLibrary.mjs --sizes=10000,100000,500000,1000000 --output=docs/benchmarks/library-scale.json
 import fs from 'node:fs';
+import console from 'node:console';
 import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
@@ -79,14 +80,14 @@ for (const size of sizes) {
     db.pragma('journal_mode = WAL');
     db.pragma('synchronous = NORMAL');
     db.pragma('cache_size = -32768');
-    db.exec(`CREATE TABLE "audio-tracks" (track_id PRIMARY KEY, birthtime, audiotrack, like, performers, title, album, metadata);
+    db.exec(`CREATE TABLE "audio-tracks" (track_id PRIMARY KEY, birthtime, audiotrack, like, performers, title, album, albumArtists, metadata);
       CREATE TABLE albums (id PRIMARY KEY, birthtime, fullpath, foldername, img);
       CREATE INDEX idx_audio_tracks_birthtime_id ON "audio-tracks" (birthtime, track_id);
       CREATE INDEX idx_albums_birthtime_id ON albums (birthtime, id);
       CREATE INDEX idx_albums_missing_cover_birthtime_id ON albums (birthtime, id) WHERE img IS NULL;
       CREATE INDEX idx_audio_tracks_audiotrack ON "audio-tracks" (audiotrack COLLATE NOCASE);`);
     registerLibrarySearch(db);
-    const track = db.prepare('INSERT INTO "audio-tracks" VALUES (?, ?, ?, 0, ?, ?, ?, ?)');
+    const track = db.prepare('INSERT INTO "audio-tracks" VALUES (?, ?, ?, 0, ?, ?, ?, ?, ?)');
     const album = db.prepare('INSERT INTO albums VALUES (?, ?, ?, ?, ?)');
     const fillStarted = performance.now();
     db.transaction(() => {
@@ -113,6 +114,7 @@ for (const size of sizes) {
           'Artist',
           `Track ${(i % 10) + 1}`,
           name,
+          'Ensemble ' + (group % 1000),
           'm'.repeat(256)
         );
       }

@@ -73,3 +73,23 @@
   padding: 0;
   fill: currentColor;
 }
+
+.search-field.search-field select {
+  flex: 0 0 auto;
+  max-width: 5.5rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0 0.3rem;
+  border: 0;
+  border-right: 1px solid var(--ui-border);
+  border-radius: 0;
+  background: var(--ui-input);
+  color: var(--ui-text);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.search-field.search-field select:focus-visible {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: -2px;
+}

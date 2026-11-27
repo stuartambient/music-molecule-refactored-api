@@ -266,7 +266,12 @@ Object.assign(validators, {
   'artwork-view': argsOf(bool),
   'update-roots': argsOf((value) => list(value, location)),
   'get-folder-path': argsOf((value) => text(value)),
-  'get-tracks': argsOf(isLibraryCursor, (value) => text(value, 4096), oneOf('ASC', 'DESC')),
+  'get-tracks': (args) =>
+    (args.length === 3 || args.length === 4) &&
+    isLibraryCursor(args[0]) &&
+    text(args[1], 4096) &&
+    oneOf('ASC', 'DESC')(args[2]) &&
+    optional(oneOf('metadata', 'genre'))(args[3]),
   'get-albums': argsOf(isLibraryCursor, (value) => text(value, 4096), oneOf('ASC', 'DESC')),
   'get-album-tracks': argsOf(locations),
   'check-track-availability': argsOf(location),
@@ -287,12 +292,13 @@ Object.assign(validators, {
   'check-for-open-table': argsOf(oneOf('table-data')),
   'get-albums-by-root': argsOf(strings),
   'save-playlist': argsOf((value) => list(value, track)),
-  'get-covers': argsOf(
-    isLibraryCursor,
-    (value) => text(value, 4096),
-    oneOf('ASC', 'DESC'),
-    oneOf('not-requested', 'missing-covers')
-  ),
+  'get-covers': (args) =>
+    (args.length === 4 || args.length === 5) &&
+    isLibraryCursor(args[0]) &&
+    text(args[1], 4096) &&
+    oneOf('ASC', 'DESC')(args[2]) &&
+    oneOf('not-requested', 'missing-covers')(args[3]) &&
+    optional(oneOf('metadata', 'genre'))(args[4]),
   'get-shuffled-tracks': argsOf(page),
   'update-tags': argsOf(tagEdits),
   'forget-tag-save': argsOf(

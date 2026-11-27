@@ -12,14 +12,15 @@ export default function useLibraryPages(
   dispatch,
   revision = 0,
   shuffle = false,
-  missing = 'not-requested'
+  missing = 'not-requested',
+  searchField = 'metadata'
 ) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   useEffect(() => {
     let current = true;
-    const key = JSON.stringify([term, sort, resetKey, revision, shuffle, missing]);
+    const key = JSON.stringify([term, sort, resetKey, revision, shuffle, missing, searchField]);
     let lists = sessions.get(dispatch);
     if (!lists) {
       lists = new Map();
@@ -45,7 +46,8 @@ export default function useLibraryPages(
           } else {
             const method = { tracks: 'getTracks', albums: 'getAlbums', covers: 'getCovers' }[kind];
             const args = [previous?.nextCursor || null, term, sort];
-            if (kind === 'covers') args.push(missing);
+            if (kind === 'covers') args.push(missing, searchField);
+            if (kind === 'tracks') args.push(searchField);
             page = await window.ipcApi[method](...args);
           }
           if (!page || !Array.isArray(page.items) || !Object.hasOwn(page, 'nextCursor'))
@@ -107,6 +109,6 @@ export default function useLibraryPages(
     return () => {
       current = false;
     };
-  }, [kind, pageNumber, term, sort, resetKey, dispatch, revision, shuffle, missing]);
+  }, [kind, pageNumber, term, sort, resetKey, dispatch, revision, shuffle, missing, searchField]);
   return { loading, error, hasMore };
 }

@@ -125,16 +125,17 @@ const getAllTracks = (rows) => {
 };
 
 const escapeLike = (text) => text.replace(/[%_^]/g, '^$&');
-const allTracksByScroll = (cursor, sort) => readLibraryPage(db, { kind: 'tracks', cursor, sort });
-const allTracksBySearchTerm = (cursor, term, sort) =>
-  readLibraryPage(db, { kind: 'tracks', cursor, term, sort });
+const allTracksByScroll = (cursor, sort, searchField = 'metadata') =>
+  readLibraryPage(db, { kind: 'tracks', cursor, sort, searchField });
+const allTracksBySearchTerm = (cursor, term, sort, searchField = 'metadata') =>
+  readLibraryPage(db, { kind: 'tracks', cursor, term, sort, searchField });
 const allAlbumsByScroll = (cursor, sort) => readLibraryPage(db, { kind: 'albums', cursor, sort });
 const allAlbumsBySearchTerm = (cursor, term, sort) =>
   readLibraryPage(db, { kind: 'albums', cursor, term, sort });
-const allCoversByScroll = (cursor, sort, term = '') =>
-  readLibraryPage(db, { kind: 'covers', cursor, sort, term });
-const allMissingCoversByScroll = (cursor, sort) =>
-  readLibraryPage(db, { kind: 'covers', cursor, sort, missing: true });
+const allCoversByScroll = (cursor, sort, term = '', searchField = 'metadata') =>
+  readLibraryPage(db, { kind: 'covers', cursor, sort, term, searchField });
+const allMissingCoversByScroll = (cursor, sort, term = '', searchField = 'metadata') =>
+  readLibraryPage(db, { kind: 'covers', cursor, sort, term, searchField, missing: true });
 
 const filesByAlbum = (albumPath) => {
   const paths = Array.isArray(albumPath) ? albumPath : [albumPath];

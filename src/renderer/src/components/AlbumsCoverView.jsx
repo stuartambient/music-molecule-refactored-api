@@ -33,7 +33,8 @@ const AlbumsCoverView = ({ /* resetKey,  */ coverSize, className }) => {
     dispatch,
     /* resetKey, */
     state.covers.length,
-    state.coversRevision || 0
+    state.coversRevision || 0,
+    state.coversSearchField || 'metadata'
   );
 
   const parentRef = useRef(null);

@@ -1,0 +1,43 @@
+Metadata-aware Tracks search - 2026-11-27
+
+Scope:
+- Lists/Tracks searches path, title, performers, albumArtists and album.
+- Lists/Albums retains folder/path-only search. Covers defaults to folder/path search.
+- Track titles or other track tags do not make an album appear in those views.
+- Explicit Genre mode is available in Lists/Tracks and Covers; ordinary modes exclude genres.
+- Playlist search is unchanged.
+- Mixed-word, accent-insensitive substring matching and date/cursor ordering remain.
+- No catalog migration, persistent text index or relevance ordering was introduced.
+- Subsequent queries read current catalog metadata; displayed pages retain the normal refresh lifecycle.
+
+Synthetic scale run: 500,000 tracks / 40,486 albums.
+On-disk temporary WAL catalog, 32 MiB cache, about 12.35 tracks per album, numeric filenames/folders, metadata absent from paths, 256 padding bytes per track. Warm-up plus three samples. Measures SQL and JS materialization, not IPC/rendering or cold disk. Only Tracks uses tag metadata; Albums and Covers retain path-only search. Dates remain the selected sort order; no persistent text index or relevance ranking.
+
+Query                     Tracks ms   Albums ms   Covers ms
+hidden title 9                  1.27      31.04      30.59
+ensemble 42                     3.69      30.47      30.65
+helene                        394.70      33.18      30.15
+folder-000000                 967.41      30.48      29.68
+not-in-this-catalog           968.32      28.79      28.89
+
+Path-only track no-match baseline: 647.86 ms.
+Times are medians; maxima and runtime details are in the adjacent JSON.
+Metadata-only terms intentionally return no Albums/Covers matches on this fixture.
+Common track matches stop after finding a page. Rare/no-match track queries may
+inspect the whole catalog and briefly delay the UI because reads are synchronous.
+These are synthetic warm-cache measurements, not real-library or rendering latency.
+
+Validation: all fifteen search tests passed, including explicit genre matching. They cover every track metadata field, mixed
+words, accents, path fallback, null tags, excluded metadata in Albums/Covers,
+missing-cover filtering, catalog edits, and complete unique cursor traversal and
+date/ID/rowid ordering in both directions. Album/cover queries also work without
+a track table, confirming that they do not consult track metadata.
+
+No user catalog or music files were accessed. The synthetic database was removed.
+
+Reproduce:
+node scripts/benchmarkMetadataSearch.mjs --tracks=500000 --output=docs/benchmarks/metadata-search-2026-11-27.json
+
+Tests (Electron in Node mode):
+$env:ELECTRON_RUN_AS_NODE='1'
+& ./node_modules/electron/dist/electron.exe scripts/testMetadataSearch.mjs

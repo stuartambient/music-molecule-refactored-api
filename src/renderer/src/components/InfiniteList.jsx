@@ -36,6 +36,8 @@ function AlbumListItem({ album, expanded, onToggle, trackCache, ...props }) {
 const InfiniteList = () => {
   const { state, dispatch } = useAudioPlayer();
   const [tracksSearchTerm, setTracksSearchTerm] = useState('');
+  const [tracksSearchField, setTracksSearchField] = useState('metadata');
+  const [tracksSearchDraftField, setTracksSearchDraftField] = useState('metadata');
   const [albumsSearchTerm, setAlbumsSearchTerm] = useState('');
 
   /*   const [mainTheme, setMainTheme] = useState(''); */
@@ -57,7 +59,8 @@ const InfiniteList = () => {
     resetKey,
     state,
     dispatch,
-    state.tracksShuffle
+    state.tracksShuffle,
+    tracksSearchField
   );
   const { albumsLoading, hasMoreAlbums, albumsError } = useAlbums(
     state.albumsPageNumber,
@@ -189,6 +192,7 @@ const InfiniteList = () => {
         type: 'set-prev-track',
         prevTrack: ''
       });
+      setTracksSearchField(tracksSearchDraftField);
       setTracksSearchTerm(term);
     }
     if (state.listType === 'albums') {
@@ -324,6 +328,8 @@ const InfiniteList = () => {
         <MediaMenu
           handleSortClick={handleSortClick}
           handleTextSearch={handleTextSearch}
+          tracksSearchField={tracksSearchDraftField}
+          onTracksSearchFieldChange={setTracksSearchDraftField}
           handlePlaylistFiles={handlePlaylistFiles}
           filesSortType={filesSortType}
           albumsSortType={albumsSortType}
