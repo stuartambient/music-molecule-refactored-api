@@ -23,3 +23,12 @@ ProfilingData
 **/backups/**
 # Downloaded mpv experiment runtime
 /vendor/mpv/
+
+# Source assets required by a clean renderer checkout (keep other legacy assets ignored).
+!/src/renderer/src/assets/
+/src/renderer/src/assets/*
+!/src/renderer/src/assets/index.css
+!/src/renderer/src/assets/noimage.jpg
+!/src/renderer/src/assets/loaders/
+/src/renderer/src/assets/loaders/*
+!/src/renderer/src/assets/loaders/rings.svg

@@ -1,3 +1,4 @@
+import process from 'node:process';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import Database from 'better-sqlite3';
@@ -12,7 +13,8 @@ function fixture(t) {
     CREATE TABLE albums (id, birthtime, fullpath, foldername, img);
     CREATE INDEX tracks_date ON "audio-tracks"(birthtime, track_id);
     CREATE INDEX albums_date ON albums(birthtime, id);
-    CREATE INDEX idx_audio_tracks_audiotrack ON "audio-tracks"(audiotrack COLLATE NOCASE);`);
+    CREATE INDEX idx_audio_tracks_audiotrack ON "audio-tracks"(audiotrack COLLATE NOCASE);
+    CREATE INDEX idx_audio_tracks_path_binary ON "audio-tracks"(audiotrack COLLATE BINARY);`);
   registerLibrarySearch(db);
   let serial = 0;
   const album = (folder, options = {}) => {
@@ -307,7 +309,7 @@ test('Covers genre matching respects album boundaries, literal wildcards, backsl
   f.track('i:\\music\\legacy\\Disc 1\\01.flac', { genre: 'Ambient Electronic' });
   assert.deepEqual(
     f.search('covers', 'elec ambi', { searchField: 'genre' }).map((row) => row.id),
-    [legacy]
+    process.platform === 'win32' ? [legacy] : []
   );
 });
 
@@ -357,7 +359,11 @@ test('Covers genre query uses indexed directory ranges rather than rescanning th
     .map((row) => row.detail);
   assert.ok(
     plan.some((line) =>
-      line.includes('SEARCH genre_track USING INDEX idx_audio_tracks_audiotrack')
+      line.includes(
+        process.platform === 'win32'
+          ? 'SEARCH genre_track USING INDEX idx_audio_tracks_audiotrack'
+          : 'SEARCH genre_track USING INDEX idx_audio_tracks_path_binary'
+      )
     ),
     plan.join('\n')
   );

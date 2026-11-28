@@ -1,3 +1,5 @@
+import process from 'node:process';
+import { albumTracksQuery } from './catalogPaths.js';
 import db from './connection';
 import { registerLibrarySearch } from './librarySearch.js';
 import { readLibraryPage } from './libraryPages.js';
@@ -74,6 +76,10 @@ const initializeDatabase = () => {
     db.exec(createAlbumsTable);
     db.exec(createRootsTable);
     db.exec(createIndexAudioTrack);
+    if (process.platform !== 'win32')
+      db.exec(
+        'CREATE INDEX IF NOT EXISTS idx_audio_tracks_path_binary ON "audio-tracks"(audiotrack COLLATE BINARY)'
+      );
     // Non-unique indexes support the same deterministic ordering in both directions.
     db.exec(
       'CREATE INDEX IF NOT EXISTS idx_audio_tracks_birthtime_id ON "audio-tracks"(birthtime, track_id)'
@@ -124,7 +130,6 @@ const getAllTracks = (rows) => {
   return ids.map((id) => map.get(id)).filter(Boolean);
 };
 
-const escapeLike = (text) => text.replace(/[%_^]/g, '^$&');
 const allTracksByScroll = (cursor, sort, searchField = 'metadata') =>
   readLibraryPage(db, { kind: 'tracks', cursor, sort, searchField });
 const allTracksBySearchTerm = (cursor, term, sort, searchField = 'metadata') =>
@@ -138,19 +143,8 @@ const allMissingCoversByScroll = (cursor, sort, term = '', searchField = 'metada
   readLibraryPage(db, { kind: 'covers', cursor, sort, term, searchField, missing: true });
 
 const filesByAlbum = (albumPath) => {
-  const paths = Array.isArray(albumPath) ? albumPath : [albumPath];
-  const patterns = new Set();
-  for (const folder of paths) {
-    if (typeof folder !== 'string' || !folder.length) continue;
-    // Scans store forward slashes. Also accept existing Windows-style paths,
-    // retaining nested disc folders but excluding similarly named siblings.
-    const directory = folder.replaceAll('\\', '/').replace(/\/+$/, '');
-    patterns.add(`${escapeLike(directory + '/')}%`);
-    patterns.add(`${escapeLike(directory.replaceAll('/', '\\') + '\\')}%`);
-  }
-  if (!patterns.size) return [];
-  const conditions = [...patterns].map(() => "audiotrack LIKE ? ESCAPE '^'").join(' OR ');
-  return db.prepare(`SELECT * FROM "audio-tracks" WHERE ${conditions}`).all(...patterns);
+  const { sql, params } = albumTracksQuery(albumPath);
+  return db.prepare(sql).all(...params);
 };
 
 const likeTrack = (fileId) => {

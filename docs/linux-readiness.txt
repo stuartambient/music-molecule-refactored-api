@@ -1,0 +1,88 @@
+Path/platform compatibility and Linux readiness
+
+Status: compatibility preparation is implemented and tested on Windows, including
+explicit POSIX path/SQLite/permission simulations. No Linux executable, AppImage,
+Debian package or live Linux audio session has been built/tested in this pass.
+Existing production executables, user catalogs, preferences and music were untouched.
+
+Implemented:
+- Windows data stays at the existing AppData/Local/Music Molecule Data location.
+- Linux catalog/backups use $XDG_DATA_HOME/music-molecule, or
+  ~/.local/share/music-molecule when the override is empty/invalid/relative.
+  Preferences/playlists remain under Electron's userData configuration directory.
+- Linux mpv can be resolved from PATH (for example /usr/bin/mpv). MPV_EXECUTABLE
+  remains an explicit override. A compatible executable bundle can be recognized
+  at vendor/mpv/linux-<arch>/mpv in dev or resources/mpv/mpv when packaged.
+  This configuration currently packages no Linux mpv binary: use a system install.
+- Windows still resolves the same bundled mpv.exe locations.
+- Cover/audio URLs share canonical one-time path encoding and a parser supporting
+  POSIX, Windows and UNC syntax. Old drive-as-host URLs are still accepted.
+- M3U reading/export respects native separators. Unix backslashes and case are
+  preserved, and filenames with line breaks are rejected as unrepresentable M3U.
+- Linux album membership and tag-save identity preserve case. A non-unique BINARY
+  path index supports Linux album/genre lookups; Windows retains NOCASE lookup.
+  No UNIQUE track/album-path constraint was added.
+- Track-art parent fallback chooses the closest containing root and real ancestor
+  directories, rather than prefix siblings or incorrectly constructed paths.
+- Track folder artwork lists the literal directory rather than using its name as
+  a glob pattern. Existing artwork precedence remains embedded, local, parents.
+- Unix denied tag writes report unwritable instead of chmod 0666.
+- Scan workers use the catalog path supplied by main, including clean dev checkouts
+  without a private environment file. They do not create a missing catalog.
+- App imports use the actual lowercase components directory. Required index.css,
+  noimage.jpg and loader rings.svg source assets are no longer hidden by .gitignore.
+- Windows mpv.exe/DLL extra resources are scoped to Windows. Linux includes its
+  window icon, uses AudioVideo category and targets AppImage and deb. The Linux
+  build command enables native-module rebuilding; Windows's rebuild flag is retained.
+
+Checks passed:
+- 13 platform/path/permission/packaging/in-memory renderer compilation tests.
+- 2 native SQLite platform query tests and 15 metadata/genre search tests.
+- 17 album cover cases, 13 native tag-save/recovery cases and 9 scan-write cases.
+- 14 streaming tests, 20 playback regressions and 8 track-art resource tests.
+- Actual isolated Chromium audio fetch/range/seek/decode checks and 9 chooser cases.
+- Builder configuration validates without packaging. Changed modules lint clean;
+  main/index.js retains its prior three lint errors. Temporary fixtures were removed.
+
+First native Linux trial (Linux x64 is the initial suggested target):
+1. Use a checkout containing these changes. Install dependencies on Linux with a
+   compatible Node/npm version (Node 22.18+ is a suitable starting point). Do not
+   reuse Windows node_modules; Electron native SQLite binaries must match the OS
+   and Electron ABI. Run npm ci on Linux.
+2. Install a compatible mpv or select Built-in playback. Check mpv --version.
+   The present loadfile argument layout requires mpv 0.38 or newer; older mpv
+   packages need an upgrade or a compatibility change before native mpv testing.
+   MPV_EXECUTABLE=/absolute/path/to/mpv can select a separate build.
+3. Run npm run dev from the project directory. Dev uses the existing environment
+   override when present, otherwise src/db/music.db. Start with a fresh Linux
+   catalog and choose Linux mount paths such as /mnt/music. Windows I:/... paths
+   are not automatically remapped when copying a catalog between operating systems.
+4. Test scans/repeated scans, case-distinct album directories, accented and literal
+   punctuation filenames, covers, previews/seeking, read-only tag-write failures,
+   M3U save/reload, mpv stop/seek/gapless and the built-in engine. Verify catalog
+   and backups survive restart in the intended writable directories.
+5. Run:
+   node --test scripts/testPlatformPaths.mjs scripts/testStreamingProtocol.mjs
+   ELECTRON_RUN_AS_NODE=1 ./node_modules/electron/dist/electron scripts/testPlatformCatalog.mjs
+   ELECTRON_RUN_AS_NODE=1 ./node_modules/electron/dist/electron scripts/testMetadataSearch.mjs
+   node scripts/testStreamingProtocolElectron.cjs
+   node scripts/testAlbumCoverChooser.cjs
+6. On Linux, npm run build:linux prepares AppImage and deb targets and rebuilds native
+   dependencies. Install/run both on the chosen distro before calling Linux supported.
+   Verify actual mpv version, audio backend, sandbox/runtime dependencies, executable
+   permissions and native SQLite loading. System mpv is currently a separate install.
+
+Before a public release:
+- Choose the supported distro/version and mpv version range after native tests.
+- Replace placeholder appId/homepage/publish metadata and set a real maintainer
+  contact. Current Linux maintainer is the project display name.
+- Decide whether to bundle/distribute Linux mpv with licenses or require system mpv.
+- Cross-platform catalog root remapping, live SMB/NFS testing, removable-drive mount
+  identity and a macOS release remain separate work. Do not equate UNC syntax tests
+  on Windows with a live Linux/network-filesystem validation.
+
+References:
+https://specifications.freedesktop.org/basedir/latest/
+https://www.electronjs.org/docs/latest/tutorial/using-native-node-modules
+https://raw.githubusercontent.com/mpv-player/mpv/v0.37.0/DOCS/man/input.rst
+https://raw.githubusercontent.com/mpv-player/mpv/v0.38.0/DOCS/man/input.rst

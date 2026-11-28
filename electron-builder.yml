@@ -10,14 +10,6 @@ files:
   - '!electron.vite.config.{js,ts,mjs,cjs}'
   - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
 extraResources:
-  - from: './vendor/mpv/windows-x64'
-    to: './mpv'
-    filter:
-      - 'mpv.exe'
-      - '*.dll'
-      - 'LICENSE*'
-      - 'NOTICE.md'
-      - 'runtime.json'
   - from: './src/main/preferences.json'
     to: './preferences.json'
 
@@ -25,6 +17,15 @@ asarUnpack:
   - '**/*.{node,dll}'
 win:
   executableName: music-molecule
+  extraResources:
+    - from: './vendor/mpv/windows-x64'
+      to: './mpv'
+      filter:
+        - 'mpv.exe'
+        - '*.dll'
+        - 'LICENSE*'
+        - 'NOTICE.md'
+        - 'runtime.json'
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
@@ -42,10 +43,12 @@ dmg:
 linux:
   target:
     - AppImage
-    - snap
     - deb
-  maintainer: electronjs.org
-  category: Utility
+  maintainer: Music Molecule
+  category: AudioVideo
+  extraResources:
+    - from: './build/icon.png'
+      to: './icon.png'
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false

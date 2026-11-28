@@ -17,6 +17,7 @@ import {
   pickAlbumCover
 } from '../src/main/albumCoverSelection.js';
 import { albumCoverUrl } from '../src/shared/albumCoverUrl.js';
+import { localFilePath } from '../src/main/localFilePath.js';
 import { canRequest } from '../src/shared/ipcContract.js';
 import { validateIpcArguments } from '../src/main/ipcValidation.js';
 
@@ -109,7 +110,7 @@ test('thumbnail URLs preserve spaces, Unicode, percent signs and URL punctuation
   const file = 'I:/Music/Artist #1/Front 50% ? \u00e9.png';
   const url = albumCoverUrl(file);
   assert.ok(!url.includes('#') && !url.includes('?'));
-  assert.equal(decodeURIComponent(url.slice(8)), file);
+  assert.equal(localFilePath(url, 'cover'), file);
 });
 
 test('chooser operations are restricted to the main window and validated', () => {

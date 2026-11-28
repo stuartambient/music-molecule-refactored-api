@@ -30,6 +30,9 @@ import { normalizeMainTheme, normalizeEditorTheme } from '../shared/themePrefere
 import mime from 'mime-types';
 import { getTrackCover } from './trackCover.js';
 import { createStreamingHandler } from './streamingProtocol.js';
+import { localFilePath } from './localFilePath.js';
+import { trackCoverParents } from './catalogPaths.js';
+import { serializePlaylist } from './playlistCatalog.js';
 import { albumCoverChoices, selectAlbumCover, pickAlbumCover } from './albumCoverSelection.js';
 import createUpdateTagsWorker from './updateTagsWorker?nodeWorker';
 import { pendingTagSaveSummary } from './tagSaveJournal.js';
@@ -418,7 +421,13 @@ function createWindow() {
     transparent: true,
     alwaysOnTop: false,
     show: false,
-    ...(process.platform === 'linux' ? { icon: path.join(__dirname, '../../build/icon.png') } : {}),
+    ...(process.platform === 'linux'
+      ? {
+          icon: is.dev
+            ? path.join(app.getAppPath(), 'build/icon.png')
+            : path.join(process.resourcesPath, 'icon.png')
+        }
+      : {}),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       additionalArguments: [`--mainTheme=${mainTheme}`, '--window-role=main'],
@@ -501,17 +510,7 @@ app
 
     protocol.handle('cover', async (request) => {
       try {
-        let url = decodeURIComponent(request.url.substring(8));
-        // Handle Windows drive-letter paths explicitly
-        if (/^[a-zA-Z]:/.test(url)) {
-          // Already an absolute path, no further changes needed
-        } else if (/^[a-zA-Z]\//.test(url)) {
-          // Convert "I/music/..." to "I:/music/..."
-          url = `${url[0]}:/${url.slice(2)}`;
-        } else {
-          throw new Error('Invalid or relative path received');
-        }
-        const filePath = path.normalize(url);
+        const filePath = path.normalize(localFilePath(request.url, 'cover'));
 
         await fs.promises.access(filePath);
 
@@ -724,28 +723,7 @@ guardedIpc.handle('prepare-music-tracks', async (_event, request) => {
   return request.inspect ? { ...result, catalogTracks: tracks } : result;
 });
 
-const getRoot = (currentDir) => {
-  /* console.log(currentDir); */
-  const root = getRoots();
-  const allPaths = [];
-  const paths = path.normalize(currentDir).split(path.sep);
-  const pathsStr = paths.join('/');
-  const rootFiltered = root.filter((r) => pathsStr.startsWith(r)).join('');
-  //console.log(pathsStr === currentDir);
-  const sliced = pathsStr.replace(`${rootFiltered}/`, '');
-  const split = sliced.split('/');
-  const splitLength = split.length;
-  if (splitLength > 1) {
-    allPaths.push(`${rootFiltered}/${split[0]}`);
-    for (let i = splitLength - 1; i > 0; i--) {
-      let tmp = `${rootFiltered}/${split[0]}/${split[i]}`;
-      if (tmp !== currentDir) {
-        allPaths.push(tmp);
-      }
-    }
-  }
-  return allPaths;
-};
+const getRoot = (currentDir) => trackCoverParents(currentDir, getRoots());
 
 guardedIpc.handle('get-cover', (_event, track) => getTrackCover(track, { getRoot, searchCover }));
 
@@ -917,7 +895,7 @@ guardedIpc.handle('save-playlist', async (_, args) => {
       return 'Action cancelled';
     }
 
-    const playlistContent = args.map((a) => a.audiotrack.replaceAll('/', '\\')).join('\n');
+    const playlistContent = serializePlaylist(args);
 
     fs.writeFileSync(save.filePath, playlistContent, { flag: 'w' });
 

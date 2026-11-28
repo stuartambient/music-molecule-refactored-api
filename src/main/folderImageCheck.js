@@ -1,67 +1,26 @@
-/* eslint-disable no-useless-escape */
-import fg from 'fast-glob';
 import fs from 'node:fs/promises';
+import path from 'node:path';
 
-async function convertToBuffer(imagePath) {
-  try {
-    const data = await fs.readFile(imagePath);
-
-    return data;
-  } catch (err) {
-    console.error('Error reading the file:', err);
-  }
-}
-
-function escapeSpecialChars(path) {
-  return path.replace(/[\[\]\(\)\{\}]/g, '\\$&');
-}
-
-const options = {
-  caseSensitiveMatch: false,
-  suppressErrors: true,
-  dot: true
-};
-
-function checkFile(file) {
-  const lc = file.toLowerCase();
-  if (lc.endsWith('.jpg') || lc.endsWith('.jpeg') || lc.endsWith('.png') || lc.endsWith('.webp')) {
-    return true;
-  }
-  return false;
-}
-
-/* async function searchCover(folder) {
-  const escapedPath = escapeSpecialChars(folder);
-
-  const cover = await fg(`${escapedPath}/*`, options);
-
-  if (cover.length > 0) {
-    const filtered = cover.filter((cvr) => checkFile(cvr));
-    if (filtered[0]) {
-      return convertToBuffer(filtered[0]);
-    }
-  } else return;
-} */
-
+// List the literal directory: Unix filenames may contain glob metacharacters.
 async function searchCover(folder) {
-  // Ensure folders is always an array
-  const folders = Array.isArray(folder) ? folder : [folder];
-
-  for (const singleFolder of folders) {
-    const escapedPath = escapeSpecialChars(singleFolder);
-
-    const cover = await fg(`${escapedPath}/*`, options);
-
-    if (cover.length > 0) {
-      const filtered = cover.filter((cvr) => checkFile(cvr));
-      if (filtered[0]) {
-        return await convertToBuffer(filtered[0]);
+  for (const directory of Array.isArray(folder) ? folder : [folder]) {
+    let entries;
+    try {
+      entries = await fs.readdir(directory, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      if (!/\.(jpe?g|png|webp)$/i.test(entry.name)) continue;
+      const file = path.join(directory, entry.name);
+      try {
+        if (entry.isSymbolicLink() && !(await fs.stat(file)).isFile()) continue;
+        if (entry.isFile() || entry.isSymbolicLink()) return await fs.readFile(file);
+      } catch (error) {
+        console.error('Error reading the image:', error);
+        return;
       }
     }
-    // Continue to the next folder if no cover is found
   }
-  // Return null if no cover is found in any folder
-  return null;
 }
-
 export default searchCover;

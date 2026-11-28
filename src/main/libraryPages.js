@@ -1,3 +1,4 @@
+import { albumDirectoryRanges } from './catalogPaths.js';
 import { isLibraryCursor } from '../shared/libraryCursor.js';
 
 const definitions = {
@@ -23,14 +24,8 @@ const trackSearchText = ['audiotrack', 'title', 'performers', 'albumArtists', 'a
   .join(' || char(10) || ');
 
 function coverGenreFilter() {
-  const directory = "rtrim(replace(albums.fullpath, char(92), '/'), '/')";
-  const windowsDirectory = `replace(${directory}, '/', char(92))`;
-  // Bound directory ranges use the existing non-unique path index, including disc subfolders.
-  return `EXISTS (SELECT 1 FROM "audio-tracks" AS genre_track WHERE
-    ((genre_track.audiotrack COLLATE NOCASE >= ${directory} || '/'
-      AND genre_track.audiotrack COLLATE NOCASE < ${directory} || '0')
-    OR (genre_track.audiotrack COLLATE NOCASE >= ${windowsDirectory} || char(92)
-      AND genre_track.audiotrack COLLATE NOCASE < ${windowsDirectory} || ']'))
+  return `EXISTS (SELECT 1 FROM "audio-tracks" AS genre_track
+    WHERE ${albumDirectoryRanges('genre_track.audiotrack', 'albums.fullpath')}
     AND library_search(genre_track.genres, @term))`;
 }
 

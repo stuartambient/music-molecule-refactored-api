@@ -1,19 +1,14 @@
 import { app } from 'electron';
-import path from 'path';
+import os from 'node:os';
+import process from 'node:process';
+import { appPaths } from './appPaths.js';
 
-const localDataRoot = path.join(app.getPath('appData'), '..', 'Local', 'Music Molecule Data');
-export const paths = {
-  // --- user-writable, synced ---
+export const paths = appPaths({
+  platform: process.platform,
+  env: process.env,
+  home: os.homedir(),
+  appData: app.getPath('appData'),
   userData: app.getPath('userData'),
-  preferences: path.join(app.getPath('userData'), 'preferences.json'),
-  playlists: path.join(app.getPath('userData'), 'playlists'),
-
-  // --- large, not synced ---
-  local: localDataRoot,
-  db: path.join(localDataRoot, 'music.db'),
-  backups: path.join(localDataRoot, 'backups'),
-
-  // --- system paths ---
   logs: app.getPath('logs'),
   resources: process.resourcesPath
-};
+});

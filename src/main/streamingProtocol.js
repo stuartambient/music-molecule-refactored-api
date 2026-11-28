@@ -1,19 +1,9 @@
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import { Readable, Transform, pipeline } from 'node:stream';
 import mime from 'mime-types';
+import { localFilePath } from './localFilePath.js';
 
-export function streamingFilePath(url) {
-  if (typeof url !== 'string' || !/^streaming:\/\//i.test(url))
-    throw new Error('Invalid audio URL.');
-  const encoded = url.slice('streaming://'.length).split(/[?#]/, 1)[0];
-  let file = decodeURIComponent(encoded.startsWith('local/') ? encoded.slice(6) : encoded);
-  // Retain compatibility with the former drive-as-host URLs normalized by Chromium.
-  if (/^[a-z]\//i.test(file)) file = `${file[0].toUpperCase()}:${file.slice(1)}`;
-  if (!file || file.includes('\0') || (!path.isAbsolute(file) && !path.win32.isAbsolute(file)))
-    throw new Error('Invalid audio path.');
-  return file;
-}
+export const streamingFilePath = (url) => localFilePath(url, 'streaming');
 
 export function audioRange(value, size) {
   if (!value || !/^bytes=/i.test(value) || value.includes(',')) return null;

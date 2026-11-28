@@ -37,31 +37,34 @@ function removeReadOnlyWindows(filePath) {
   });
 }
 
-export async function ensureWritableWithStatus(filePath) {
+export async function ensureWritableWithStatus(
+  filePath,
+  { platform = os.platform(), fileSystem = fsp } = {}
+) {
   let hadReadOnly = false;
 
   // 1️⃣ Check real OS write permission
   try {
-    await fsp.access(filePath, fs.constants.W_OK);
+    await fileSystem.access(filePath, fs.constants.W_OK);
   } catch (err) {
-    if (err?.code === 'ENOENT') {
+    if (['ENOENT', 'ENOTDIR'].includes(err?.code)) {
       return { status: 'missing', hadReadOnly: false, error: err };
     }
 
-    // 2️⃣ Attempt attribute / chmod correction
-    if (os.platform() === 'win32') {
+    // Attempt Windows read-only attribute correction.
+    if (platform === 'win32') {
       hadReadOnly = await hasReadOnlyAttribute(filePath);
       if (hadReadOnly) {
         await removeReadOnlyWindows(filePath);
       }
     } else {
-      await fsp.chmod(filePath, 0o666);
+      // Respect Unix ownership/mode bits; do not broaden access to an audio file.
+      return { status: 'unwritable', hadReadOnly: false, error: err };
     }
 
     // 3️⃣ Re-check permission
     try {
-      console.log('constants?', fs.constants?.W_OK);
-      await fsp.access(filePath, fs.constants.W_OK);
+      await fileSystem.access(filePath, fs.constants.W_OK);
     } catch (err2) {
       return { status: 'unwritable', hadReadOnly, error: err2 };
     }
@@ -69,10 +72,10 @@ export async function ensureWritableWithStatus(filePath) {
 
   // 4️⃣ Detect Windows file locks (sharing violation)
   try {
-    const handle = await fsp.open(filePath, 'r+');
+    const handle = await fileSystem.open(filePath, 'r+');
     await handle.close();
   } catch (err3) {
-    return { status: 'locked', hadReadOnly, error: err3 };
+    return { status: platform === 'win32' ? 'locked' : 'unwritable', hadReadOnly, error: err3 };
   }
 
   return {

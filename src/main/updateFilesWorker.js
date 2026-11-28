@@ -9,13 +9,10 @@ import { insertFiles, parseMeta } from './utility/utils.js';
 import { findScanRoot, scanRoots } from './utility/scanRoots.js';
 import { commitScanChanges } from './utility/scanWrites.js';
 
-const mode = import.meta.env.MODE;
-const dbPath =
-  mode === 'development'
-    ? path.join(process.cwd(), import.meta.env.MAIN_VITE_DB_PATH_DEV)
-    : workerData;
+// The main process resolves dev/packaged paths and passes the catalog explicitly.
+const dbPath = workerData;
 
-const db = new Database(dbPath);
+const db = new Database(dbPath, { fileMustExist: true });
 const createRootsTable = `CREATE TABLE IF NOT EXISTS roots ( id INTEGER PRIMARY KEY AUTOINCREMENT, root TEXT UNIQUE)`;
 db.exec(createRootsTable);
 

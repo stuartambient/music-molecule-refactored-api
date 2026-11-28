@@ -1,9 +1,7 @@
+import { sameCatalogPath } from './catalogPaths.js';
 import { createTagSaveJournal, listTagSaveJobs, pendingTagSaveSummary } from './tagSaveJournal.js';
 
 const message = (error) => error?.message || String(error);
-const samePath = (a, b) =>
-  a?.replaceAll('\\', '/').toLowerCase() === b?.replaceAll('\\', '/').toLowerCase();
-
 export async function runTagSaveBatch({
   db,
   edits = [],
@@ -29,7 +27,7 @@ export async function runTagSaveBatch({
       catalog: { status: 'not_started' }
     };
     try {
-      if (!samePath(lookup.get(edit.track_id)?.audiotrack, edit.id))
+      if (!sameCatalogPath(lookup.get(edit.track_id)?.audiotrack, edit.id))
         throw new Error('This file no longer matches its catalog entry. No file was changed.');
       const expected = retry ? edit.expected : await expect(edit);
       if (!retry) {

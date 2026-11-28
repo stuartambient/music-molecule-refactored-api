@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import process from 'node:process';
 
 const imageExtension = /\.(jpe?g|png|webp|gif)$/i;
-const normalize = (file) => file.replaceAll('\\', '/');
+const normalize = (file) => (process.platform === 'win32' ? file.replaceAll('\\', '/') : file);
 const imageFiles = (entries) =>
   entries
     .filter((entry) => entry.isFile() && imageExtension.test(entry.name))
