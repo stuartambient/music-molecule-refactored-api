@@ -1,7 +1,8 @@
 # mpv playback experiment
 
-Branch: `codex/mpv-playback-experiment`. This is an optional background mpv
-process controlled by JSON IPC. It is not a libmpv native addon.
+The mpv work was merged into development; `codex/mpv-playback-experiment` is the
+historical branch name. Playback uses an optional background mpv process controlled
+by JSON IPC, not a libmpv native addon. Start with the [development setup guide](../README.md).
 
 ## Try it
 
@@ -32,7 +33,9 @@ uses an already downloaded archive. The executable is not committed to Git.
 Electron Builder copies this runtime and its notices to `resources/mpv`.
 Run setup before building a Windows package. `MPV_EXECUTABLE` can override the
 executable path for local experiments; this does not alter packaged resources.
-Other platforms are not packaged by this experiment.
+Linux runtime lookup and package configuration have been prepared, but a native
+Linux release is not validated. Linux can use a compatible system mpv (0.38 or
+newer); see [Linux readiness](linux-readiness.txt).
 
 mpv reads local catalog files directly, using its native decoder, buffering,
 and audio output. The main window supplies track IDs, not arbitrary paths or
@@ -47,7 +50,7 @@ renderer memory. mpv can still use memory for decoding and audio output.
 Gapless does not remove recorded silence or guarantee uninterrupted playback
 from slow or disconnected storage. Device formats and sample rates follow mpv's
 output negotiation; this experiment does not promise exclusive or bit-perfect
-output. Runtime availability currently checks the executable's presence; startup
+output. Runtime availability checks for a file and, on Unix, executable permission; startup
 or decoder failures are reported by the player and can be retried.
 
 ## Verification
@@ -58,8 +61,9 @@ With the runtime installed:
 node scripts/testMpvPlayback.mjs
 node scripts/testMpvAudioSamples.mjs
 node scripts/testMpvRenderer.cjs
-npm run build
 ```
+
+Packaging/build output is a separate action, not required for these focused checks.
 
 Native tests use silent output or a temporary PCM file. Renderer tests use the
 actual provider, reducer, scrubber, preferences component, preload bridge, and
