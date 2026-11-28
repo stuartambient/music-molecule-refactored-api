@@ -17,7 +17,15 @@
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "npm run build && electron-builder --mac",
     "build:linux": "npm run build && electron-builder --linux --config.npmRebuild=true",
-    "mpv:setup": "node scripts/setupMpv.cjs"
+    "mpv:setup": "node scripts/setupMpv.cjs",
+    "test": "node scripts/runTests.mjs core",
+    "test:unit": "node scripts/runTests.mjs unit",
+    "test:catalog": "node scripts/runTests.mjs catalog",
+    "test:ui": "node scripts/runTests.mjs ui",
+    "test:audio": "node scripts/runTests.mjs audio",
+    "test:mpv": "node scripts/runTests.mjs mpv",
+    "test:all": "node scripts/runTests.mjs all",
+    "test:list": "node scripts/runTests.mjs --list"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",

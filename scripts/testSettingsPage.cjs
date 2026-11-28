@@ -66,7 +66,7 @@ if (!process.versions.electron) {
       await window.webContents.executeJavaScript(result.outputFiles[0].text);
       const results = await window.webContents.executeJavaScript('window.settingsTests');
       results.forEach((result) => console.log(result));
-      const previewPath = join(__dirname, '../out/settings-previews');
+      const previewPath = join(app.getPath('userData'), 'settings-previews');
       mkdirSync(previewPath, { recursive: true });
       for (const theme of ['basic', 'theme-1']) {
         await window.webContents.executeJavaScript(
@@ -87,7 +87,7 @@ if (!process.versions.electron) {
       await window.webContents.executeJavaScript('window.checkSettingsLayout()');
       const narrow = await window.webContents.capturePage();
       writeFileSync(join(previewPath, 'narrow.png'), narrow.toPNG());
-      console.log('Settings previews saved to out/settings-previews.');
+      console.log('Settings previews saved to the temporary test profile.');
       app.exit(0);
     } catch (error) {
       console.error(error);

@@ -176,9 +176,9 @@ The source stylesheet, placeholder cover and loader required by renderer imports
 are included in Git. Import capitalization must match actual directory names on
 case-sensitive systems.
 
-For development tools, VS Code with ESLint and Prettier is useful. There is not yet
-one aggregate `npm test` command; focused checks and their fixture/launch requirements
-are documented beside the scripts and in the notes below.
+For development tools, VS Code with ESLint and Prettier is useful. Run `npm test`
+for routine regression checks. See the [testing guide](docs/testing.md) for test
+groups, prerequisites, failure reports, and optional UI/audio checks.
 
 ## Further notes
 

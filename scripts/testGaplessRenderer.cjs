@@ -110,23 +110,22 @@ if (!process.versions.electron) {
       const approvedRealPaths = new Set(
         (fixtures.real || []).map((track) => track.audiotrack.toLowerCase())
       );
-      protocol.registerStreamProtocol('streaming', (request, callback) => {
-        const location = decodeURIComponent(request.url.split('?')[0]).replace('streaming://', '');
-        const path = location.charAt(0).toUpperCase() + ':' + location.slice(1);
+      const { pathToFileURL } = require('node:url');
+      const { createStreamingHandler, streamingFilePath } = await import(
+        pathToFileURL(join(__dirname, '../src/main/streamingProtocol.js')).href
+      );
+      const handleStreaming = createStreamingHandler();
+      protocol.handle('streaming', (request) => {
+        const file = streamingFilePath(request.url);
         if (
-          !approvedRealPaths.has(path.toLowerCase()) &&
-          !path.toLowerCase().startsWith(fixtureRoot.replaceAll('\\', '/').toLowerCase() + '/')
+          !approvedRealPaths.has(file.toLowerCase()) &&
+          !file
+            .replaceAll('\\', '/')
+            .toLowerCase()
+            .startsWith(fixtureRoot.replaceAll('\\', '/').toLowerCase() + '/')
         )
-          return callback({ statusCode: 403 });
-        callback({
-          statusCode: 200,
-          headers: {
-            'Content-Type': 'audio/mpeg',
-            'Content-Length': String(fs.statSync(path).size),
-            'Access-Control-Allow-Origin': '*'
-          },
-          data: fs.createReadStream(path)
-        });
+          return new Response(null, { status: 403 });
+        return handleStreaming(request);
       });
       window = new BrowserWindow({
         width: 800,
@@ -180,7 +179,7 @@ if (!process.versions.electron) {
         'window.gaplessTests.catch(error => { console.error(error.stack); throw error; })'
       );
       results.forEach((result) => console.log(result));
-      const previews = join(__dirname, '../out/gapless-previews');
+      const previews = join(fixtureRoot, 'gapless-previews');
       fs.mkdirSync(previews, { recursive: true });
       for (const [theme, mini] of [
         ['basic', false],

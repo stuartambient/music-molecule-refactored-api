@@ -283,12 +283,12 @@ window.albumTests = (async () => {
       dispatch({ type: 'library' });
       dispatch({ type: 'set-list-type', listType: 'albums' });
     });
-    await act(async () => {
-      for (let attempt = 0; attempt < 60; attempt++) {
+    for (let attempt = 0; attempt < 60; attempt++) {
+      await act(async () => {
         await frame();
-        if (document.querySelector('#album-b .albumtrack')) break;
-      }
-    });
+      });
+      if (document.querySelector('#album-b .albumtrack')) break;
+    }
     assert(
       document.querySelector('#album-b .albumtrack'),
       'Covers playback closed a manually unfolded album'

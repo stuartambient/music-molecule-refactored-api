@@ -66,7 +66,7 @@ if (!process.versions.electron) {
       await window.webContents.executeJavaScript(result.outputFiles[0].text);
       const results = await window.webContents.executeJavaScript('window.albumTests');
       results.forEach((result) => console.log(result));
-      const previewPath = join(__dirname, '../out/album-previews');
+      const previewPath = join(app.getPath('userData'), 'album-previews');
       mkdirSync(previewPath, { recursive: true });
       for (const theme of ['basic', 'theme-1']) {
         await window.webContents.executeJavaScript(
@@ -80,7 +80,7 @@ if (!process.versions.electron) {
         const playingScreenshot = await window.webContents.capturePage();
         writeFileSync(join(previewPath, `playing-${theme}.png`), playingScreenshot.toPNG());
       }
-      console.log('Album control previews saved to out/album-previews.');
+      console.log('Album control previews saved to the temporary test profile.');
       app.exit(0);
     } catch (error) {
       console.error(error);

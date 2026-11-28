@@ -68,7 +68,7 @@ if (!process.versions.electron) {
       await window.webContents.executeJavaScript(result.outputFiles[0].text);
       const results = await window.webContents.executeJavaScript('window.themeTests');
       results.forEach((result) => console.log(result));
-      const previewPath = join(__dirname, '../out/theme-previews');
+      const previewPath = join(app.getPath('userData'), 'theme-previews');
       mkdirSync(previewPath, { recursive: true });
       for (const theme of ['basic', 'theme-1']) {
         await window.webContents.executeJavaScript(
@@ -77,7 +77,7 @@ if (!process.versions.electron) {
         const screenshot = await window.webContents.capturePage();
         writeFileSync(join(previewPath, `${theme}.png`), screenshot.toPNG());
       }
-      console.log('Theme previews saved to out/theme-previews.');
+      console.log('Theme previews saved to the temporary test profile.');
       app.exit(0);
     } catch (error) {
       console.error(error);

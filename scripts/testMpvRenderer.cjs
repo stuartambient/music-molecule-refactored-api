@@ -67,7 +67,7 @@ if (!process.versions.electron) {
         fs.copyFileSync(queue[0].audiotrack, corrupt.audiotrack);
       });
       ipcMain.handle('capture-problem-preview', async () => {
-        const previews = path.resolve('out/problem-track-previews');
+        const previews = path.join(root, 'problem-track-previews');
         fs.mkdirSync(previews, { recursive: true });
         window.setContentSize(850, 1050);
         fs.writeFileSync(
